@@ -1,0 +1,26 @@
+#info-cards {
+    padding: 30px 0px;
+}
+#info-cards .card-info {
+    display: flex;
+    justify-content: center;
+}
+#info-cards .card-info .content {
+    display: flex;
+    justify-content: center;
+}
+#info-cards .card-info svg {
+    width: 40px;
+    height: 40px;
+    fill: #252d5f;
+} 
+#info-cards .card-info .content-text {
+    margin-left: 15px;
+}
+#info-cards .card-info .content-text p {
+    font-weight: 600;
+    margin-bottom: 0px;
+}
+#info-cards .card-info .content-text .description-text {
+    font-weight: 400;
+}

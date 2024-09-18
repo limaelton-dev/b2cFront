@@ -1,0 +1,24 @@
+#promo {
+    margin-top: 40px;
+    margin-bottom: 70px;
+}
+#promo .cards {
+    display: flex;
+    justify-content: space-between;
+}
+#promo .cards .card {
+    border-radius: 20px;
+    border: none;
+    height: 180px;
+    width: 22%;
+    padding: 10px 15px;
+}
+#promo .cards .card .title-card {
+    color: white;
+    font-size: 23px;
+    font-weight: bold;
+}
+#promo .cards .card {
+    background: rgb(32,134,175);
+    background: radial-gradient(circle, rgba(32,134,175,1) 0%, rgba(0,15,148,1) 93%, rgba(4,30,138,1) 100%);
+}
