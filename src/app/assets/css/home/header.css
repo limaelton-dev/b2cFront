@@ -71,9 +71,32 @@ header .content-header .logo p {
 header .content-header .logo img {
     
 }
+header .content-header .search .content-search {
+    position: relative;
+}
+header .content-header .search .content-search .result-search {
+    background-color: white;
+    border-bottom-left-radius: 3px;
+    border-bottom-right-radius: 3px;
+    position: absolute;
+    width: 100%;
+    top: 89%;
+    z-index: 1;
+    padding: 7px 5px 5px 5px;
+    border: 1px solid #dedede
+}
+header .content-header .search .content-search .result-search ul {
+    margin: 0;
+    list-style: none;
+}
+header .content-header .search .content-search .result-search ul li {
+    margin: 5px;
+}
 header .content-header .search .content-search form {
     display: flex;
     align-items: center;
+    z-index: 3;
+    position: inherit;
 }
 header .content-header .search .content-search select {
     border: 1px solid #dedede;

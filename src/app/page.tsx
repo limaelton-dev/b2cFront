@@ -5,8 +5,51 @@ import LogoColetek from './assets/img/logo_coletek.png';
 import Banner from './assets/img/banner.png';
 import UserImg from './assets/img/user.jpg';
 import HeadphoneImg from './assets/img/headphone.png';
+import { search } from './services/search';
+import { useEffect, useState } from 'react';
+import { ProdutoInterface } from './interfaces/home';
 
+
+const URL = process.env.NEXT_PUBLIC_URL || '';
 export default function HomePage() {
+
+    const [debounceTimeout, setDebounceTimeout] = useState<NodeJS.Timeout | null>(null);
+    const [results, setResults] = useState<any[]>([]);
+    const [searchTerm, setSearchTerm] = useState('');
+
+    const changeSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { value } = e.target;
+        setSearchTerm(value);
+
+        if (value.length < 4) {
+            setResults([]);
+        }
+    };
+
+    useEffect(() => {
+        if (searchTerm.length < 4) return;
+
+        if (debounceTimeout) {
+            clearTimeout(debounceTimeout);
+        }
+
+        const timeout = setTimeout(() => {
+            submitSearch();
+        }, 500);
+
+        setDebounceTimeout(timeout);
+
+        return () => {
+            clearTimeout(timeout);
+        };
+    }, [searchTerm]);
+
+    const submitSearch = async () => {
+        const response = await search(searchTerm);
+        if (response.status == 200) {
+            setResults(response.data);
+        }
+    };
 
     return (
         <>
@@ -58,13 +101,25 @@ export default function HomePage() {
                                             <option value="1" defaultValue={1}>Todas categorias</option>
                                             <option value="2">Categoria 1</option>
                                         </select>
-                                        <input type="text" id="search"/>
+                                        <input type="text" id="search" onChange={changeSearch}/>
                                         <button>
                                             <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#fff">
                                                 <path d="M784-120 532-372q-30 24-69 38t-83 14q-109 0-184.5-75.5T120-580q0-109 75.5-184.5T380-840q109 0 184.5 75.5T640-580q0 44-14 83t-38 69l252 252-56 56ZM380-400q75 0 127.5-52.5T560-580q0-75-52.5-127.5T380-760q-75 0-127.5 52.5T200-580q0 75 52.5 127.5T380-400Z"/>
                                             </svg>
                                         </button>
                                     </form>
+                                    {results.length > 0  && 
+                                        <div className="result-search">
+                                            <ul>
+                                                {results.map((result) => (
+                                                    <li key={result.pro_codigo}><a target="_blank" href={URL+'/produto/'+result.pro_codigo}>{result.pro_descricao}</a></li>
+                                                ))}
+                                                {results.length > 5 && 
+                                                   <li><a href="">Veja mais resultados</a></li> 
+                                                }
+                                            </ul>
+                                        </div>
+                                    }
                                 </div>
                             </div>
                             <div className="user-preference">
@@ -1074,5 +1129,5 @@ export default function HomePage() {
                 </footer>
             </main>
         </>
-  );
+    );
 }
