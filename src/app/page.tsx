@@ -7,8 +7,6 @@ import UserImg from './assets/img/user.jpg';
 import HeadphoneImg from './assets/img/headphone.png';
 import { search } from './services/search';
 import { useEffect, useState } from 'react';
-import { ProdutoInterface } from './interfaces/home';
-
 
 const URL = process.env.NEXT_PUBLIC_URL || '';
 export default function HomePage() {
@@ -312,7 +310,7 @@ export default function HomePage() {
                                 <div className="wishlist-button">
 
                                 </div>
-                                <Image
+                                    <Image
                                         src={HeadphoneImg}
                                         alt="Headphone"
                                         layout="responsive"
