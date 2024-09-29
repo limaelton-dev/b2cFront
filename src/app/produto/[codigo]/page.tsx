@@ -133,7 +133,7 @@ const ProductPage = () => {
                             </div>
                             <div className="content-text">
                                 <p className="nome">Márcio Mendes</p>
-                                <p className="email">marciomendes.gmail.com</p>
+                                <p className="email">marciomendes@gmail.com</p>
                             </div>
                         </div>  
                     </div>
