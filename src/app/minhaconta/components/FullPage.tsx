@@ -1,4 +1,5 @@
 import * as React from 'react';
+//não esquecer de criar "Cartões*"
 import { styled, useTheme, Theme, CSSObject } from '@mui/material/styles';
 import Box from '@mui/material/Box';
 import MuiDrawer from '@mui/material/Drawer';
@@ -20,6 +21,11 @@ import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
 import PlaceIcon from '@mui/icons-material/Place';
 import Image from 'next/image';
 import LogoColetek from '../../assets/img/logo_coletek_white.png';
+
+// Importando os componentes de formulários e a página de compras
+import DadosPessoaisForm from './forms/DadosPessoaisForm';
+import EnderecosForm from './forms/EnderecosForm';
+import MinhasComprasPage from './MinhasComprasPage';
 
 const drawerWidth = 240;
 
@@ -74,7 +80,6 @@ const AppBar = styled(MuiAppBar, {
   }),
 }));
 
-
 const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' })(
   ({ theme, open }) => ({
     width: drawerWidth,
@@ -100,7 +105,7 @@ export default function FullPage() {
   const drawerIcons = [
     <BadgeIcon />,
     <ShoppingBagIcon />,
-    <PlaceIcon />
+    <PlaceIcon />,
   ];
 
   const handleDrawerOpen = () => {
@@ -118,23 +123,11 @@ export default function FullPage() {
   const renderContent = () => {
     switch (selectedSection) {
       case 'Dados Pessoais':
-        return (
-          <Typography sx={{ marginBottom: 2 }}>
-            Seção de Dados Pessoais.
-          </Typography>
-        );
+        return <DadosPessoaisForm />;
       case 'Minhas Compras':
-        return (
-          <Typography sx={{ marginBottom: 2 }}>
-            Seção de Minhas Compras.
-          </Typography>
-        );
+        return <MinhasComprasPage />;
       case 'Meus Endereços':
-        return (
-          <Typography sx={{ marginBottom: 2 }}>
-            Seção de Meus Endereços.
-          </Typography>
-        );
+        return <EnderecosForm />;
       default:
         return (
           <Typography sx={{ marginBottom: 2 }}>
