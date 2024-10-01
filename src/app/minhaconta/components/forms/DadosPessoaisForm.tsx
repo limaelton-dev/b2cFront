@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Box } from '@mui/material';
-import InfoCard from '../InfoCard';
+import InfoCardPersonalData from '../InfoCardPersonalData';
 
 const DadosPessoaisForm = () => {
   const [formData, setFormData] = useState({
@@ -14,12 +14,12 @@ const DadosPessoaisForm = () => {
 
   return (
     <Box component="div" display="flex" flexWrap="wrap" gap={2} margin={3}>
-      <InfoCard label="Nome completo" description={formData.nome} />
-      <InfoCard label="Data Nascimento" description={formData.dob} />
-      <InfoCard label="CPF" description={formData.cpf} />
-      <InfoCard label="Username" description={formData.username} />
-      <InfoCard label="E-mail" description={formData.email} />
-      <InfoCard label="Telefone" description={formData.phone} />
+      <InfoCardPersonalData label="Nome completo" description={formData.nome} />
+      <InfoCardPersonalData label="Data Nascimento" description={formData.dob} />
+      <InfoCardPersonalData label="CPF" description={formData.cpf} />
+      <InfoCardPersonalData label="Username" description={formData.username} />
+      <InfoCardPersonalData label="E-mail" description={formData.email} />
+      <InfoCardPersonalData label="Telefone" description={formData.phone} />
     </Box>
   );
 };

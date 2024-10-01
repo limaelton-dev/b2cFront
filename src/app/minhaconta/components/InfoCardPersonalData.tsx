@@ -6,7 +6,7 @@ interface InfoCardProps {
   description: string;
 }
 
-const InfoCard: React.FC<InfoCardProps> = ({ label, description }) => {
+const InfoCardPersonalData: React.FC<InfoCardProps> = ({ label, description }) => {
   return (
     <Card sx={{ display: 'flex', flexDirection: 'row', width: '100%' }}>
       <CardContent sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
@@ -26,4 +26,4 @@ const InfoCard: React.FC<InfoCardProps> = ({ label, description }) => {
   );
 };
 
-export default InfoCard;
+export default InfoCardPersonalData;

@@ -8,7 +8,9 @@ import Container from '@mui/material/Container';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import PlaceIcon from '@mui/icons-material/Place';
-import headphoneImage from '../../assets/img/headphone.png'; // Caminho relativo para a imagem
+import headphoneImage from '../../assets/img/headphone.png';
+
+import Image from 'next/image';
 
 const MinhasComprasPage = () => {
   const compras = [
@@ -62,15 +64,14 @@ const MinhasComprasPage = () => {
   return (
     <Box display="flex" flexWrap="wrap" gap={2} margin={3}>
       {compras.map((compra) => (
-        <Card key={compra.id} sx={{ display: 'flex', flexDirection: 'row', width: 'calc(50% - 16px)'}}>
-          <CardMedia
-            component="img"
-            sx={{ width: 150,
-                  margin: 1
-             }}
-            image={(typeof compra.imagem === 'string' ? compra.imagem : compra.imagem.src) || 'https://via.placeholder.com/150'}
-            alt={compra.produto}
-          />
+        <Card key={compra.id} sx={{ display: 'flex', flexDirection: 'row', width: 'calc(50% - 16px)', alignItems: 'center'}}>
+          <Box component="div" sx={{width: '250px', height: '200px', display: 'flex', alignItems: 'center'}}>
+            <Image
+              src={compra.imagem}
+              alt={compra.produto}
+              layout='responsive'
+            />
+          </Box>          
           <Container>
             <Box>
               <Typography
@@ -79,7 +80,8 @@ const MinhasComprasPage = () => {
                 component="div"
                 sx={{ 
                   color: getStatusColor(compra.status),
-                  fontWeight: '600'
+                  fontWeight: '600',
+                  paddingLeft: '14px'
                 }}
               >
                 {compra.status}
@@ -104,9 +106,6 @@ const MinhasComprasPage = () => {
                   Quantidade: {compra.quantidade}
                 </Typography>
               </CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', pl: 1, pb: 1 }}>
-                {/* Ícones removidos */}
-              </Box>
             </Box>
           </Container>
         </Card>
