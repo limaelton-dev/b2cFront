@@ -42,7 +42,7 @@ const MinhasComprasPage = () => {
       valor: 'R$ 1500,00',
       quantidade: 3,
       imagem: headphoneImage,
-      status: 'Entregue'
+      status: 'Cancelada'
     },
   ];
 
@@ -94,7 +94,7 @@ const MinhasComprasPage = () => {
             <Divider />
             <Box sx={{ display: 'flex', flexDirection: 'column', flex: '1 0 auto' }}>
               <CardContent sx={{ flex: '1 0 auto' }}>
-                <Typography variant="h6" component="div" sx={{  }}>
+                <Typography variant="h6" component="div">
                   {compra.produto}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">

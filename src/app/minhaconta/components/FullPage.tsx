@@ -21,8 +21,6 @@ import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
 import PlaceIcon from '@mui/icons-material/Place';
 import Image from 'next/image';
 import LogoColetek from '../../assets/img/logo_coletek_white.png';
-
-// Importando os componentes de formulários e a página de compras
 import DadosPessoaisForm from './forms/DadosPessoaisForm';
 import EnderecosForm from './forms/EnderecosForm';
 import MinhasComprasPage from './MinhasComprasPage';
@@ -163,6 +161,7 @@ export default function FullPage() {
           </Typography>
         </Toolbar>
       </AppBar>
+
       <Drawer variant="permanent" open={open}>
         <DrawerHeader>
           <IconButton onClick={handleDrawerClose}>
@@ -198,8 +197,9 @@ export default function FullPage() {
           ))}
         </List>
       </Drawer>
-      <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
+      <Box component="main" sx={{ flexGrow: 1, p: 3}}>
         <DrawerHeader />
+        {/**Conteúdo da página */}
         {renderContent()}
       </Box>
     </Box>

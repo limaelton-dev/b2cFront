@@ -1,50 +1,25 @@
 import React, { useState } from 'react';
-import { TextField, Button, Box } from '@mui/material';
+import { Box } from '@mui/material';
+import InfoCard from '../InfoCard';
 
 const DadosPessoaisForm = () => {
   const [formData, setFormData] = useState({
-    nome: '',
-    email: '',
-    telefone: ''
+    nome: 'João Alvino Silva',
+    cpf: '581.728.380-85',
+    email: 'joaosilva24@email.com',
+    username: 'joaoSilva24',
+    dob: '01/11/1985',
+    phone: '+554299059905',
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Handle form submission here (e.g., sending data to the backend)
-    console.log(formData);
-  };
-
   return (
-    <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-      <TextField
-        label="Nome"
-        name="nome"
-        value={formData.nome}
-        onChange={handleChange}
-        fullWidth
-      />
-      <TextField
-        label="Email"
-        name="email"
-        value={formData.email}
-        onChange={handleChange}
-        fullWidth
-      />
-      <TextField
-        label="Telefone"
-        name="telefone"
-        value={formData.telefone}
-        onChange={handleChange}
-        fullWidth
-      />
-      <Button type="submit" variant="contained">Salvar Dados</Button>
+    <Box component="div" display="flex" flexWrap="wrap" gap={2} margin={3}>
+      <InfoCard label="Nome completo" description={formData.nome} />
+      <InfoCard label="Data Nascimento" description={formData.dob} />
+      <InfoCard label="CPF" description={formData.cpf} />
+      <InfoCard label="Username" description={formData.username} />
+      <InfoCard label="E-mail" description={formData.email} />
+      <InfoCard label="Telefone" description={formData.phone} />
     </Box>
   );
 };
