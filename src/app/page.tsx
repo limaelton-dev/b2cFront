@@ -1,19 +1,56 @@
 "use client"
+import React from 'react';
 import Image from 'next/image';
 import './assets/css/home.css';
 import LogoColetek from './assets/img/logo_coletek.png';
 import Banner from './assets/img/banner.png';
 import HeadphoneImg from './assets/img/headphone.png';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import Header from './header';
 import Footer from './footer';
+import Cart from './components/cart';
+import AlertDialog from './components/dialog';
 
 const URL = process.env.NEXT_PUBLIC_URL || '';
 export default function HomePage() {
+    const [openedCart, setOpenedCart] = useState(false);
+    const [openDialog, setOpenDialog] = useState(false);
+    const [dialogTitle, setDialogTitle] = useState('');
+    const [dialogDesc, setDialogDesc] = useState('');
+    const [dialogBtnAgree, setDialogBtnAgree] = useState('');
+    const [dialogBtnCancel, setDialogBtnCancel] = useState('');
+
+    const handleChangeDialog = ({
+        title = '',
+        desc = '',
+        btnAgree = '',
+        btnCancel = '',
+        open = false
+    }) => {
+        setDialogTitle(title);
+        setDialogDesc(desc);
+        setDialogBtnAgree(btnAgree);
+        setDialogBtnCancel(btnCancel);
+        setOpenDialog(open);
+    }
+
+    const handleOpenDialog = (v) => {
+        setOpenDialog(v);
+    }
+
 
     return (
         <>
-            <Header/>
+            <AlertDialog 
+                title={dialogTitle}
+                description={dialogDesc}
+                msgAgree={dialogBtnAgree}
+                msgCancel={dialogBtnCancel}
+                open={openDialog}
+                setOpen={handleOpenDialog}
+            />
+            <Cart cartOpened={openedCart} onCartToggle={setOpenedCart} changeAlertOpts={handleChangeDialog}/>
+            <Header cartOpened={openedCart} onCartToggle={setOpenedCart} />
             <main>
                 <section id="banner">
                     <Image
