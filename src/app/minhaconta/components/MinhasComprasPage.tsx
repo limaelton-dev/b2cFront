@@ -1,16 +1,16 @@
 import React from 'react';
 import Box from '@mui/material/Box';
-import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
-import CardMedia from '@mui/material/CardMedia';
 import Divider from '@mui/material/Divider';
-import Container from '@mui/material/Container';
-import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
+import IconButton from '@mui/material/IconButton';
 import PlaceIcon from '@mui/icons-material/Place';
-import headphoneImage from '../../assets/img/headphone.png';
-
 import Image from 'next/image';
+import Accordion from '@mui/material/Accordion';
+import AccordionSummary from '@mui/material/AccordionSummary';
+import AccordionDetails from '@mui/material/AccordionDetails';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import headphoneImage from '../../assets/img/headphone.png';
 
 const MinhasComprasPage = () => {
   const compras = [
@@ -62,53 +62,65 @@ const MinhasComprasPage = () => {
   };
 
   return (
-    <Box display="flex" flexWrap="wrap" gap={2} margin={3}>
+    <Box display="flex" flexDirection="column" gap={2} margin={3}>
       {compras.map((compra) => (
-        <Card key={compra.id} sx={{ display: 'flex', flexDirection: 'row', width: 'calc(50% - 16px)', alignItems: 'center'}}>
-          <Box component="div" sx={{width: '250px', height: '200px', display: 'flex', alignItems: 'center'}}>
-            <Image
-              src={compra.imagem}
-              alt={compra.produto}
-              layout='responsive'
-            />
-          </Box>          
-          <Container>
-            <Box>
+        <Accordion key={compra.id}>
+          <AccordionSummary
+            expandIcon={<ExpandMoreIcon />}
+            aria-controls={`panel${compra.id}-content`}
+            id={`panel${compra.id}-header`}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+              {/* Imagem do produto */}
+              <Box sx={{ width: '60px', height: '60px', marginRight: 2 }}>
+                <Image
+                  src={compra.imagem}
+                  alt={compra.produto}
+                  width={60}
+                  height={60}
+                />
+              </Box>
+              {/* Nome do produto */}
+              <Typography variant="h6" sx={{ flexGrow: 1 }}>
+                {compra.produto}
+              </Typography>
+              {/* Status do produto */}
               <Typography
-                gutterBottom
-                variant="subtitle1"
-                component="div"
-                sx={{ 
-                  color: getStatusColor(compra.status),
-                  fontWeight: '600',
-                  paddingLeft: '14px'
-                }}
+                sx={{ color: getStatusColor(compra.status), fontWeight: '600' }}
               >
                 {compra.status}
               </Typography>
-              <Typography gutterBottom variant="subtitle2" component="div">
-                <IconButton>
-                  <PlaceIcon sx={{ color: '#8a0303' }} /> {/* Ícone PlaceIcon com cor vermelha */}
-                </IconButton>
-                Rua João Amaral, 150 - São Paulo/SP
-              </Typography>
             </Box>
-            <Divider />
-            <Box sx={{ display: 'flex', flexDirection: 'column', flex: '1 0 auto' }}>
-              <CardContent sx={{ flex: '1 0 auto' }}>
-                <Typography variant="h6" component="div">
-                  {compra.produto}
+          </AccordionSummary>
+          <AccordionDetails>
+            <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
+              <Box sx={{ width: '250px', height: '200px', display: 'flex', alignItems: 'center' }}>
+                <Image
+                  src={compra.imagem}
+                  alt={compra.produto}
+                  layout="responsive"
+                />
+              </Box>
+              <Box sx={{ flex: 1, paddingLeft: 2 }}>
+                <Typography gutterBottom variant="subtitle2" component="div">
+                  <IconButton>
+                    <PlaceIcon sx={{ color: '#8a0303' }} />
+                  </IconButton>
+                  Rua João Amaral, 150 - São Paulo/SP
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Valor: {compra.valor}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Quantidade: {compra.quantidade}
-                </Typography>
-              </CardContent>
+                <Divider />
+                <CardContent>
+                  <Typography variant="body1" component="div">
+                    Valor: {compra.valor}
+                  </Typography>
+                  <Typography variant="body1" component="div">
+                    Quantidade: {compra.quantidade}
+                  </Typography>
+                </CardContent>
+              </Box>
             </Box>
-          </Container>
-        </Card>
+          </AccordionDetails>
+        </Accordion>
       ))}
     </Box>
   );

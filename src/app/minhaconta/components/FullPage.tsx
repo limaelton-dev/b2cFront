@@ -23,6 +23,7 @@ import PlaceIcon from '@mui/icons-material/Place';
 import MailIcon from '@mui/icons-material/Mail';
 import Badge from '@mui/material/Badge';
 import Fade from '@mui/material/Fade';
+import VerifiedIcon from '@mui/icons-material/Verified';
 
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import AccountCircle from '@mui/icons-material/AccountCircle';
@@ -228,9 +229,10 @@ export default function FullPage() {
         >
           <Box sx={{ display: 'flex', alignItems: 'center', overflow: 'hidden' }}>
             <Avatar alt="Joao" src={UserImage.src} sx={{ width: 40, height: 40, marginRight: 2 }} />
-            <Box sx={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' , justifyContent: 'center'}}>
               <Typography variant="caption" noWrap>
                 João Silva
+                <VerifiedIcon fontSize="small" sx={{color: 'green', marginLeft: '2px'}}/>
               </Typography>
               <Typography variant="caption" color="textSecondary" noWrap>
                 joaosilva24@email.com
