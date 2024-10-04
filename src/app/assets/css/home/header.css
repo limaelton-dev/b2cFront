@@ -141,16 +141,6 @@ header .content-header .user-preference .content-preference svg {
     margin-right: 2px;
     position: relative;
 }
-header .content-header .user-preference .cart .items-total, header .content-header .user-preference .wishlist .items-total{
-    background-color: #4C90F3;
-    font-size: 11px;
-    border-radius: 100%;
-    position: absolute;
-    top: -4px;
-    left: 15px;
-    padding: 0px 5px;
-    color: white;   
-}
 header .content-header .categories {
     width: 77%;
     display: flex;

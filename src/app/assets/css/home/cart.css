@@ -20,6 +20,7 @@
     align-items: center;
     line-height: 15px;
     height: 30px;
+    margin-bottom: 7px;
 }
 .products-cart .product .quantity {
     display: flex;
@@ -83,4 +84,32 @@
     padding: 11px 0px;
     margin-top: 15px;
     text-decoration: none;
+}
+.content-header .user-preference .cart .items-total, .content-header .user-preference .wishlist .items-total{
+    background-color: #4C90F3;
+    font-size: 11px;
+    border-radius: 100%;
+    position: absolute;
+    top: -4px;
+    left: 15px;
+    padding: 0px 5px;
+    color: white;
+    animation: shadowTotal 1 0.9s ease;
+}
+@keyframes shadowTotal {
+    0% {
+        box-shadow: 0px 0px 0px 0px transparent;
+    }
+    25% {
+        box-shadow: 0px 0px 3px 3px #5a90e1cd;
+    }
+    50% {
+        box-shadow: 0px 0px 0px 0px transparent;
+    }
+    75% {
+        box-shadow: 0px 0px 3px 3px #5a90e1cd;
+    }
+    100% {
+        box-shadow: 0px 0px 0px 0px transparent;
+    }
 }

@@ -4,13 +4,13 @@ import Head from 'next/head';
 import 'bootstrap/dist/css/bootstrap.css';
 import { GeistSans } from 'geist/font/sans';
 import { CartProvider } from "./context/cart";
-import { ToastProvider } from "./context/toast";
+import { AlertDialogProvider } from "./context/dialog";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <ToastProvider>
+    <AlertDialogProvider>
       <CartProvider>
         <html lang="pt">
             <Head>
@@ -27,7 +27,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <body className={GeistSans.className} suppressHydrationWarning={true}>{children}</body>
         </html>
       </CartProvider>
-    </ToastProvider>
+    </AlertDialogProvider>
 
   );
 }

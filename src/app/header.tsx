@@ -5,9 +5,11 @@ import { useEffect, useState } from 'react';
 import { search } from './services/search';
 import Collapse from '@mui/material/Collapse';
 import Box from '@mui/material/Box';
+import { useCart } from './context/cart';
 
 const URL = process.env.NEXT_PUBLIC_URL || '';
 export default function Header({ cartOpened, onCartToggle }) {
+    const { cartItems } = useCart();
     const [debounceTimeout, setDebounceTimeout] = useState<NodeJS.Timeout | null>(null);
     const [results, setResults] = useState<any[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
@@ -125,9 +127,11 @@ export default function Header({ cartOpened, onCartToggle }) {
                                 <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#bcbcbc">
                                     <path d="M240-80q-33 0-56.5-23.5T160-160v-480q0-33 23.5-56.5T240-720h80q0-66 47-113t113-47q66 0 113 47t47 113h80q33 0 56.5 23.5T800-640v480q0 33-23.5 56.5T720-80H240Zm0-80h480v-480h-80v80q0 17-11.5 28.5T600-520q-17 0-28.5-11.5T560-560v-80H400v80q0 17-11.5 28.5T360-520q-17 0-28.5-11.5T320-560v-80h-80v480Zm160-560h160q0-33-23.5-56.5T480-800q-33 0-56.5 23.5T400-720ZM240-160v-480 480Z"/>
                                 </svg>
-                                <div className="items-total">
-                                    2
-                                </div>
+                                {cartItems.length > 0 &&
+                                    <div className="items-total">
+                                        {cartItems.length}
+                                    </div>
+                                }
                                 Carrinho
                             </div>
                             <div className="wishlist content-preference">

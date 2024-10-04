@@ -5,7 +5,7 @@ interface CartContextType {
     cartItems: any[];
     itemQty: any[];
     changeQtyItem: (product: any, newV: number) => void;
-    addToCart: (product: any) => void;
+    addToCart: (product: any) => boolean;
     removeFromCart: (id: string) => void;
 }
 
@@ -13,7 +13,7 @@ const CartContext = createContext<CartContextType>({
     cartItems: [],
     itemQty: [],
     changeQtyItem: () => {},
-    addToCart: () => {},
+    addToCart: () => false,
     removeFromCart: () => {},
 });
 
@@ -26,10 +26,15 @@ export const CartProvider = ({ children }) => {
     const [itemQty, setItemQty] = useState([]);
 
     const addToCart = (product) => {
-        if(!cartItems.find(p => p.pro_codigo == product.pro_codigo)) {
-            setCartItems((prevItems) => [...prevItems, product]);
-            setItemQty((prevItems) => [...prevItems, {id: product.pro_codigo, qty: 1}]);
+        const itemExists = cartItems.some(item => item.pro_codigo === product.pro_codigo);
+
+        if(itemExists) {
+            return false;
         }
+
+        setCartItems((prevItems) => [...prevItems, product]);
+        setItemQty((prevItems) => [...prevItems, {id: product.pro_codigo, qty: 1}]);
+        return true;
     };
 
     const removeFromCart = (id) => {
@@ -37,7 +42,6 @@ export const CartProvider = ({ children }) => {
             setCartItems((prevItems) => prevItems.filter(item => item.pro_codigo != id));
             setItemQty((prevItems) => prevItems.filter(item => item.id != id));
         }
-        console.log(cartItems);
     };
 
     const changeQtyItem = (id, newQty) => {

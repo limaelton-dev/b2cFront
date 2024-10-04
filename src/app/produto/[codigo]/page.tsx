@@ -14,18 +14,14 @@ import Elo from '../../assets/img/elo.webp';
 import Hyper from '../../assets/img/hyper.webp';
 import { useEffect, useState } from 'react';
 import { getProduto } from '../../services/produto/page';
-import AlertDialog from '../../components/dialog';
 import Cart from '../../components/cart';
 import Header from '../../header';
 import { useCart } from '../../context/cart';
-import { Snackbar } from '@mui/material';
-import { useToast } from '../../context/toast';
+import { Alert, Snackbar, Slide } from '@mui/material';
 
 const ProductPage = ({cart}) => {
-    const { setToastShow, setDurationToast, setToastMessage } = useToast();
     const { addToCart, cartItems } = useCart();
     const { codigo } = useParams();
-    const [toast, setToast] = useState(false);
     const [product, setProduct] = useState({
         pro_codigo: 54862,
         pro_descricao: 'DISCO FLAP 4 1/2" GRÃO 400',
@@ -33,12 +29,9 @@ const ProductPage = ({cart}) => {
         pro_quantity: 1,
     });
     const [openedCart, setOpenedCart] = useState(false);
-    const [openDialog, setOpenDialog] = useState(false);
-    const [dialogTitle, setDialogTitle] = useState('');
-    const [dialogDesc, setDialogDesc] = useState('');
-    const [dialogBtnAgree, setDialogBtnAgree] = useState('');
-    const [dialogBtnCancel, setDialogBtnCancel] = useState('');
     const [response, setResponse] = useState();
+    const [openToast, setToast] = useState(false);
+    const [toastMessage, setToastMessage] = useState('');
 
     useEffect(() => {
         const fetchProduto = async () => {
@@ -54,46 +47,50 @@ const ProductPage = ({cart}) => {
         fetchProduto();
     },[])
 
-    const handleChangeDialog = ({
-        title = '',
-        desc = '',
-        btnAgree = '',
-        btnCancel = '',
-        open = false
-    }) => {
-        setDialogTitle(title);
-        setDialogDesc(desc);
-        setDialogBtnAgree(btnAgree);
-        setDialogBtnCancel(btnCancel);
-        setOpenDialog(open);
-    }
-
-    const handleOpenDialog = (v) => {
-        setOpenDialog(v);
-    }
-
     const handleAddToCart = () => {
-        addToCart(product);
+        if(!addToCart(product)) {
+            setToast(true);
+            setToastMessage('O produto já existe no carrinho.')
+        }
+        else {
+            setTimeout(() => {
+                setOpenedCart(true);
+            }, 500)
+        }
     }
 
-    useEffect(() => {
-        setToastMessage('Produto adicionado ao carrinho');
-        setDurationToast(5000)
-        setToast(true);
-    },[cartItems])
+    const handleClose = (event, reason) => {
+        if (reason === 'clickaway') {
+          return;
+        }
+    
+        setToast(false);
+    };
 
     return (
     <>
-        <AlertDialog 
-            title={dialogTitle}
-            description={dialogDesc}
-            msgAgree={dialogBtnAgree}
-            msgCancel={dialogBtnCancel}
-            open={openDialog}
-            setOpen={handleOpenDialog}
-        />
-        <Cart cartOpened={openedCart} onCartToggle={setOpenedCart} changeAlertOpts={handleChangeDialog}/>
+        <Cart cartOpened={openedCart} onCartToggle={setOpenedCart}/>
+        <Snackbar
+            sx={{ borderRadius: '3px'}}
+            open={openToast}
+            autoHideDuration={6000}
+            onClose={handleClose}
+            TransitionComponent={Slide}
+        >   
+            <Alert severity="info" sx={{ 
+                width: '100%',
+                boxShadow: '0px 0px 1px 1px red;',
+                background: 'white',
+                color: 'red',
+                '.MuiAlert-icon': {
+                    color: 'red',
+                }
+            }}>
+                {toastMessage}
+            </Alert>
+        </Snackbar>
         <Header cartOpened={openedCart} onCartToggle={setOpenedCart} />
+        
         <main>
             <section id="content-product">
                 <div className="container d-flex flex-wrap">

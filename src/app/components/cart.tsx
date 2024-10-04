@@ -5,8 +5,10 @@ import Image from 'next/image';
 import HeadphoneImg from '../assets/img/headphone.png';
 import { Close } from '@mui/icons-material';
 import { useCart } from '../context/cart';
+import { useAlertDialog } from '../context/dialog';
 
-export default function Cart({ cartOpened, onCartToggle, changeAlertOpts }) {
+export default function Cart({ cartOpened, onCartToggle }) {
+    const { openDialog } = useAlertDialog();
     const { cartItems, itemQty, changeQtyItem, removeFromCart } = useCart();
     const [min, setMin] = useState(1);
     const [max, setMax] = useState(100);
@@ -23,27 +25,30 @@ export default function Cart({ cartOpened, onCartToggle, changeAlertOpts }) {
         changeQtyItem(cartItems[i].pro_codigo, itemQty[i].qty - 1)
     };
 
-    const handleInputChange = (e, i) => {
-        const newV = Number(e.target.value);
-        itemQty[i].qty = newV;
+    const handleInputChange = (i, e) => {
+        console.log(e.target.value);
+        const newV = Number(e.target.value)
+        console.log(newV);
+        if(newV < min || newV > max) {
+            if(newV < min) {
+                changeQtyItem(i.pro_codigo, min)
+            }
+            if(newV > max) {
+                changeQtyItem(i.pro_codigo, max)
+            }
+        }
+        else {
+            changeQtyItem(i.pro_codigo, newV)
+        }
     };
 
     const handleAlertRemoveItem = (id) => {
-        removeFromCart(id)
-        // changeAlertOpts({
-        //     title: 'Tem certeja que deseja remover este item do carrinho?',
-        //     desc: '',
-        //     btnAgree: 'Ok',
-        //     btnCancel: 'Cancelar',
-        //     open: true
-        // })
+        openDialog('Tem certeza que deseja remover este produto?', '', 'Não', 'Sim', (confirm) =>  {
+            if(confirm) {
+                removeFromCart(id)
+            }
+        })
     }
-
-    const calculateTotal = () => {
-        return cartItems
-          .reduce((total, item) => total + item.pro_valorultimacompra * item.pro_quantity, 0)
-          .toFixed(2);
-    };
 
     return (
         <Drawer open={cartOpened} anchor="right">
@@ -78,7 +83,7 @@ export default function Cart({ cartOpened, onCartToggle, changeAlertOpts }) {
                                             type='button'
                                             onClick={() => handleDec(index)}
                                             className="btn-qty decrement">-</button>
-                                        <input value={itemQty[index].qty} min={min} max={max} onChange={() => handleInputChange(this, item)} type="number"/>
+                                        <input value={itemQty[index].qty} min={min} max={max} onChange={(e) => handleInputChange(item, e)} type="number"/>
                                         <button 
                                             type='button'
                                             onClick={() => handleInc(index)}
@@ -102,7 +107,7 @@ export default function Cart({ cartOpened, onCartToggle, changeAlertOpts }) {
                         <span className='price-totals'>
                             <b>R$ {cartItems
                                     .reduce((total, item) => total + (item.pro_valorultimacompra * itemQty[cartItems.findIndex(i => i.pro_codigo == item.pro_codigo)].qty), 0)
-                                    .toFixed(2)
+                                    .toFixed(2).replace('.',',')
                                 }
                             </b>
                         </span>
