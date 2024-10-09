@@ -1,4 +1,5 @@
 "use client"
+import React from 'react';
 import '../assets/css/login.css';
 import AlternateEmailIcon from '@mui/icons-material/AlternateEmail';
 import LockIcon from '@mui/icons-material/Lock';
@@ -10,10 +11,12 @@ import Image from 'next/image';
 import Logo from '../assets/img/logo_coletek_white.png';
 import svgG from '../assets/img/svg/google.svg';
 import svgF from '../assets/img/svg/facebook.svg';
+import { useAuth } from '../context/auth';
 
 export default function LoginPage() {
     const router = useRouter();
-    const [cookies, setCookie] = useCookies(['jwt']);
+    const { setUserFn } = useAuth();
+    const [cookies, setCookie] = useCookies(['jwt','user']);
     const [isLoading, setIsLoading] = useState(false);
 
     const [formData, setFormData] = useState({
@@ -34,6 +37,7 @@ export default function LoginPage() {
         setIsLoading(true);
         const response = await login(formData.email, formData.password)
         if(response.status == 200) {
+            setUserFn(response.user);
             setCookie('jwt', response.token);
             router.push('/');
         }

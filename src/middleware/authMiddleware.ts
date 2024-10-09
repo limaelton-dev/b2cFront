@@ -14,6 +14,8 @@ export async function authMiddleware(req: NextRequest) {
         
         return true;
     } catch (error) {
+        localStorage.removeItem('user')
+        localStorage.removeItem('cart')
         return false;
     }
 }

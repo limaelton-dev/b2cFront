@@ -1,10 +1,7 @@
 "use client"
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { Dialog, DialogActions, DialogContent, DialogTitle, Button, DialogContentText } from '@mui/material';
-
-interface AlertDialogContextType {
-    openDialog: (titleDialog: string, msgDialog: string, btnTxtLeft: string, btnTxtRight: string, onConfirm: (value: boolean) => void) => void;
-}
+import { AlertDialogContextType } from '../interfaces/interfaces';
 
 const AlertDialogContext = createContext<AlertDialogContextType | undefined>(undefined);
 

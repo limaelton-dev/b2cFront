@@ -38,7 +38,7 @@ const ProductPage = ({cart}) => {
             try {
                 const response = await getProduto(codigo);
                 if(response.status === 200 && response.data) {
-                    setProduct(response.data);
+                    setProduct(response.data[0]);
                 }
             } catch (error) {
                 console.error('Erro ao buscar produtos', error);

@@ -6,14 +6,17 @@ import { search } from './services/search';
 import Collapse from '@mui/material/Collapse';
 import Box from '@mui/material/Box';
 import { useCart } from './context/cart';
+import { useAuth } from './context/auth';
 
 const URL = process.env.NEXT_PUBLIC_URL || '';
 export default function Header({ cartOpened, onCartToggle }) {
+    const { user } = useAuth();
     const { cartItems } = useCart();
     const [debounceTimeout, setDebounceTimeout] = useState<NodeJS.Timeout | null>(null);
     const [results, setResults] = useState<any[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
 
+    
     const changeSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { value } = e.target;
         setSearchTerm(value);
@@ -22,6 +25,10 @@ export default function Header({ cartOpened, onCartToggle }) {
             setResults([]);
         }
     };
+
+    useEffect(() => {
+        console.log(user)
+    }, [user]);
 
     useEffect(() => {
         if (searchTerm.length < 4) return;
@@ -166,8 +173,8 @@ export default function Header({ cartOpened, onCartToggle }) {
                                 />
                             </div>
                             <div className="content-text">
-                                <p className="nome">Márcio Mendes</p>
-                                <p className="email">marciomendes.gmail.com</p>
+                                <p className="nome">{user ? user.name : ''}</p>
+                                <p className="email">{user ? user.email : ''}</p>
                             </div>
                         </div>  
                     </div>

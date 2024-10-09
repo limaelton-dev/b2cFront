@@ -26,9 +26,7 @@ export default function Cart({ cartOpened, onCartToggle }) {
     };
 
     const handleInputChange = (i, e) => {
-        console.log(e.target.value);
         const newV = Number(e.target.value)
-        console.log(newV);
         if(newV < min || newV > max) {
             if(newV < min) {
                 changeQtyItem(i.pro_codigo, min)
