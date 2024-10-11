@@ -44,7 +44,12 @@ export const CartProvider = ({ children }) => {
         }
 
         setCartItems((prevItems) => [...prevItems, product]);
-        setCartData((prevItems) => [...prevItems, {id: product.pro_codigo, qty: 1}]);
+        setCartData((prevItems) => {
+            if (!Array.isArray(prevItems)) {
+                return [{ id: product.pro_codigo, qty: 1 }];
+            }
+            return [...prevItems, { id: product.pro_codigo, qty: 1 }];
+        });
         debouncedSendCartToServer(cartData);
         return true;
     };
