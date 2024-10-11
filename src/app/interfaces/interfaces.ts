@@ -11,7 +11,7 @@ export interface AuthContextType {
 
 export interface CartContextType {
     cartItems: any[];
-    itemQty: any[];
+    cartData: any[];
     changeQtyItem: (product: any, newV: number) => void;
     addToCart: (product: any) => boolean;
     removeFromCart: (id: string) => void;

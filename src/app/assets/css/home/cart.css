@@ -51,6 +51,7 @@
     font-size: 15px;
     align-items: center;
     height: 36px;
+    width: 85px;
 }
 
 .products-cart .product input[type=number]::-webkit-inner-spin-button, 

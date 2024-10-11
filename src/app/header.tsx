@@ -27,10 +27,6 @@ export default function Header({ cartOpened, onCartToggle }) {
     };
 
     useEffect(() => {
-        console.log(user)
-    }, [user]);
-
-    useEffect(() => {
         if (searchTerm.length < 4) return;
 
         if (debounceTimeout) {

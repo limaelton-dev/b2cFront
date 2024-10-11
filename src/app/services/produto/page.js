@@ -25,3 +25,23 @@ export const getProdsArr = async (arr) => {
     }
 };
 
+export const getCart = async (id) => {
+    try {
+        const response = await axios.get(`${API_URL}/carrinho/${id}`);
+        return response;
+    }
+    catch (err) {
+        return err;
+    }
+};
+
+export const cartUpdate = async (user, data) => {
+    try {
+        const response = await axios.patch(`${API_URL}/carrinho/${user}`, { cart_data: data });
+        return response;
+    }
+    catch (err) {
+        return err;
+    }
+};
+

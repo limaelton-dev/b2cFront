@@ -1,25 +1,37 @@
 "use client"
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useRef } from 'react';
 import Cookies from 'js-cookie';
-import { getProdsArr } from '../services/produto/page';
+import { getProdsArr, cartUpdate, getCart } from '../services/produto/page';
 import { CartContextType } from '../interfaces/interfaces';
 import { useAuth } from './auth';
 
 const CartContext = createContext<CartContextType>({
     cartItems: [],
-    itemQty: [],
+    cartData: [],
     changeQtyItem: () => {},
     addToCart: () => false,
     removeFromCart: () => {},
 });
+
+function debounce(func: (...args: any[]) => void, wait: number) {
+    let timeout: NodeJS.Timeout;
+    
+    return function executedFunction(...args: any[]) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => {
+            func(...args);
+        }, wait);
+    };
+}
 
 export const useCart = () => {
     return useContext(CartContext);
 };
     
 export const CartProvider = ({ children }) => {
+    const timeoutRef = useRef<NodeJS.Timeout | null>(null);
     const [cartItems, setCartItems] = useState([]);
-    const [itemQty, setItemQty] = useState([]);
+    const [cartData, setCartData] = useState([]);
     const { user } = useAuth();
 
     const isLoggedIn = user;
@@ -32,70 +44,102 @@ export const CartProvider = ({ children }) => {
         }
 
         setCartItems((prevItems) => [...prevItems, product]);
-        setItemQty((prevItems) => [...prevItems, {id: product.pro_codigo, qty: 1}]);
+        setCartData((prevItems) => [...prevItems, {id: product.pro_codigo, qty: 1}]);
+        debouncedSendCartToServer(cartData);
         return true;
     };
 
     const removeFromCart = (id) => {
         if(cartItems.find(p => p.pro_codigo == id)) {
             setCartItems((prevItems) => prevItems.filter(item => item.pro_codigo != id));
-            setItemQty((prevItems) => prevItems.filter(item => item.id != id));
+            setCartData((prevItems) => prevItems.filter(item => item.id != id));
         }
     };
 
     const changeQtyItem = (id, newQty) => {
-        const updatedItems = itemQty.map((item) => 
+        const updatedItems = cartData.map((item) => 
             item.id === id ? { ...item, qty: newQty } : item
         );
-        setItemQty(updatedItems);
+        setCartData(updatedItems);
     }
 
     useEffect(() => {
         const fetchCartData = async () => {
-            const cartData = JSON.parse(localStorage.getItem('cart'));
-            if (cartData.length > 0) {
-                try {
-                    const cart = await getProdsArr(cartData.map(i => i.id));
-                    setCartItems(cart.data);
-                    setItemQty(cartData);
-                } catch (error) {
-                    console.error('Erro ao buscar os produtos do carrinho:', error);
+            try {
+                const cart = await getCart(user.id);
+                setCartData(cart.data);
+                localStorage.setItem('cart', JSON.stringify(cart.data))
+                if(cart.data.length > 0) {
+                    const resp = await getProdsArr(cart.data.map(i => i.id));
+                    if(resp.data) {
+                        setCartItems(resp.data); 
+                    }
                 }
+            } catch (error) {
+                console.error('Erro: ', error);
             }
         }
-        fetchCartData();
+        if(isLoggedIn)
+            fetchCartData();
     }, [user]);
 
-    useEffect(() => {
-        if (isLoggedIn) {
-            localStorage.setItem('cart', JSON.stringify(itemQty));
-        } else {
-            Cookies.set('cart', JSON.stringify(itemQty), { expires: 7 });
+    const debouncedSendCartToServer = (data) => {
+        if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
         }
-    }, [itemQty]);
+    
+        timeoutRef.current = setTimeout(() => {
+            sendCartToServer(data);
+        }, 1000);
+    };
+
+    const sendCartToServer = (data) => {
+        cartUpdate(user.id, data);
+    };
+      
+    useEffect(() => {
+        if (cartData.length > 0) {
+            if (isLoggedIn) {
+                if (JSON.stringify(cartData) !== localStorage.getItem('cart')) {
+                    localStorage.setItem('cart', JSON.stringify(cartData));
+                    debouncedSendCartToServer(cartData);
+                }
+            } else {
+                Cookies.set('cart', JSON.stringify(cartData), { expires: 7 });
+            }
+        }
+
+    }, [cartData]);
 
     useEffect(() => {
-        const fetchCartData = async () => {
-            if(Cookies.get('cart')) {
-                const cookieCart = JSON.parse(Cookies.get('cart'));
+        const fetchCartData = async (storage) => {
+            const data = storage ? localStorage.getItem('cart') : Cookies.get('cart')
+            if(data) {
+                const cookieCart = JSON.parse(data);
                 if (cookieCart.length > 0) {
                     try {
                         const cart = await getProdsArr(cookieCart.map(i => i.id));
                         setCartItems(cart.data);
-                        setItemQty(cookieCart);
+                        setCartData(cookieCart);
                     } catch (error) {
-                        console.error('Erro ao buscar os produtos do carrinho:', error);
+                        console.error('Erro: ', error);
                     }
                 }
             }
         };
-      
-        fetchCartData();
+
+        
+        if (isLoggedIn) {
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+            }
+            fetchCartData(true);
+        }
+        fetchCartData(false);
     }, []);
-    
 
     return (
-        <CartContext.Provider value={{ cartItems, itemQty, changeQtyItem, addToCart, removeFromCart }}>
+        <CartContext.Provider value={{ cartItems, cartData, changeQtyItem, addToCart, removeFromCart }}>
         {children}
         </CartContext.Provider>
     );

@@ -7,9 +7,10 @@ import { Close } from '@mui/icons-material';
 import { useCart } from '../context/cart';
 import { useAlertDialog } from '../context/dialog';
 
+
 export default function Cart({ cartOpened, onCartToggle }) {
     const { openDialog } = useAlertDialog();
-    const { cartItems, itemQty, changeQtyItem, removeFromCart } = useCart();
+    const { cartItems, cartData, changeQtyItem, removeFromCart } = useCart();
     const [min, setMin] = useState(1);
     const [max, setMax] = useState(100);
 
@@ -17,18 +18,23 @@ export default function Cart({ cartOpened, onCartToggle }) {
         onCartToggle(false);
     }
 
-    const handleInc = (i) => {
-        changeQtyItem(cartItems[i].pro_codigo, itemQty[i].qty + 1)
+    const handleInc = (i, id) => {
+        const d = cartData.find(i => i.id == id)
+        if(d.qty < max)
+            changeQtyItem(id, d.qty + 1)
     };
     
-    const handleDec = (i) => {
-        changeQtyItem(cartItems[i].pro_codigo, itemQty[i].qty - 1)
+    const handleDec = (i, id) => {
+        const d = cartData.find(i => i.id == id)
+        if(d.qty > min)
+            changeQtyItem(id, d.qty - 1)
     };
 
     const handleInputChange = (i, e) => {
         const newV = Number(e.target.value)
         if(newV < min || newV > max) {
             if(newV < min) {
+                console.log('entrou heinn', min)
                 changeQtyItem(i.pro_codigo, min)
             }
             if(newV > max) {
@@ -63,7 +69,7 @@ export default function Cart({ cartOpened, onCartToggle }) {
                 ) : (
                     <>
                         {cartItems.map((item, index) => (
-                            <div className="product">
+                            <div className="product" data-test={item.pro_codigo} key={item.pro_codigo}>
                                 <div style={{ display: 'flex', justifyContent: 'flex-end'}}>
                                     <IconButton style={{padding: '0px'}} aria-label="delete" onClick={() => handleAlertRemoveItem(item.pro_codigo)}>
                                         <Close />
@@ -79,18 +85,18 @@ export default function Cart({ cartOpened, onCartToggle }) {
                                     <div className="quantity">
                                         <button 
                                             type='button'
-                                            onClick={() => handleDec(index)}
+                                            onClick={() => handleDec(index, item.pro_codigo)}
                                             className="btn-qty decrement">-</button>
-                                        <input value={itemQty[index].qty} min={min} max={max} onChange={(e) => handleInputChange(item, e)} type="number"/>
+                                        <input value={cartData.find(i => i.id == item.pro_codigo).qty} min={min} max={max} onChange={(e) => handleInputChange(item, e)} type="number"/>
                                         <button 
                                             type='button'
-                                            onClick={() => handleInc(index)}
+                                            onClick={() => handleInc(index, item.pro_codigo)}
                                             className="btn-qty increment">+</button>
                                     </div>
                                 </div>
                                 <div className="product-price">
                                     <span className="price">
-                                        <b>R$ {(item.pro_valorultimacompra * itemQty[index].qty).toFixed(2).toString().replace('.',',')}</b>
+                                        <b>R$ {(item.pro_valorultimacompra * cartData.find(i => i.id == item.pro_codigo).qty).toFixed(2).toString().replace('.',',')}</b>
                                     </span>
                                 </div>
                             </div>
@@ -104,7 +110,7 @@ export default function Cart({ cartOpened, onCartToggle }) {
                         <span>Total: </span>
                         <span className='price-totals'>
                             <b>R$ {cartItems
-                                    .reduce((total, item) => total + (item.pro_valorultimacompra * itemQty[cartItems.findIndex(i => i.pro_codigo == item.pro_codigo)].qty), 0)
+                                    .reduce((total, item) => total + (item.pro_valorultimacompra * cartData[cartItems.findIndex(i => i.pro_codigo == item.pro_codigo)].qty), 0)
                                     .toFixed(2).replace('.',',')
                                 }
                             </b>
