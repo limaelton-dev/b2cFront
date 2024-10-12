@@ -217,6 +217,7 @@ export default function FullPage() {
       </AppBar>
 
       <Drawer variant="permanent" open={open}>
+
         <DrawerHeader
           sx={{
             display: 'flex',
@@ -232,7 +233,6 @@ export default function FullPage() {
             <Box sx={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' , justifyContent: 'center'}}>
               <Typography variant="caption" noWrap>
                 João Silva
-                <VerifiedIcon fontSize="small" sx={{color: 'green', marginLeft: '2px'}}/>
               </Typography>
               <Typography variant="caption" color="textSecondary" noWrap>
                 joaosilva24@email.com
@@ -286,7 +286,11 @@ export default function FullPage() {
 
         {selectedSection && (
           <Fade in={fadeIn} timeout={500}>
-            <Box>{renderContent()}</Box>
+            <Box 
+              sx={{padding:'20px 200px'}}
+            > 
+              {renderContent()}
+            </Box>
           </Fade>
         )}
       </Box>
