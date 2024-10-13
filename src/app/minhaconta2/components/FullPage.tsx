@@ -35,7 +35,7 @@ import ArrowRightIcon from '@mui/icons-material/ArrowRight';
 import Image from 'next/image';
 import LogoColetek from '../../assets/img/logo_coletek_white.png';
 import UserImage from '../../assets/img/user.jpg';
-import DadosPessoaisForm from './forms/DadosPessoaisForm';
+import DadosPessoaisForm from '../../minhaconta/components/DadosPessoaisForm';
 import EnderecosForm from './forms/EnderecosForm';
 import MinhasComprasPage from './MinhasComprasPage';
 

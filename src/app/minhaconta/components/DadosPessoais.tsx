@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Box } from '@mui/material';
-import InfoCardPersonalData from '../InfoCardPersonalData';
+import InfoCardPersonalData from '../../minhaconta/components/InfoCardPersonalData';
 
-const DadosPessoaisForm = () => {
+const DadosPessoais = () => {
   const [formData, setFormData] = useState({
     nome: 'João Alvino Silva',
     cpf: '581.728.380-85',
@@ -24,4 +24,4 @@ const DadosPessoaisForm = () => {
   );
 };
 
-export default DadosPessoaisForm;
+export default DadosPessoais;

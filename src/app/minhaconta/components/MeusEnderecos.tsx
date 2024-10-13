@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Box } from '@mui/material';
-import InfoCardAddress from '../InfoCardAddress';
+import InfoCardAddress from '../components/InfoCardAddress';
 
-const EnderecosForm = () => {
+const MeusEnderecos = () => {
   const [formData, setFormData] = useState({
     address: 'Quadra Dezenove, 150',
     bairro: 'Nova Marabá',
@@ -18,4 +18,4 @@ const EnderecosForm = () => {
   );
 };
 
-export default EnderecosForm;
+export default MeusEnderecos;
