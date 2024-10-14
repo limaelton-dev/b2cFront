@@ -29,19 +29,18 @@ export default function SideBar({items, onSectionChange}: SideBarProps) {
 
     const handleListItemClick = (index: number) => {
         setSelectedIndex(index);
-
         const item = items[index];
-
-        if(item.subItems) {
-            if(openIndexes.includes(index)) {
-                setOpenIndexes(openIndexes.filter((i) => i !== index));
-            } else {
-                setOpenIndexes([...openIndexes, index]);
-            }
+    
+        if (item.subItems) {
+            setOpenIndexes(prev => 
+                prev.includes(index) 
+                ? prev.filter(i => i !== index) 
+                : [...prev, index]
+            );
         } else {
-            onSectionChange(item.label)
+            onSectionChange(item.label);
         }
-    }
+    };
 
     return(
         <Box sx={{width: '100%', maxWidth: 360, bgcolor: 'background.paper'}}>
@@ -65,7 +64,7 @@ export default function SideBar({items, onSectionChange}: SideBarProps) {
                                 <List component="div" disablePadding>
                                     {item.subItems.map((subItem, subIndex) => (
                                         <ListItemButton 
-                                            key={subIndex} 
+                                            key={subItem.label} 
                                             sx={{ pl:4 }}
                                             onClick={() => onSectionChange(subItem.label)}
                                         >
