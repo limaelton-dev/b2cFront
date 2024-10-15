@@ -2,7 +2,6 @@
 import React from 'react';
 import '../assets/css/minhaconta.css';
 import { useState } from 'react';
-import Cart from '../components/cart';
 import Header from '../header';
 import { Alert, Snackbar, Slide, Typography, Box, List } from '@mui/material';
 import DadosPessoais from './components/DadosPessoais';
@@ -36,11 +35,10 @@ const mainItems = [
 ];
 
 
-const MyAccountPage = ({cart}) => {
+const MyAccountPage = () => {
 
     const [openedCart, setOpenedCart] = useState(false);
-    const [openToast, setToast] = useState(false);
-    const [toastMessage, setToastMessage] = useState('');
+
     const [renderedSection, setRenderedSection] = React.useState('Dados Pessoais');
 
     const handleSectionChange = (section) => {
@@ -68,16 +66,13 @@ const MyAccountPage = ({cart}) => {
         if (reason === 'clickaway') {
           return;
         }
-    
-        setToast(false);
+
     };
 
     return (
     <>
-        <Cart cartOpened={openedCart} onCartToggle={setOpenedCart}/>
         <Snackbar
             sx={{ borderRadius: '3px'}}
-            open={openToast}
             autoHideDuration={6000}
             onClose={handleClose}
             TransitionComponent={Slide}
@@ -91,7 +86,6 @@ const MyAccountPage = ({cart}) => {
                     color: 'red',
                 }
             }}>
-                {toastMessage}
             </Alert>
         </Snackbar>
         <Header cartOpened={openedCart} onCartToggle={setOpenedCart} />
@@ -107,7 +101,7 @@ const MyAccountPage = ({cart}) => {
                 
             > 
 
-                <Box component="div" sx= {{marginTop: '24px', width: '500px'}}>
+                <Box component="div" sx= {{marginTop: '24px', width: '30%'}}>
                     <SideBar items={mainItems} onSectionChange={setRenderedSection} />
                 </Box>
                 {renderContent()}
