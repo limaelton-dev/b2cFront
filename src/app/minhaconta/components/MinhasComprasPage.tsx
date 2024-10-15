@@ -39,6 +39,20 @@ const MinhasComprasPage = () => {
       ],
       status: 'Cancelada',
     },
+    {
+      id: 4,
+      produtos: [
+        { nome: 'Produto 4', valor: 'R$ 1500,00', quantidade: 3, imagem: headphoneImage },
+      ],
+      status: 'Cancelada',
+    },
+    {
+      id: 5,
+      produtos: [
+        { nome: 'Produto 4', valor: 'R$ 1500,00', quantidade: 3, imagem: headphoneImage },
+      ],
+      status: 'Cancelada',
+    },
   ];
 
   const getStatusColor = (status) => {
@@ -68,65 +82,73 @@ const MinhasComprasPage = () => {
   };
 
   return (
-    <Box display="flex" flexDirection="column" gap={2} margin={3}>
-      {pedidos.map((pedido) => (
-        <Accordion key={pedido.id} sx={{ boxShadow: '0px 1px 7px 1px #BEBEBE', borderRadius: '8px', overflow: 'hidden' }}>
-        {/* <Accordion key={pedido.id} sx={{ boxShadow: '3', borderRadius: '8px', overflow: 'hidden' }}> */}
-          <AccordionSummary>
-            <Box sx={{ width: '100%' }}>
-              {/* Status do Pedido com Ícone */}
-              <Box sx={{ display: 'flex', alignItems: 'center'}}>
-                {getStatusIcon(pedido.status)}
-                <Typography sx={{ color: getStatusColor(pedido.status), fontWeight: '400', fontSize: '15px'}}>
-                  {pedido.status}
-                </Typography>
-              </Box>
+<Box 
+  display="flex" 
+  flexWrap="wrap" 
+  gap={2} 
+  margin={3} 
+  justifyContent="flex-start"
+>
+  {pedidos.map((pedido) => (
+    <Accordion 
+      key={pedido.id} 
+      sx={{ 
+        boxShadow: '0px 1px 7px 1px #BEBEBE', 
+        borderRadius: '8px', 
+        overflow: 'hidden', 
+        width: 'auto',
+        marginBottom: '16px'
+      }}
+    >
+      <AccordionSummary>
+        <Box sx={{ width: '100%' }}>
+          {/* Status do Pedido com Ícone */}
+          <Box sx={{ display: 'flex', alignItems: 'center'}}>
+            {getStatusIcon(pedido.status)}
+            <Typography sx={{ color: getStatusColor(pedido.status), fontWeight: '400', fontSize: '15px'}}>
+              {pedido.status}
+            </Typography>
+          </Box>
 
-              {/* Divider entre o status e o nome do pedido */}
-              <Divider sx={{ marginY: 1, background: '#AEAEAE', height: '2px'}} />
+          {/* Divider entre o status e o nome do pedido */}
+          <Divider sx={{ marginY: 1, background: '#AEAEAE', height: '2px'}} />
 
-              {/* Nome do Pedido e o botão "Ver mais" */}
-              <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', padding: '10px 0px'}}>
+          {/* Nome do Pedido e o botão "Ver mais" */}
+          <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', padding: '10px 0px'}}>
+            <Typography variant="h6" color="#5a5a5a" fontWeight='400'>Pedido {pedido.id}</Typography>
+            <Box sx={{ flexGrow: 1 }} />
+            <Button variant="outlined" size="small">Ver mais</Button>
+          </Box>
+        </Box>
+      </AccordionSummary>
 
-                <Typography variant="h6" color="#5a5a5a" fontWeight='400'>Pedido {pedido.id}</Typography>
-
-                {/* Espaço flexível entre o nome do pedido e o botão */}
-                <Box sx={{ flexGrow: 1 }} />
-
-                {/* Botão Ver Mais */}
-                <Button variant="outlined" size="small">
-                  Ver mais
-                </Button>
-              </Box>
+      <AccordionDetails>
+        {pedido.produtos.map((produto, index) => (
+          <Box key={index} sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', mb: 2 }}>
+            <Box sx={{ width: '60px', height: '60px', marginRight: 2 }}>
+              <Image src={produto.imagem} alt={produto.nome} width={60} height={60} />
             </Box>
-          </AccordionSummary>
-
-          <AccordionDetails>
-            {pedido.produtos.map((produto, index) => (
-              <Box key={index} sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', mb: 2 }}>
-                <Box sx={{ width: '60px', height: '60px', marginRight: 2 }}>
-                  <Image src={produto.imagem} alt={produto.nome} width={60} height={60} />
-                </Box>
-                <Box sx={{ flex: 1 }}>
-                  <Typography variant="body1">{produto.nome}</Typography>
-                  <Typography variant="body2">Valor: {produto.valor}</Typography>
-                  <Typography variant="body2">Quantidade: {produto.quantidade}</Typography>
-                </Box>
-              </Box>
-            ))}
-            <Divider />
-            <Box sx={{ display: 'flex', alignItems: 'center', paddingTop: 2 }}>
-              <IconButton>
-                <PlaceIcon sx={{ color: '#8a0303' }} />
-              </IconButton>
-              <Typography variant="body2">
-                Rua João Amaral, 150 - São Paulo/SP
-              </Typography>
+            <Box sx={{ flex: 1 }}>
+              <Typography variant="body1">{produto.nome}</Typography>
+              <Typography variant="body2">Valor: {produto.valor}</Typography>
+              <Typography variant="body2">Quantidade: {produto.quantidade}</Typography>
             </Box>
-          </AccordionDetails>
-        </Accordion>
-      ))}
-    </Box>
+          </Box>
+        ))}
+        <Divider />
+        <Box sx={{ display: 'flex', alignItems: 'center', paddingTop: 2 }}>
+          <IconButton>
+            <PlaceIcon sx={{ color: '#8a0303' }} />
+          </IconButton>
+          <Typography variant="body2">
+            Rua João Amaral, 150 - São Paulo/SP
+          </Typography>
+        </Box>
+      </AccordionDetails>
+    </Accordion>
+  ))}
+</Box>
+
   );
 };
 

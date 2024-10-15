@@ -9,7 +9,14 @@ interface InfoCardProps {
 
 const InfoCardAddress: React.FC<InfoCardProps> = ({ city, state, address }) => {
   return (
-    <Card sx={{ display: 'flex', flexDirection: 'row', width: '100%' }}>
+    <Card 
+      sx={{ 
+        display: 'flex', 
+        flexDirection: 'row', 
+        width: '100%', 
+        minHeight: '150px' // Adiciona uma altura mínima para os cartões
+      }}
+    >
       <CardContent sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
         <Box component="div" sx={{ display: 'flex', flexDirection: 'row', width: '100%', gap: '20px'}}>
           <Box component="div" >

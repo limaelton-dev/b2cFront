@@ -36,8 +36,6 @@ import Image from 'next/image';
 import LogoColetek from '../../assets/img/logo_coletek_white.png';
 import UserImage from '../../assets/img/user.jpg';
 import DadosPessoaisForm from './forms/DadosPessoaisForm';
-import EnderecosForm from './forms/EnderecosForm';
-import MinhasComprasPage from './MinhasComprasPage';
 
 const drawerWidth = 240;
 
@@ -140,22 +138,20 @@ export default function FullPage() {
     }, 300); // Tempo da transição de saída
   };
 
-  const renderContent = () => {
-    switch (renderedSection) {
-      case 'Dados Pessoais':
-        return <DadosPessoaisForm />;
-      case 'Minhas Compras':
-        return <MinhasComprasPage />;
-      case 'Meus Endereços':
-        return <EnderecosForm />;
-      default:
-        return (
-          <Typography sx={{ marginBottom: 2 }}>
-            Selecione uma opção no menu.
-          </Typography>
-        );
-    }
-  };
+  // const renderContent = () => {
+  //   switch (renderedSection) {
+  //     case 'Dados Pessoais':
+  //       return <DadosPessoaisForm />;
+  //     case 'Produtos'
+  //        return <Produtos />;
+  //     default:
+  //       return (
+  //         <Typography sx={{ marginBottom: 2 }}>
+  //           Selecione uma opção no menu.
+  //         </Typography>
+  //       );
+  //   }
+  // };
 
   return (
     <Box sx={{ display: 'flex' }}>
@@ -247,7 +243,7 @@ export default function FullPage() {
         <Divider/>
 
         <List>
-          {['Dados Pessoais', 'Minhas Compras', 'Meus Endereços'].map((text, index) => (
+          {['Dados Pessoais', 'Produtos'].map((text, index) => (
             <ListItem key={text} disablePadding sx={{ display: 'block' }}>
               <ListItemButton
                 onClick={() => handleListItemClick(text)}
@@ -289,7 +285,7 @@ export default function FullPage() {
             <Box 
               sx={{padding:'20px 200px'}}
             > 
-              {renderContent()}
+              {/* {renderContent()} */}
             </Box>
           </Fade>
         )}
