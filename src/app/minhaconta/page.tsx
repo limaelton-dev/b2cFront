@@ -93,19 +93,19 @@ const MyAccountPage = () => {
         <main>
             {/* <Typography sx={{padding:'0px 291.5px'}}> Minha Conta </Typography> */}
             <Box 
-                sx={{
-                    padding:'0px 291.5px',
-                    display: 'flex',
-                    gap: '1',
-                }}
-                
-            > 
-
-                <Box component="div" sx= {{marginTop: '24px', width: '30%'}}>
-                    <SideBar items={mainItems} onSectionChange={setRenderedSection} />
-                </Box>
-                {renderContent()}
-            </Box>
+    sx={{
+        padding: '0px 291.5px',
+        display: 'flex',
+        gap: '1',
+    }}
+>
+    <Box sx={{ marginTop: '24px', width: '20%' }}>
+        <SideBar items={mainItems} onSectionChange={setRenderedSection} />
+    </Box>
+    <Box sx={{ marginTop: '24px', flex: 1 }}> {/* O restante do espaço será ocupado por este Box */}
+        {renderContent()}
+    </Box>
+</Box>
         </main>
     </>
   );

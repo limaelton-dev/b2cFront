@@ -47,7 +47,7 @@ export default function SideBar({items, onSectionChange}: SideBarProps) {
             <List component="nav">
                 {items.map((item, index) => (
                     <React.Fragment key={index}>
-                        {index > 0 && <Divider />}
+                        {/* {index > 0 && <Divider />} */}
                         <ListItemButton onClick={() => handleListItemClick(index)}>
                             <ListItemIcon sx={{ minWidth: 30, widht: '12px' }}>
                                 {item.icon}

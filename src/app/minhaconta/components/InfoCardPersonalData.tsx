@@ -9,8 +9,8 @@ interface InfoCardProps {
 
 const InfoCardPersonalData: React.FC<InfoCardProps> = ({ label, description }) => {
   return (
-    <Card sx={{ display: 'flex', flexDirection: 'row', width: 'calc(95% - 20px)' }}>
-      <CardContent sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: 'calc(95% - 20px)' }}>
+    <Card sx={{ display: 'flex', flexDirection: 'row', width: '100%' }}>
+      <CardContent sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
         <Box component="div">
           <Typography 
             sx={{ fontSize: '12px' }}
