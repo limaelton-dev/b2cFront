@@ -9,17 +9,17 @@ interface InfoCardProps {
 
 const InfoCardPersonalData: React.FC<InfoCardProps> = ({ label, description }) => {
   return (
-    <Card sx={{ display: 'flex', flexDirection: 'row', width: '100%' }}>
-      <CardContent sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+    <Card sx={{ display: 'flex', flexDirection: 'row', width: 'calc(95% - 20px)' }}>
+      <CardContent sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: 'calc(95% - 20px)' }}>
         <Box component="div">
           <Typography 
-            sx={{ fontSize: '0.7rem' }}
+            sx={{ fontSize: '12px' }}
           >
-            {label} <VerifiedIcon fontSize="small" sx={{color: 'green', marginLeft: '2px'}}/>
+            {label} <VerifiedIcon sx={{color: 'green', marginLeft: '2px', fontSize: '15px'}}/>
           </Typography>
           <Typography
             color="text.secondary"
-            sx={{ fontSize: '0.9rem' }}
+            sx={{ fontSize: '15px' }}
           >
             {description}
           </Typography>
@@ -28,12 +28,14 @@ const InfoCardPersonalData: React.FC<InfoCardProps> = ({ label, description }) =
           <Button 
             variant="text"
             sx={{ 
-              fontSize: '0.75rem', 
+              fontSize: '12px', 
               padding: '8px 16px', 
               minWidth: '75px', 
               height: '40px'
             }}
-          >Alterar</Button>
+          >
+            Alterar
+          </Button>
         </Box>
       </CardContent>
     </Card>
