@@ -18,13 +18,8 @@ const MeusEnderecos = () => {
       flexWrap="wrap" 
       gap={2} 
       margin={1} 
-      sx={{ justifyContent: 'center' }}
+      sx={{ flexShrink: '0' }}
     >
-      <InfoCardAddress 
-        address={formData.address} 
-        city={formData.city} 
-        state={formData.state}
-      />
       <InfoCardAddress 
         address={formData.address} 
         city={formData.city} 
