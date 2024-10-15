@@ -43,33 +43,39 @@ export default function SideBar({items, onSectionChange}: SideBarProps) {
     };
 
     return(
-        <Box sx={{width: '100%', maxWidth: 360, bgcolor: 'background.paper'}}>
+        <Box sx={{ width: '100%', maxWidth: 360, bgcolor: 'background.paper' }}>
             <List component="nav">
                 {items.map((item, index) => (
                     <React.Fragment key={index}>
-                        {index > 0 && (
-                            <Divider />
-                        )}
-                        <ListItemButton
-                            onClick={() => handleListItemClick(index)}
-                        >
-                            <ListItemIcon>{item.icon}</ListItemIcon>
-                            <ListItemText primary={item.label} />
+                        {index > 0 && <Divider />}
+                        <ListItemButton onClick={() => handleListItemClick(index)}>
+                            <ListItemIcon sx={{ minWidth: 30, widht: '12px' }}>
+                                {item.icon}
+                            </ListItemIcon>
+                            <ListItemText 
+                                primary={item.label} 
+                                primaryTypographyProps={{ fontSize: '12px' }}
+                            />
                             {item.subItems ? (
                                 openIndexes.includes(index) ? <ExpandLess /> : <ExpandMore />
-                            ): null}
+                            ) : null}
                         </ListItemButton>
-                        {item.subItems &&(
+                        {item.subItems && (
                             <Collapse in={openIndexes.includes(index)} timeout="auto" unmountOnExit>
                                 <List component="div" disablePadding>
                                     {item.subItems.map((subItem, subIndex) => (
                                         <ListItemButton 
                                             key={subItem.label} 
-                                            sx={{ pl:4 }}
+                                            sx={{ pl: 4 }}
                                             onClick={() => onSectionChange(subItem.label)}
                                         >
-                                            <ListItemIcon>{subItem.icon}</ListItemIcon>
-                                            <ListItemText primary={subItem.label} />
+                                            <ListItemIcon sx={{ minWidth: 30, widht: '12px' }}>
+                                                {subItem.icon}
+                                            </ListItemIcon>
+                                            <ListItemText 
+                                                primary={subItem.label} 
+                                                primaryTypographyProps={{ fontSize: '11px' }}
+                                            />
                                         </ListItemButton>
                                     ))}
                                 </List>

@@ -21,13 +21,13 @@ const mainItems = [
         icon: <FeaturedPlayListOutlinedIcon sx={{color: '#4C90F3'}} />,
         label: 'Meus dados',
         subItems: [
-            { icon: <BadgeOutlinedIcon sx={{color: '#4C90F3'}}/>, label: 'Dados Pessoais'},
-            { icon: <PlaceOutlinedIcon sx={{color: '#4C90F3'}}/>, label: 'Meus Endereços'},
+            { icon: <></>, label: 'Dados pessoais'},
+            { icon: <></>, label: 'Meus endereços'},
         ],
     },
     {
         icon: <LocalMallOutlinedIcon sx={{color: '#4C90F3'}}/>,
-        label: 'Minhas Compras',
+        label: 'Minhas compras',
     },
     {
         icon: <CreditCardIcon sx={{color: '#4C90F3'}}/>,
@@ -49,11 +49,11 @@ const MyAccountPage = ({cart}) => {
 
     const renderContent = () => {
         switch (renderedSection) {
-          case 'Dados Pessoais':
+          case 'Dados pessoais':
             return <DadosPessoais />;
-          case 'Minhas Compras':
+          case 'Minhas compras':
             return <MinhasComprasPage />;
-          case 'Meus Endereços':
+          case 'Meus endereços':
             return <MeusEnderecos />;
           default:
             return (
@@ -97,15 +97,17 @@ const MyAccountPage = ({cart}) => {
         <Header cartOpened={openedCart} onCartToggle={setOpenedCart} />
         
         <main>
+            {/* <Typography sx={{padding:'0px 291.5px'}}> Minha Conta </Typography> */}
             <Box 
                 sx={{
-                    padding:'30px 291.5px',
+                    padding:'0px 291.5px',
                     display: 'flex',
                     gap: '1',
                 }}
-
+                
             > 
-                <Box component="div" sx= {{margin: '24px', width: '500px'}}>
+
+                <Box component="div" sx= {{marginTop: '24px', width: '500px'}}>
                     <SideBar items={mainItems} onSectionChange={setRenderedSection} />
                 </Box>
                 {renderContent()}

@@ -12,8 +12,24 @@ const MeusEnderecos = () => {
   });
 
   return (
-    <Box component="div" display="flex" flexWrap="wrap" gap={2} margin={3}>
-      <InfoCardAddress address= {formData.address} city={formData.city} state={formData.state} />
+    <Box 
+      component="div" 
+      display="flex" 
+      flexWrap="wrap" 
+      gap={2} 
+      margin={1} 
+      sx={{ justifyContent: 'center' }}
+    >
+      <InfoCardAddress 
+        address={formData.address} 
+        city={formData.city} 
+        state={formData.state}
+      />
+      <InfoCardAddress 
+        address={formData.address} 
+        city={formData.city} 
+        state={formData.state}
+      />
     </Box>
   );
 };
