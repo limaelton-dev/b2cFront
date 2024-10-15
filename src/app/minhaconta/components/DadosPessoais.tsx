@@ -13,7 +13,14 @@ const DadosPessoais = () => {
   });
 
   return (
-    <Box component="div" display="flex" flexWrap="wrap" gap={2} margin={1} sx={{ flexShrink: '0'}}>
+    <Box 
+      component="div" 
+      display="flex" 
+      flexWrap="wrap" 
+      gap={2} 
+      margin={1} 
+      sx={{ flexShrink: '0'}}
+    >
       <InfoCardPersonalData label="Nome completo" description={formData.nome} />
       <InfoCardPersonalData label="Data Nascimento" description={formData.dob} />
       <InfoCardPersonalData label="CPF" description={formData.cpf} />

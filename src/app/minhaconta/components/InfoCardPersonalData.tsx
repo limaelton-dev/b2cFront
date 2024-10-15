@@ -9,7 +9,13 @@ interface InfoCardProps {
 
 const InfoCardPersonalData: React.FC<InfoCardProps> = ({ label, description }) => {
   return (
-    <Card sx={{ display: 'flex', flexDirection: 'row', width: '100%' }}>
+    <Card 
+      sx={{ 
+        display: 'flex', 
+        flexDirection: 'row', 
+        width: '100%' 
+        }}
+      >
       <CardContent sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
         <Box component="div">
           <Typography 

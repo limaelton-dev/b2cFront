@@ -13,27 +13,32 @@ const InfoCardAddress: React.FC<InfoCardProps> = ({ city, state, address }) => {
       sx={{ 
         display: 'flex', 
         flexDirection: 'row', 
-        width: '100%', 
-        minHeight: '150px' // Adiciona uma altura mínima para os cartões
+        width: '100%'
       }}
     >
-      <CardContent sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+      <CardContent sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
         <Box component="div" sx={{ display: 'flex', flexDirection: 'row', width: '100%', gap: '20px'}}>
           <Box component="div" >
-            <Typography variant="h6" component="div">
+            <Typography sx={{ fontSize: '12px' }}>
               Endereço
             </Typography>
-            <Typography variant="body2" component="div" color="text.secondary">
+            <Typography 
+              color="text.secondary"
+              sx={{ fontSize: '15px' }}
+            >
               {address}
             </Typography>
           </Box>
 
           <Box component="div" >
             <Box component="div">
-              <Typography variant="h6" component="div">
+              <Typography sx={{ fontSize: '12px' }} >
                 Cidade/Estado
               </Typography>
-              <Typography variant="body2" component="div" color="text.secondary">
+              <Typography 
+                color="text.secondary"
+                sx={{ fontSize: '15px' }}
+              >
                 {city} - {state}
               </Typography>
             </Box>
@@ -42,7 +47,17 @@ const InfoCardAddress: React.FC<InfoCardProps> = ({ city, state, address }) => {
         </Box>
 
         <Box component="div">
-          <Button variant="text">Alterar</Button>
+          <Button 
+            variant="text"
+            sx={{ 
+              fontSize: '12px', 
+              padding: '8px 16px', 
+              minWidth: '75px', 
+              height: '40px'
+            }}
+          >
+            Alterar
+          </Button>
         </Box>
       </CardContent>
     </Card>
