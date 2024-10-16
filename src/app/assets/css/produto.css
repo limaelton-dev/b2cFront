@@ -1,3 +1,4 @@
+@import url('--globalClasses.css');
 @import url('./produto/content.css');
 @import url('./produto/products.css');
 @import url('./home/cart.css');

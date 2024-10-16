@@ -1,3 +1,5 @@
+@import url('--globalClasses.css');
+
 @import url('./home/banner.css');
 @import url('./produto/products.css');
 @import url('./home/categorias.css');

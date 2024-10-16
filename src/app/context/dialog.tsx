@@ -19,6 +19,7 @@ export const AlertDialogProvider: React.FC<{ children: ReactNode }> = ({ childre
     const [titleDialog, setTitle] = useState('');
     const [btnTxtLeft, setBtnTxtLeft] = useState('');
     const [btnTxtRight, setBtnTxtRight] = useState('');
+    const [isHovered, setIsHovered] = useState([false, false]);
     const [onConfirm, setOnConfirm] = useState<(value: boolean) => void>(() => {});
 
     const openDialog = (titleDialog: string, msgDialog: string, btnTxtLeft: string, btnTxtRight: string, onConfirm: (value: boolean) => void) => {
@@ -46,10 +47,23 @@ export const AlertDialogProvider: React.FC<{ children: ReactNode }> = ({ childre
                 </DialogContentText>
             </DialogContent>
             <DialogActions sx={{ justifyContent: 'center' }}>
-                <Button variant="outlined" style={{color: '#cf6363', borderColor: '#cf6363'}} onClick={() => closeDialog(false)}>
+                <Button 
+                    variant={isHovered[0] ? 'contained' : 'outlined'}
+                    onMouseEnter={() => setIsHovered([true, false])}
+                    onMouseLeave={() => setIsHovered([false, false])}
+                    style={{backgroundColor: isHovered[0] ? '#cf6363' : 'white', color: isHovered[0] ? 'white' : '#cf6363', borderColor: '#cf6363'}}
+                    onClick={() => closeDialog(false)}
+                >
                     {btnTxtLeft}
                 </Button>
-                <Button variant="outlined" onClick={() => closeDialog(true)} autoFocus>
+                <Button
+                    variant={isHovered[1] ? 'contained' : 'outlined'}
+                    onMouseEnter={() => setIsHovered([false, true])}
+                    onMouseLeave={() => setIsHovered([false, false])}
+                    style={{backgroundColor: isHovered[1] ? '#1976d2' : 'white'}}
+                    onClick={() => closeDialog(true)}
+                    autoFocus
+                >
                     {btnTxtRight}
                 </Button>
             </DialogActions>

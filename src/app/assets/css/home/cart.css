@@ -1,5 +1,6 @@
 .products-cart {
-    height: calc(85vh - 41px);
+    height: calc(100vh - 421px);
+    max-height: calc(100vh - 421px);
     overflow-y: auto;
 }
 .products-cart .product {
@@ -36,6 +37,11 @@
 .products-cart .product .quantity button{
     width: 35px;
     border:1px solid #dedede;
+    background: white;
+    transition: all ease 0.3s;
+}
+.products-cart .product .quantity button:hover{
+    background: #dddddd;
 }
 .products-cart .product .quantity .decrement{
     border-top-left-radius: 3px;
@@ -65,21 +71,33 @@
 }
 .cart-totals {
     width: 100%;
-    height: 14vh;
+    max-height: 21vh;
     padding: 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
 }
 .cart-totals .totals {
     display: flex;
     justify-content: space-between;
 }
 .cart-totals .totals span {
-    font-size: 20px;
+    font-size: 15px;
+    display: flex;
+    line-height: 19px;
+    flex-direction: column;
+    justify-content: center;
+    margin-bottom: 5px;
+}
+.cart-totals .totals span.mini {
+    font-size: 12px;
+    line-height: 8px;
 }
 .cart-totals .link-to-buy {
     width: 100%;
     display: flex;
     justify-content: center;
-    background-color: #2a84c3;
+    background-color: #34af58;
     color: white;
     border-radius: 4px;
     padding: 11px 0px;
@@ -96,6 +114,89 @@
     padding: 0px 5px;
     color: white;
     animation: shadowTotal 1 0.9s ease;
+}
+.cart-moreprod {
+    display: flex;
+    justify-content: center;
+    padding-top: 5px;
+    padding-bottom: 12px;
+    box-shadow: 0px -4px 12px 1px #eeeeeeb0;
+}
+.coupon-code {
+    padding: 10px;
+    height: calc(12vh + 6px);
+}
+.coupon-code span {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+.coupon-code .coupon-status {
+    display: flex;
+    color: green;
+    align-items: center;
+    margin-top: 6px;
+}
+.coupon-code .coupon-status svg {
+    margin-right: 5px;
+}
+.coupon-code .apply{
+    display: flex;
+    justify-content: center;
+    margin-top: 9px;
+}
+.coupon-code .apply .input-cupom {
+    overflow: hidden;
+    position: relative;
+}
+.coupon-code .circles{
+    background-color: #2a84c3;
+    width: 10px;
+    height: 10px;
+    border-radius: 100%;
+    position: absolute;
+    left: -10px;
+    top: 50%;
+    transform: translateY(-50%);
+    animation: moveCircles 3s infinite ease;
+}
+.coupon-code .circle1 {
+    animation-delay: 0s;
+}
+.coupon-code .circle2 {
+    animation-delay: 0.4s;
+}
+.coupon-code .circle3 {
+    animation-delay: 0.8s;
+}
+@keyframes moveCircles {
+    0% {
+        left: -9%;
+    }
+    5% {
+        left: -5%;
+    }
+    10% {
+        left: -1%;
+    }
+    45% {
+        left: 47%;
+    }
+    50% {
+        left: 50%;
+    }
+    55% {
+        left: 53%;
+    }
+    85% {
+        left: 105%;
+    }
+    90% {
+        left: 105%;
+    }
+    100% {
+        left: 105%;
+    }
 }
 @keyframes shadowTotal {
     0% {
