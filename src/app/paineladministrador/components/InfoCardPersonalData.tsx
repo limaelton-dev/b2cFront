@@ -9,39 +9,18 @@ interface InfoCardProps {
 
 const InfoCardPersonalData: React.FC<InfoCardProps> = ({ label, description }) => {
   return (
-    <Card 
-      sx={{ 
-        display: 'flex', 
-        flexDirection: 'row', 
-        width: '100%' 
-        }}
-      >
+    <Card sx={{ display: 'flex', flexDirection: 'row', width: '100%' }}>
       <CardContent sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
         <Box component="div">
-          <Typography 
-            sx={{ fontSize: '12px' }}
-          >
-            {label} <VerifiedIcon sx={{color: 'green', marginLeft: '2px', fontSize: '15px'}}/>
+          <Typography variant="h6" component="div">
+            {label} <VerifiedIcon fontSize="small" sx={{color: 'green', marginLeft: '2px'}}/>
           </Typography>
-          <Typography
-            color="text.secondary"
-            sx={{ fontSize: '15px' }}
-          >
+          <Typography variant="body2" component="div" color="text.secondary">
             {description}
           </Typography>
         </Box>
         <Box component="div">
-          <Button 
-            variant="text"
-            sx={{ 
-              fontSize: '12px', 
-              padding: '8px 16px', 
-              minWidth: '75px', 
-              height: '40px'
-            }}
-          >
-            Alterar
-          </Button>
+          <Button variant="text">Alterar</Button>
         </Box>
       </CardContent>
     </Card>

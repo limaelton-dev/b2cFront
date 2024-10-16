@@ -1,7 +1,0 @@
-.gradient-icon {
-    background: linear-gradient(90deg, rgba(12, 17, 78, 1) 0%, rgba(81, 17, 24, 1) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    display: flex;
-    align-items: center;
-  }
