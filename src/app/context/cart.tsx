@@ -30,35 +30,40 @@ export const useCart = () => {
     
 export const CartProvider = ({ children }) => {
     const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-    const [cartItems, setCartItems] = useState([]);
-    const [cartData, setCartData] = useState([]);
+    const [cartItems, setCartItems] = useState([]); // Produtos
+    const [cartData, setCartData] = useState([]); // Quantidade, Cor
     const { user } = useAuth();
 
     const isLoggedIn = user;
 
-    const addToCart = (product) => {
-        const itemExists = cartItems.some(item => item.pro_codigo === product.pro_codigo);
+    const addToCart = (product, idCor) => {
+        const itemExists = cartItems.some(item => item.pro_codigo === product.pro_codigo && item.colorId == idCor);
 
         if(itemExists) {
             return false;
         }
 
-        setCartItems((prevItems) => [...prevItems, product]);
         setCartData((prevItems) => {
             if (!Array.isArray(prevItems)) {
-                return [{ id: product.pro_codigo, qty: 1 }];
+                return [{ id: product.pro_codigo, qty: 1, colorId: idCor }];
             }
-            return [...prevItems, { id: product.pro_codigo, qty: 1 }];
+            return [...prevItems, { id: product.pro_codigo, idCart: prevItems.length + 1, qty: 1, colorId: idCor }];
         });
-        debouncedSendCartToServer(cartData);
+        setCartItems((prevItems) => [...prevItems, product]);
+        debouncedSendCartToServer();
         return true;
     };
 
-    const removeFromCart = (id) => {
-        if(cartItems.find(p => p.pro_codigo == id)) {
-            setCartItems((prevItems) => prevItems.filter(item => item.pro_codigo != id));
-            setCartData((prevItems) => prevItems.filter(item => item.id != id));
-        }
+    const removeFromCart = (id, idCor) => {
+        const itemExists = cartItems.find(p => p.pro_codigo === id);
+        setCartData([]);setCartItems([]);
+        debouncedSendCartToServer();
+        // if (itemExists) {
+        //     setCartData(cartData.filter(item => 
+        //         item.id !== id || item.colorId === idCor
+        //     ));
+        //     setCartItems(cartItems.filter(item => item.pro_codigo !== id));
+        // }
     };
 
     const changeQtyItem = (id, newQty) => {
@@ -70,14 +75,15 @@ export const CartProvider = ({ children }) => {
 
     useEffect(() => {
         const fetchCartData = async () => {
+            console.log('entrou aqui')
             try {
                 const cart = await getCart(user.id);
-                setCartData(cart.data);
                 localStorage.setItem('cart', JSON.stringify(cart.data))
-                if(cart.data.length > 0) {
+                if(cart.data && cart.data.length > 0) {
                     const resp = await getProdsArr(cart.data.map(i => i.id));
                     if(resp.data) {
                         setCartItems(resp.data); 
+                        setCartData(cart.data);
                     }
                 }
             } catch (error) {
@@ -88,18 +94,20 @@ export const CartProvider = ({ children }) => {
             fetchCartData();
     }, [user]);
 
-    const debouncedSendCartToServer = (data) => {
+    const debouncedSendCartToServer = () => {
         if (timeoutRef.current) {
             clearTimeout(timeoutRef.current);
         }
     
         timeoutRef.current = setTimeout(() => {
-            sendCartToServer(data);
+            sendCartToServer();
         }, 1000);
     };
 
-    const sendCartToServer = (data) => {
-        cartUpdate(user.id, data);
+    const sendCartToServer = () => {
+        if(user) {
+            cartUpdate(user.id, cartData);
+        }
     };
       
     useEffect(() => {
@@ -107,25 +115,26 @@ export const CartProvider = ({ children }) => {
             if (isLoggedIn) {
                 if (JSON.stringify(cartData) !== localStorage.getItem('cart')) {
                     localStorage.setItem('cart', JSON.stringify(cartData));
-                    debouncedSendCartToServer(cartData);
                 }
             } else {
                 Cookies.set('cart', JSON.stringify(cartData), { expires: 7 });
             }
         }
+        debouncedSendCartToServer();
 
     }, [cartData]);
 
     useEffect(() => {
         const fetchCartData = async (storage) => {
+            console.log('entrou aqui uééé´´e')
             const data = storage ? localStorage.getItem('cart') : Cookies.get('cart')
             if(data) {
                 const cookieCart = JSON.parse(data);
                 if (cookieCart.length > 0) {
                     try {
                         const cart = await getProdsArr(cookieCart.map(i => i.id));
-                        setCartItems(cart.data);
                         setCartData(cookieCart);
+                        setCartItems(cart.data);
                     } catch (error) {
                         console.error('Erro: ', error);
                     }

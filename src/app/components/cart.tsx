@@ -12,7 +12,6 @@ import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 
-
 export default function Cart({ cartOpened, onCartToggle }) {
     const { showToast } = useToastSide();
     const { openDialog } = useAlertDialog();
@@ -77,10 +76,10 @@ export default function Cart({ cartOpened, onCartToggle }) {
         }
     }
 
-    const handleAlertRemoveItem = (id) => {
+    const handleAlertRemoveItem = (id, colorId) => {
         openDialog('Tem certeza que deseja remover este produto?', '', 'Não', 'Sim', (confirm) =>  {
             if(confirm) {
-                removeFromCart(id)
+                removeFromCart(id, colorId)
             }
         })
     }
@@ -122,6 +121,9 @@ export default function Cart({ cartOpened, onCartToggle }) {
     //     return text.length > 36 ? text.substring(0, 36) + '...' : text;
     // }
 
+    useEffect(() => {
+        console.log(cartItems)
+    }, [cartItems])
 
     return (
         <Drawer open={cartOpened} anchor="right">
@@ -133,14 +135,14 @@ export default function Cart({ cartOpened, onCartToggle }) {
                 </div>
                 <Divider style={{background: 'gray'}}/>
                 <div className="products-cart">
-                {cartItems.length === 0 ? (
+                {cartData.length === 0 ? (
                     <p style={{textAlign: 'center', marginTop: '25px'}}>Carrinho vazio</p>
                 ) : (
                     <>
-                        {cartItems.map((item, index) => (
-                            <div className="product" data-test={item.pro_codigo} key={item.pro_codigo}>
+                        {cartData.map((item, index) => (
+                            <div className="product" data-test={item.id} key={item.id}>
                                 <div style={{ display: 'flex', justifyContent: 'flex-end'}}>
-                                    <IconButton style={{padding: '0px'}} aria-label="delete" onClick={() => handleAlertRemoveItem(item.pro_codigo)}>
+                                    <IconButton style={{padding: '0px'}} aria-label="delete" onClick={() => handleAlertRemoveItem(item.id, item.colorId)}>
                                         <DeleteOutlineIcon />
                                     </IconButton>
                                 </div>
@@ -150,22 +152,22 @@ export default function Cart({ cartOpened, onCartToggle }) {
                                     width={100}
                                 />
                                 <div className="name-qty">
-                                    <span>{item.pro_descricao}</span>
+                                    <span>{cartItems ? cartItems.find(r => r.pro_codigo == item.id).pro_descricao : ''}</span>
                                     <div className="quantity">
                                         <button 
                                             type='button'
-                                            onClick={() => handleDec(index, item.pro_codigo)}
+                                            onClick={() => handleDec(index, item.id)}
                                             className="btn-qty decrement">-</button>
-                                        <input value={cartData.find(i => i.id == item.pro_codigo).qty} min={min} max={max} onChange={(e) => handleInputChange(item, e)} type="number"/>
+                                        <input value={item.qty} min={min} max={max} onChange={(e) => handleInputChange(item, e)} type="number"/>
                                         <button 
                                             type='button'
-                                            onClick={() => handleInc(index, item.pro_codigo)}
+                                            onClick={() => handleInc(index, item.id)}
                                             className="btn-qty increment">+</button>
                                     </div>
                                 </div>
                                 <div className="product-price">
                                     <span className="price">
-                                        <b>R$ {(item.pro_valorultimacompra * cartData.find(i => i.id == item.pro_codigo).qty).toFixed(2).toString().replace('.',',')}</b>
+                                        <b>R$ {cartItems ? (cartItems.find(r => r.pro_codigo == item.id).pro_valorultimacompra * item.qty).toFixed(2).toString().replace('.',',') : '0,00'}</b>
                                     </span>
                                 </div>
                             </div>

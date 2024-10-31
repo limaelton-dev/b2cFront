@@ -32,9 +32,11 @@
 }
 #content-product .content-infoprod h1{
     font-size: 24px;
+    font-weight: bold;
 }
 #content-product .content-infoprod .rating-infoprod .label-stars svg {
-    fill: #e3c336;
+    fill: #fbd93f;
+    width: 19px;
 }
 #content-product .content-infoprod .rating-infoprod{
     display: flex;
@@ -48,6 +50,9 @@
     font-size: 13px;
     margin-bottom: 0px;
     margin-left: 6px;
+}
+#content-product .content-product-info p {
+    font-size: 17px;
 }
 #content-product .content-infoprod .content-price {
     display: flex;
@@ -78,27 +83,22 @@
     margin-right: 15px;
     position: relative;
 }
-#content-product .content-infoprod .colors .color.red {
-    background-color: red;
-    border: 1px solid transparent
-}
-#content-product .content-infoprod .colors .color.black {
-    background-color: black;
-    border:1px solid transparent
-}
-#content-product .content-infoprod .colors .color.white {
-    background-color: white;
-    border:1px solid #dedede;
+#content-product .content-infoprod .colors .color:hover::after {
+    border: 2px solid #898989;
 }
 #content-product .content-infoprod .colors .color::after {
     content: '';
     height: 43px;
     width: 43px;
+    transition: all ease 0.2s;
     border: 2px solid #c3c3c3;
     position: absolute;
-    top: -5px;
-    left: -5px;
+    top: -4px;
+    left: -4px;
     border-radius: 100%;
+}
+#content-product .content-infoprod .colors .color.active::after {
+    border: 2px solid #77d977;
 }
 #content-product .content-infoprod h5 {
     margin-bottom: 25px;

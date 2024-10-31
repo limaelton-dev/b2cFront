@@ -17,21 +17,24 @@ import { getProduto } from '../../services/produto/page';
 import Cart from '../../components/cart';
 import Header from '../../header';
 import { useCart } from '../../context/cart';
-import { Alert, Snackbar, Slide } from '@mui/material';
+import { Alert, Snackbar, Slide, Button, CircularProgress } from '@mui/material';
+import { useToastSide } from '../../context/toastSide';
+import ScrollTopButton from '../../components/scrollTopButton';
 
 const ProductPage = ({cart}) => {
+    const { showToast } = useToastSide();
     const { addToCart, cartItems } = useCart();
+    const [loadBtn, setLoadBtn] = useState(false);
+    const [isPromoProd, setIsPromoProd] = useState(false);
+    const [isActiveColorId, setIsActiveColorId] = useState(null)
     const { codigo } = useParams();
     const [product, setProduct] = useState({
         pro_codigo: 54862,
         pro_descricao: 'DISCO FLAP 4 1/2" GRÃO 400',
         pro_valorultimacompra: 139.90,
-        pro_quantity: 1,
+        cores: []
     });
     const [openedCart, setOpenedCart] = useState(false);
-    const [response, setResponse] = useState();
-    const [openToast, setToast] = useState(false);
-    const [toastMessage, setToastMessage] = useState('');
 
     useEffect(() => {
         const fetchProduto = async () => {
@@ -47,52 +50,76 @@ const ProductPage = ({cart}) => {
         fetchProduto();
     },[])
 
-    const handleAddToCart = () => {
-        if(!addToCart(product)) {
-            setToast(true);
-            setToastMessage('O produto já existe no carrinho.')
+    const handleAddToCart = async () => {
+        setLoadBtn(true);
+        if(!addToCart(product, isActiveColorId)) {
+            showToast('O produto já existe no carrinho!','error')
+            setLoadBtn(false);
         }
         else {
             setTimeout(() => {
+                setLoadBtn(false)
+                showToast('O produto foi adicionado ao carrinho!','success')
                 setOpenedCart(true);
             }, 500)
         }
     }
 
-    const handleClose = (event, reason) => {
-        if (reason === 'clickaway') {
-          return;
-        }
-    
-        setToast(false);
-    };
+    function formataClasse(str) {
+        return str
+            .normalize('NFD') // Normaliza a string para decompor caracteres acentuados
+            .replace(/[\u0300-\u036f]/g, '') // Remove os caracteres de acentuação
+            .replace(/[^a-zA-Z0-9 ]/g, ''); // Remove caracteres especiais, mantendo apenas letras, números e espaços
+    }
 
     return (
     <>
         <Cart cartOpened={openedCart} onCartToggle={setOpenedCart}/>
-        <Snackbar
-            sx={{ borderRadius: '3px'}}
-            open={openToast}
-            autoHideDuration={6000}
-            onClose={handleClose}
-            TransitionComponent={Slide}
-        >   
-            <Alert severity="info" sx={{ 
-                width: '100%',
-                boxShadow: '0px 0px 1px 1px red;',
-                background: 'white',
-                color: 'red',
-                '.MuiAlert-icon': {
-                    color: 'red',
-                }
-            }}>
-                {toastMessage}
-            </Alert>
-        </Snackbar>
         <Header cartOpened={openedCart} onCartToggle={setOpenedCart} />
-        
+        <ScrollTopButton/>
         <main>
             <section id="content-product">
+                <div className="banner-product">
+                    <div className="container d-flex">
+                        <div className="col-lg-6 d-flex flex-column">
+                            <h2>{product.pro_descricao}</h2>
+                            <span className='sku'>{product.pro_codigo}</span>
+                            <div className="nav-product">
+                                <div className="button-nav"><b>Características</b></div>
+                                <div className="button-nav"><b>Especificações Técnicas</b></div>
+                                <div className="button-nav"><b>Avaliações</b></div>
+                            </div>
+                        </div>
+                        <div className="col-lg-6 d-flex" style={{paddingLeft: '80px'}}>
+                            <div className="price-info-head col-lg-6">
+                                <span className='price'>
+                                    {isPromoProd ? 
+                                        <span>R$ {Number(product.pro_valorultimacompra).toFixed(2).replace('.',',')}</span>
+                                            :
+                                        <>
+                                            <span>De <b style={{textDecoration: 'line-through'}}>R$ {Number(product.pro_valorultimacompra).toFixed(2).replace('.',',')}</b></span>
+                                            <span>Por <b>R$ {Number((product.pro_valorultimacompra - 5)).toFixed(2).replace('.',',')}</b></span>
+                                        </>
+                                    }
+                                </span>
+                                <span>Em até 12x de <b>R$ {Number(product.pro_valorultimacompra).toFixed(2).replace('.',',')}</b></span>
+                                <span>ou <span style={{textDecoration: 'underline'}}>R$ {Number((product.pro_valorultimacompra - 5)).toFixed(2).replace('.',',')}</span> no pagamento pix</span>
+                            </div>
+                            <div className="button-buy col-lg-6 d-flex align-items-center justify-content-center">
+                                <button type='button'
+                                    onClick={handleAddToCart}
+                                    className='btn-buy-primary'
+                                >
+                                    {loadBtn ? 
+                                        <CircularProgress color="inherit" />
+                                        :
+                                        'Comprar'
+                                    }
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <div className="container d-flex flex-wrap">
                     <div className="content-img">
                         <Image
@@ -142,6 +169,7 @@ const ProductPage = ({cart}) => {
                         <div className="content-title-prod">
                             <h1>{product.pro_descricao}</h1>
                             <div className="rating-infoprod">
+                                <div className="sku">SKU: {product.pro_codigo}</div>
                                 <div className="label-stars">
                                     <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e8eaed">
                                         <path d="m233-120 65-281L80-590l288-25 112-265 112 265 288 25-218 189 65 281-247-149-247 149Z"/>
@@ -160,92 +188,34 @@ const ProductPage = ({cart}) => {
                                     </svg>
                                     <p className="count-rating">(145)</p>
                                 </div>
-                                <div className="sku">SKU: {product.pro_codigo}</div>
                             </div>
                             <hr/>
-                            <div className="content-price">
+                            <div className="content-product-info">
+                                <p>O famoso headset Voicer Comfort da C3TECH agora com conexão USB. Com som limpo e claro, use em call centers, aulas ou residência.
+                                    O controle de volume integrado ao cabo, haste do microfone flexível, almofadas e arco revestidos de espuma tornam o uso fácil,
+                                     além de proporcionar um conforto inexplicável, 
+                                     ideal para te acompanhar em todas as chamadas.</p>
+                            </div>
+                            {/* <div className="content-price">
                                 <span className="price">
                                     R$ 389,90
                                 </span>
                                 <span className="card-info">
                                     Até 12x no cartão
                                 </span>
-                            </div>
+                            </div> */}
                             <p className="text-colors">Cores:</p>
                             <div className="colors">
-                                <div className="color red"></div>
-                                <div className="color black"></div>
-                                <div className="color white"></div>
+                                {product.cores.map((item) => (
+                                    <div 
+                                        onClick={() => setIsActiveColorId(item.id)}
+                                        className={'color ' + (isActiveColorId == item.id ? ' active' : '')}
+                                        style={{backgroundColor: item.hex}}
+                                    ></div>
+                                ))}
                             </div>
-                            <p className="text-options">Opções:</p>
-                            <div className="options">
-                                <div className="option active">Headphone</div>
-                                <div className="option">Headphone + Mouse</div>
-                                <div className="option">Headphone + Mouse + Mousepad</div>
-                            </div>
+                            
                             <button type='button' onClick={handleAddToCart}>Comprar</button>
-                            <hr/>
-                            <h5>Aceitamos:</h5>
-                            <div className="options-card">
-                                <div className="option">
-                                    <Image
-                                        src={Vi}
-                                        alt=""
-                                        layout="responsive"
-                                    />
-                                </div>
-                                <div className="option">
-                                    <Image
-                                        src={Ae}
-                                        alt=""
-                                        layout="responsive"
-                                    />
-                                </div>
-                                <div className="option">
-                                    <Image
-                                        src={Dn}
-                                        alt=""
-                                        layout="responsive"
-                                    />
-                                </div>
-                                <div className="option">
-                                    <Image
-                                        src={Mc}
-                                        alt=""
-                                        layout="responsive"
-                                    />
-                                </div>
-                                <div className="option">
-                                    <Image
-                                        src={Elo}
-                                        alt=""
-                                        layout="responsive"
-                                    />
-                                </div>
-                                <div className="option">
-                                    <Image
-                                        src={Hyper}
-                                        alt="twitter"
-                                        layout="responsive"
-                                    />
-                                </div>
-                            </div>
-                            <hr/>
-                            <h5>Compartilhe:</h5>
-                            <div className="compartilhe">
-                                <ul className="midias">
-                                    <li className="whats">
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91C2.13 13.66 2.59 15.36 3.45 16.86L2.05 22L7.3 20.62C8.75 21.41 10.38 21.83 12.04 21.83C17.5 21.83 21.95 17.38 21.95 11.92C21.95 9.27 20.92 6.78 19.05 4.91C17.18 3.03 14.69 2 12.04 2M12.05 3.67C14.25 3.67 16.31 4.53 17.87 6.09C19.42 7.65 20.28 9.72 20.28 11.92C20.28 16.46 16.58 20.15 12.04 20.15C10.56 20.15 9.11 19.76 7.85 19L7.55 18.83L4.43 19.65L5.26 16.61L5.06 16.29C4.24 15 3.8 13.47 3.8 11.91C3.81 7.37 7.5 3.67 12.05 3.67M8.53 7.33C8.37 7.33 8.1 7.39 7.87 7.64C7.65 7.89 7 8.5 7 9.71C7 10.93 7.89 12.1 8 12.27C8.14 12.44 9.76 14.94 12.25 16C12.84 16.27 13.3 16.42 13.66 16.53C14.25 16.72 14.79 16.69 15.22 16.63C15.7 16.56 16.68 16.03 16.89 15.45C17.1 14.87 17.1 14.38 17.04 14.27C16.97 14.17 16.81 14.11 16.56 14C16.31 13.86 15.09 13.26 14.87 13.18C14.64 13.1 14.5 13.06 14.31 13.3C14.15 13.55 13.67 14.11 13.53 14.27C13.38 14.44 13.24 14.46 13 14.34C12.74 14.21 11.94 13.95 11 13.11C10.26 12.45 9.77 11.64 9.62 11.39C9.5 11.15 9.61 11 9.73 10.89C9.84 10.78 10 10.6 10.1 10.45C10.23 10.31 10.27 10.2 10.35 10.04C10.43 9.87 10.39 9.73 10.33 9.61C10.27 9.5 9.77 8.26 9.56 7.77C9.36 7.29 9.16 7.35 9 7.34C8.86 7.34 8.7 7.33 8.53 7.33Z" /></svg>
-                                    </li>
-                                    <li className="x">
-                                        <Image
-                                            src={Ximg}
-                                            alt="twitter"
-                                            layout="responsive"
-                                        />
-                                    </li>
-                                </ul>
-                            </div>
                         </div>
                     </div>
                 </div>

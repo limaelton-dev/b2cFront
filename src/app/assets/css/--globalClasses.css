@@ -1,3 +1,23 @@
+* {
+    scroll-behavior: smooth !important;
+}
 .c-red {
     color: red;
+}
+.btn-buy-primary {
+    font-size: 15px;
+    padding: 6px 41px;
+    border-radius: 17px;
+    font-weight: 500;
+    text-transform: uppercase;
+    background-color: #1976d2;
+    border: none;
+    font-family: 'Roboto';
+    color: white;
+    display: flex;
+}
+.btn-buy-primary .MuiCircularProgress-root {
+    width: 22px !important;
+    height: 22px !important;
+    margin: 0px 24px;
 }

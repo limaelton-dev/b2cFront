@@ -25,7 +25,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <meta name="apple-mobile-web-app-capable" content="yes" />
               <meta name="apple-mobile-web-app-status-bar-style" content="#fff" />
           </head>
-          <body>
+          <body id="myBody">
               <ToastSideProvider>
                   <AuthProvider>
                       <CouponProvider>
