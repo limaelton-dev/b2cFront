@@ -53,6 +53,7 @@
 }
 #content-product .content-product-info p {
     font-size: 17px;
+    line-height: 20px;
 }
 #content-product .content-infoprod .content-price {
     display: flex;
@@ -71,7 +72,7 @@
     color: red;
 }
 #content-product .content-infoprod .text-colors {
-    margin-top: 30px;
+    margin-top: 15px;
 }
 #content-product .content-infoprod .colors {
     display: flex;
@@ -82,6 +83,9 @@
     height: 35px;
     margin-right: 15px;
     position: relative;
+}
+#content-product .content-infoprod .colors .color:last-of-type {
+    margin-right: 0px;
 }
 #content-product .content-infoprod .colors .color:hover::after {
     border: 2px solid #898989;

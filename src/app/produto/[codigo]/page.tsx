@@ -5,13 +5,7 @@ import '../../assets/css/produto.css';
 import Image from 'next/image';
 import LogoColetek from '../../assets/img/logo_coletek.png';
 import HeadphoneImg from '../../assets/img/headphone.png';
-import Ximg from '../../assets/img/svg/x.svg';
-import Vi from '../../assets/img/vi.webp';
-import Ae from '../../assets/img/ae.webp';
-import Dn from '../../assets/img/dn.webp';
-import Mc from '../../assets/img/mc.webp';
-import Elo from '../../assets/img/elo.webp';
-import Hyper from '../../assets/img/hyper.webp';
+import BannerProd from '../../assets/img/banner_mouse.png';
 import { useEffect, useState } from 'react';
 import { getProduto } from '../../services/produto/page';
 import Cart from '../../components/cart';
@@ -127,7 +121,7 @@ const ProductPage = ({cart}) => {
                             alt="Headphone"
                             layout="responsive"
                         />
-                        <div className="carrousel">
+                        <div className="carrousel mt-4">
                             <div className="img-carrousel">
                                 <Image
                                     src={HeadphoneImg}
@@ -196,39 +190,259 @@ const ProductPage = ({cart}) => {
                                      além de proporcionar um conforto inexplicável, 
                                      ideal para te acompanhar em todas as chamadas.</p>
                             </div>
-                            {/* <div className="content-price">
-                                <span className="price">
+                            <div className='d-flex flex-direction-column align-items-center'>
+                                <p className="text-colors">Cores:</p>
+                                <div className="colors">
+                                    {product.cores.map((item) => (
+                                        <div 
+                                        onClick={() => setIsActiveColorId(item.id)}
+                                        className={'color ' + (isActiveColorId == item.id ? ' active' : '')}
+                                        style={{backgroundColor: item.hex}}
+                                        ></div>
+                                    ))}
+                                </div>
+                            </div>
+                            <hr />
+                            <div className="content-price d-flex flex-direction-column align-items-center">
+                                <span className="price text-center">
                                     R$ 389,90
                                 </span>
                                 <span className="card-info">
                                     Até 12x no cartão
                                 </span>
-                            </div> */}
-                            <p className="text-colors">Cores:</p>
-                            <div className="colors">
-                                {product.cores.map((item) => (
-                                    <div 
-                                        onClick={() => setIsActiveColorId(item.id)}
-                                        className={'color ' + (isActiveColorId == item.id ? ' active' : '')}
-                                        style={{backgroundColor: item.hex}}
-                                    ></div>
-                                ))}
+                                <span>Em até 12x de <b>R$ {Number(product.pro_valorultimacompra).toFixed(2).replace('.',',')}</b></span>
+                                <span>ou <span style={{textDecoration: 'underline'}}>R$ {Number((product.pro_valorultimacompra - 5)).toFixed(2).replace('.',',')}</span> no pagamento pix</span>
+                                <button type='button'
+                                    onClick={handleAddToCart}
+                                    className='btn-buy-primary mt-3'
+                                >
+                                    {loadBtn ? 
+                                        <CircularProgress color="inherit" />
+                                        :
+                                        'Comprar'
+                                    }
+                                </button>
                             </div>
                             
-                            <button type='button' onClick={handleAddToCart}>Comprar</button>
                         </div>
                     </div>
                 </div>
             </section>
+            <section id="recomend" style={{paddingBottom: '25px', marginTop: '25px'}}>
+                <div className="container">
+                    <div className="title-section">
+                        <p>Recomendado para você</p>
+                    </div>
+                    <div className="products prod-listing" style={{
+                        display: 'flex',
+                        justifyContent: 'space-between'
+                    }}>
+                        <div className="product">
+                            <div className="wishlist-button">
+
+                            </div>
+                            <Image
+                                src={HeadphoneImg}
+                                alt="Headphone"
+                                layout="responsive"
+                            />
+                            <div className="promo green">
+                                Até 20% OFF
+                            </div>
+                            <div className="promo-rating">
+                                <div className="colors">
+                                    <div className="color red"></div>
+                                    <div className="color black"></div>
+                                    <div className="color white"></div>
+                                </div>
+                                <div className="rating">
+                                    4.7
+                                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#F6B608">
+                                        <path d="m233-120 65-281L80-590l288-25 112-265 112 265 288 25-218 189 65 281-247-149-247 149Z"/>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div className="title-product">
+                                Headphone Coletek 7.1 surround
+                            </div>
+                            <div className="description">
+                                Headphone Coletek 7.1 surround
+                            </div>
+                            <div className="price">
+                                R$ 235,50
+                                <div className="discount">
+                                    (5% OFF)
+                                </div>
+                            </div>
+                        </div>
+                        <div className="product">
+                            <div className="wishlist-button">
+
+                            </div>
+                            <Image
+                                                src={HeadphoneImg}
+                                                alt="Headphone"
+                                                layout="responsive"
+                                          />
+                            <div className="promo green">
+                                Até 20% OFF
+                            </div>
+                            <div className="promo-rating">
+                                <div className="colors">
+                                    <div className="color red"></div>
+                                    <div className="color black"></div>
+                                    <div className="color white"></div>
+                                </div>
+                                <div className="rating">
+                                    4.7
+                                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#F6B608">
+                                        <path d="m233-120 65-281L80-590l288-25 112-265 112 265 288 25-218 189 65 281-247-149-247 149Z"/>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div className="title-product">
+                                Headphone Coletek 7.1 surround
+                            </div>
+                            <div className="description">
+                                Headphone Coletek 7.1 surround
+                            </div>
+                            <div className="price">
+                                R$ 235,50
+                                <div className="discount">
+                                    (5% OFF)
+                                </div>
+                            </div>
+                        </div>
+                        <div className="product">
+                            <div className="wishlist-button">
+
+                            </div>
+                            <Image
+                                src={HeadphoneImg}
+                                alt="Headphone"
+                                layout="responsive"
+                            />
+                            <div className="promo green">
+                                Até 20% OFF
+                            </div>
+                            <div className="promo-rating">
+                                <div className="colors">
+                                    <div className="color red"></div>
+                                    <div className="color black"></div>
+                                    <div className="color white"></div>
+                                </div>
+                                <div className="rating">
+                                    4.7
+                                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#F6B608">
+                                        <path d="m233-120 65-281L80-590l288-25 112-265 112 265 288 25-218 189 65 281-247-149-247 149Z"/>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div className="title-product">
+                                Headphone Coletek 7.1 surround
+                            </div>
+                            <div className="description">
+                                Headphone Coletek 7.1 surround
+                            </div>
+                            <div className="price">
+                                R$ 235,50
+                                <div className="discount">
+                                    (5% OFF)
+                                </div>
+                            </div>
+                        </div>
+                        <div className="product">
+                            <div className="wishlist-button">
+
+                            </div>
+                            <Image
+                                                src={HeadphoneImg}
+                                                alt="Headphone"
+                                                layout="responsive"
+                                          />
+                            <div className="promo green">
+                                Até 20% OFF
+                            </div>
+                            <div className="promo-rating">
+                                <div className="colors">
+                                    <div className="color red"></div>
+                                    <div className="color black"></div>
+                                    <div className="color white"></div>
+                                </div>
+                                <div className="rating">
+                                    4.7
+                                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#F6B608">
+                                        <path d="m233-120 65-281L80-590l288-25 112-265 112 265 288 25-218 189 65 281-247-149-247 149Z"/>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div className="title-product">
+                                Headphone Coletek 7.1 surround
+                            </div>
+                            <div className="description">
+                                Headphone Coletek 7.1 surround
+                            </div>
+                            <div className="price">
+                                R$ 235,50
+                                <div className="discount">
+                                    (5% OFF)
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <section id="banner_prod">
+                <div className="container">
+                    <Image
+                        height={500}
+                        src={BannerProd}
+                        alt="Banner"
+                        layout="responsive"
+                    />
+                </div>
+            </section>
+            <section id='especificacoes' style={{margin: '25px 0px'}}>
+                <div className="container">
+                    <div className="title-section">
+                        <p>Especificações</p>
+                    </div>
+                    <p>
+                    Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br/>
+                    Sed feugiat neque lacinia tellus elementum, et fringilla orci posuere.<br/>
+                    Nulla viverra risus id facilisis varius.<br/>
+
+                    Nunc at mauris sed lectus euismod efficitur in blandit dolor.<br/>
+                    Sed cursus velit porttitor vehicula egestas.<br/>
+                    Mauris vel tortor at arcu interdum vehicula eget vel diam.<br/>
+                    Praesent sodales urna vitae faucibus vulputate.<br/>
+                    Mauris gravida diam sit amet magna porta, vel rutrum velit scelerisque.<br/>
+                    Integer euismod dolor quis ligula accumsan pretium.<br/>
+
+                    Maecenas ultricies lectus eget egestas sollicitudin.<br/>
+                    Phasellus at turpis ut sem ullamcorper fringilla in sed orci.<br/>
+                    Aliquam a dolor eget eros ultrices facilisis.<br/>
+                    Donec eu tortor eu urna lobortis tincidunt a quis arcu.<br/>
+                    Morbi vulputate enim eu euismod mollis.<br/>
+                    Aenean pretium ex sit amet massa cursus, suscipit scelerisque ligula posuere.<br/>
+
+                    Donec volutpat lacus eu purus lobortis, nec semper urna lobortis.<br/>
+                    Integer sed sapien molestie, elementum justo quis, lacinia odio.<br/>
+                    Pellentesque eu nibh efficitur, posuere sapien sit amet, consequat sem.<br/>
+                    Proin non orci sit amet sem fringilla commodo vitae aliquet nisi.<br/>
+                    Etiam sed felis ut odio porttitor sagittis in ac lacus.<br/>
+                    Nulla eu nisl blandit, bibendum enim vel, auctor felis.<br/>
+
+                    Nulla egestas nisl bibendum eros gravida congue.<br/>
+                    Mauris commodo felis sit amet sem consequat, non commodo nulla volutpat.<br/>
+                    Duis at nisl in arcu accumsan bibendum.<br/>
+                    In quis quam nec felis hendrerit pretium vitae sed urna.<br/>
+                    Vestibulum semper sem at nisl euismod, interdum tristique sem fringilla.<br/>
+                    </p>
+                </div>
+            </section>
             <section id="tabs">
                 <div className="container">
-                    <div className="content-tabs">
-                        <ul>
-                            <li className="active">Avaliações</li>
-                            <li>Detalhes</li>
-                            <li>Produtos Relacionados</li>
-                        </ul>
-                    </div>
                     <div className="content-showtab">
                         <div className="tab-rating">
                             <div className="rating-left">
@@ -525,167 +739,6 @@ const ProductPage = ({cart}) => {
                                     </div>
                                 </div>
                                 <hr/>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-            <section id="prod-newest" style={{paddingBottom: '25px'}}>
-                <div className="container">
-                    <div className="title-section">
-                        <p>Usuários também visitaram</p>
-                    </div>
-                    <div className="products prod-listing">
-                        <div className="product">
-                            <div className="wishlist-button">
-
-                            </div>
-                            <Image
-                                src={HeadphoneImg}
-                                alt="Headphone"
-                                layout="responsive"
-                            />
-                            <div className="promo green">
-                                Até 20% OFF
-                            </div>
-                            <div className="promo-rating">
-                                <div className="colors">
-                                    <div className="color red"></div>
-                                    <div className="color black"></div>
-                                    <div className="color white"></div>
-                                </div>
-                                <div className="rating">
-                                    4.7
-                                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#F6B608">
-                                        <path d="m233-120 65-281L80-590l288-25 112-265 112 265 288 25-218 189 65 281-247-149-247 149Z"/>
-                                    </svg>
-                                </div>
-                            </div>
-                            <div className="title-product">
-                                Headphone Coletek 7.1 surround
-                            </div>
-                            <div className="description">
-                                Headphone Coletek 7.1 surround
-                            </div>
-                            <div className="price">
-                                R$ 235,50
-                                <div className="discount">
-                                    (5% OFF)
-                                </div>
-                            </div>
-                        </div>
-                        <div className="product">
-                            <div className="wishlist-button">
-
-                            </div>
-                            <Image
-                                                src={HeadphoneImg}
-                                                alt="Headphone"
-                                                layout="responsive"
-                                          />
-                            <div className="promo green">
-                                Até 20% OFF
-                            </div>
-                            <div className="promo-rating">
-                                <div className="colors">
-                                    <div className="color red"></div>
-                                    <div className="color black"></div>
-                                    <div className="color white"></div>
-                                </div>
-                                <div className="rating">
-                                    4.7
-                                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#F6B608">
-                                        <path d="m233-120 65-281L80-590l288-25 112-265 112 265 288 25-218 189 65 281-247-149-247 149Z"/>
-                                    </svg>
-                                </div>
-                            </div>
-                            <div className="title-product">
-                                Headphone Coletek 7.1 surround
-                            </div>
-                            <div className="description">
-                                Headphone Coletek 7.1 surround
-                            </div>
-                            <div className="price">
-                                R$ 235,50
-                                <div className="discount">
-                                    (5% OFF)
-                                </div>
-                            </div>
-                        </div>
-                        <div className="product">
-                            <div className="wishlist-button">
-
-                            </div>
-                            <Image
-                                src={HeadphoneImg}
-                                alt="Headphone"
-                                layout="responsive"
-                            />
-                            <div className="promo green">
-                                Até 20% OFF
-                            </div>
-                            <div className="promo-rating">
-                                <div className="colors">
-                                    <div className="color red"></div>
-                                    <div className="color black"></div>
-                                    <div className="color white"></div>
-                                </div>
-                                <div className="rating">
-                                    4.7
-                                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#F6B608">
-                                        <path d="m233-120 65-281L80-590l288-25 112-265 112 265 288 25-218 189 65 281-247-149-247 149Z"/>
-                                    </svg>
-                                </div>
-                            </div>
-                            <div className="title-product">
-                                Headphone Coletek 7.1 surround
-                            </div>
-                            <div className="description">
-                                Headphone Coletek 7.1 surround
-                            </div>
-                            <div className="price">
-                                R$ 235,50
-                                <div className="discount">
-                                    (5% OFF)
-                                </div>
-                            </div>
-                        </div>
-                        <div className="product">
-                            <div className="wishlist-button">
-
-                            </div>
-                            <Image
-                                                src={HeadphoneImg}
-                                                alt="Headphone"
-                                                layout="responsive"
-                                          />
-                            <div className="promo green">
-                                Até 20% OFF
-                            </div>
-                            <div className="promo-rating">
-                                <div className="colors">
-                                    <div className="color red"></div>
-                                    <div className="color black"></div>
-                                    <div className="color white"></div>
-                                </div>
-                                <div className="rating">
-                                    4.7
-                                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#F6B608">
-                                        <path d="m233-120 65-281L80-590l288-25 112-265 112 265 288 25-218 189 65 281-247-149-247 149Z"/>
-                                    </svg>
-                                </div>
-                            </div>
-                            <div className="title-product">
-                                Headphone Coletek 7.1 surround
-                            </div>
-                            <div className="description">
-                                Headphone Coletek 7.1 surround
-                            </div>
-                            <div className="price">
-                                R$ 235,50
-                                <div className="discount">
-                                    (5% OFF)
-                                </div>
                             </div>
                         </div>
                     </div>
