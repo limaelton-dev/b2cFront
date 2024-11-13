@@ -1,6 +1,6 @@
 @import url('--globalClasses.css');
-@import url('./minhaconta/navbar.css');
-@import url('./minhaconta/drawer.css');
+/* @import url('./minhaconta/navbar.css'); */
+/* @import url('./minhaconta/drawer.css'); */
 @import url('./home/cart.css');
 @import url('./home/footer.css');
 @import url('./home/header.css');

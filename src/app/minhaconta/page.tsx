@@ -7,6 +7,7 @@ import { Alert, Snackbar, Slide, Typography, Box, List } from '@mui/material';
 import DadosPessoais from './components/DadosPessoais';
 import MinhasComprasPage from './components/MinhasComprasPage';
 import MeusEnderecos from './components/MeusEnderecos';
+import MeusCartoes from './components/MeusCartoes';
 import SideBar from './components/SideBar';
 
 import PlaceOutlinedIcon from '@mui/icons-material/PlaceOutlined';
@@ -46,21 +47,23 @@ const MyAccountPage = () => {
     }
 
     const renderContent = () => {
-        switch (renderedSection) {
-          case 'Dados pessoais':
-            return <DadosPessoais />;
-          case 'Minhas compras':
-            return <MinhasComprasPage />;
-          case 'Meus endereços':
-            return <MeusEnderecos />;
-          default:
-            return (
-              <Typography sx={{ marginBottom: 2 }}>
-                Selecione uma opção no menu.
-              </Typography>
-            );
-        }
-      };
+      switch (renderedSection) {
+        case 'Dados pessoais':
+          return <DadosPessoais />;
+        case 'Minhas compras':
+          return <MinhasComprasPage />;
+        case 'Meus endereços':
+          return <MeusEnderecos />;
+        case 'Meus cartões':
+          return <MeusCartoes />;
+        default:
+          return (
+            <Typography sx={{ marginBottom: 2 }}>
+              Selecione uma opção no menu.
+            </Typography>
+          );
+      }
+    };
 
     const handleClose = (event, reason) => {
         if (reason === 'clickaway') {
