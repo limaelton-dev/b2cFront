@@ -18,6 +18,7 @@ export default function LoginPage() {
     const { setUserFn } = useAuth();
     const [cookies, setCookie] = useCookies(['jwt','user']);
     const [isLoading, setIsLoading] = useState(false);
+    const [textError, setTextError] = useState('');
 
     const [formData, setFormData] = useState({
         email: '',
@@ -40,6 +41,14 @@ export default function LoginPage() {
             setUserFn(response.user);
             setCookie('jwt', response.token);
             router.push('/');
+        }
+        else {
+            setIsLoading(false);
+            if(response.code == 'ERR_NETWORK')
+                setTextError('Erro de conexão com o servidor.\nPor favor, tente novamente mais tarde');
+                
+            if(response.code == 'ERR_BAD_REQUEST')
+                setTextError('Email ou senha incorretos');
         }
     }
 
@@ -64,6 +73,7 @@ export default function LoginPage() {
                             <div id="content-login" className="content-forms active-content d-flex align-items">
                                 <div style={{width: '100%',display: 'flex', alignItems: 'center'}}>
                                     <form id="form-login" action="" style={{width: '100%'}} method="POST">
+                                        <p style={{textAlign: 'center', color: 'red'}} dangerouslySetInnerHTML={{ __html: textError.replace(/\n/g, '<br />') }} />
                                         <div className="form-group d-flex">
                                             <a href="#" className="login-social google">
                                                 <Image
@@ -99,7 +109,7 @@ export default function LoginPage() {
                                             <LockIcon style={{position: 'absolute', top: '50%', left: '15px', transform: 'translateY(-50%)'}}/>
                                             <input type="password" name="password" value={formData.password} onChange={handleChange} placeholder="Senha"  className="form-control"/>
                                         </div>
-                                        <button type="submit" onClick={submit} className="btn btn-primary btn-auth d-flex">
+                                        <button type="submit" style={{backgroundColor: isLoading ? '#8cad8b' : '#349131', pointerEvents: isLoading ? 'none': 'all'}} onClick={submit} className="btn btn-primary btn-auth d-flex">
                                             {isLoading ? 
                                                 <div className="spinner-border text-light" style={{fontSize: '8px',width: '24px',height: '24px'}} role="status"><span className="visually-hidden"></span></div>
                                                 :

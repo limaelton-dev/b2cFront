@@ -4,7 +4,7 @@
     padding: 10px;
     display: flex;
     flex-direction: column;
-    width: 24%;
+    width: 95%;
     margin-bottom: 20px;
     position: relative;
 }
@@ -92,5 +92,5 @@
     background-color: #1149e0;
 }
 .products.prod-listing .product {
-    width: 23%;
+    width: 95%;
 }

@@ -8,8 +8,10 @@ export async function middleware(req: NextRequest) {
     if(stateDev == 'debug')
         return NextResponse.next();
 
-    if (url.startsWith('/') || url.startsWith('/login')) { // Colocar a rota específica para esse middleware aqui
+
+    if (url.startsWith('/login')) {
         const authResponse = await authMiddleware(req);
+        console.log(authResponse)
         if(!authResponse) {
             if(!url.startsWith('/login')) {
                 return NextResponse.redirect(new URL('/login', req.url))

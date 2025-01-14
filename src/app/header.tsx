@@ -1,15 +1,21 @@
 import Image from 'next/image';
 import LogoColetek from './assets/img/logo_coletek.png';
+import Headphone from './assets/img/headphone.png';
 import UserImg from './assets/img/user.jpg';
 import { useEffect, useState } from 'react';
 import { search } from './services/search';
 import Collapse from '@mui/material/Collapse';
 import Box from '@mui/material/Box';
+import LaunchIcon from '@mui/icons-material/Launch';
 import { useCart } from './context/cart';
 import { useAuth } from './context/auth';
+import PersonOutlineOutlinedIcon from '@mui/icons-material/PersonOutlineOutlined';
+import { useRouter } from 'next/navigation';
+import { AuthContextType, User } from './interfaces/interfaces';
 
 const URL = process.env.NEXT_PUBLIC_URL || '';
 export default function Header({ cartOpened, onCartToggle }) {
+    const router = useRouter();
     const { user } = useAuth();
     const { cartItems } = useCart();
     const [debounceTimeout, setDebounceTimeout] = useState<NodeJS.Timeout | null>(null);
@@ -56,7 +62,7 @@ export default function Header({ cartOpened, onCartToggle }) {
     }
 
     return (
-        <header>
+        <header id="header-page">
             <div className="bar-top">
                 <div className="container">
                     <ul>
@@ -90,8 +96,10 @@ export default function Header({ cartOpened, onCartToggle }) {
                 <div className="container">
                     <div className="row" style={{alignItems: 'center', marginBottom: '5px'}}>
                         <div className="logo">
-                            <div className="logo-footer">
+                            <div className="logo-footer" >
                                 <Image
+                                    onClick={() => router.push('/')} 
+                                    style={{cursor: 'pointer'}}
                                     src={LogoColetek}
                                     alt="Logo Coletek"
                                 />
@@ -115,7 +123,13 @@ export default function Header({ cartOpened, onCartToggle }) {
                                     <div className="result-search">
                                         <ul>
                                             {results.map((result) => (
-                                                <li key={result.pro_codigo}><a target="_blank" href={URL+'/produto/'+result.pro_codigo}>{result.pro_descricao}</a></li>
+                                                <li key={result.pro_codigo} style={{display: 'flex', alignItems: 'center'}}>
+                                                    <Image
+                                                        src={Headphone}
+                                                        alt="Logo Coletek"
+                                                    />
+                                                    <a target="_blank" className='search-product-link' style={{textDecoration: 'none', color: 'black', display: 'flex',flexGrow: '1', justifyContent: 'space-between', height: '50px', alignItems: 'center'}} href={URL+'/produto/'+result.pro_codigo}>{result.pro_descricao}<LaunchIcon sx={{width: '18px'}} /></a>
+                                                </li>
                                             ))}
                                             {results.length > 5 && 
                                                 <li><a href="">Veja mais resultados</a></li> 
@@ -126,6 +140,24 @@ export default function Header({ cartOpened, onCartToggle }) {
                             </div>
                         </div>
                         <div className="user-preference">
+                            <div className="user">
+                                <div className="content-img">
+                                    {user.name ? 
+                                        <Image
+                                            src={UserImg}
+                                            alt="Icone Usuário"
+                                            height={45}
+                                            width={45}
+                                        />
+                                        :
+                                        <PersonOutlineOutlinedIcon/>
+                                    }
+                                </div>
+                                <div className="content-text">
+                                    {user.name ? <p className='nome'>{user.name}</p> :  <div className='entre-cad'><a href="/login">Entre</a> ou<br/><a href="/register">Cadastre-se</a></div>}
+                                    <p className="email">{user.email || ''}</p>
+                                </div>
+                            </div>  
                             <div className="cart content-preference" onClick={changeOpenedCart}>
                                 <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#bcbcbc">
                                     <path d="M240-80q-33 0-56.5-23.5T160-160v-480q0-33 23.5-56.5T240-720h80q0-66 47-113t113-47q66 0 113 47t47 113h80q33 0 56.5 23.5T800-640v480q0 33-23.5 56.5T720-80H240Zm0-80h480v-480h-80v80q0 17-11.5 28.5T600-520q-17 0-28.5-11.5T560-560v-80H400v80q0 17-11.5 28.5T360-520q-17 0-28.5-11.5T320-560v-80h-80v480Zm160-560h160q0-33-23.5-56.5T480-800q-33 0-56.5 23.5T400-720ZM240-160v-480 480Z"/>
@@ -136,15 +168,6 @@ export default function Header({ cartOpened, onCartToggle }) {
                                     </div>
                                 }
                                 Carrinho
-                            </div>
-                            <div className="wishlist content-preference">
-                                <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#bcbcbc">
-                                    <path d="m480-120-58-52q-101-91-167-157T150-447.5Q111-500 95.5-544T80-634q0-94 63-157t157-63q52 0 99 22t81 62q34-40 81-62t99-22q94 0 157 63t63 157q0 46-15.5 90T810-447.5Q771-395 705-329T538-172l-58 52Zm0-108q96-86 158-147.5t98-107q36-45.5 50-81t14-70.5q0-60-40-100t-100-40q-47 0-87 26.5T518-680h-76q-15-41-55-67.5T300-774q-60 0-100 40t-40 100q0 35 14 70.5t50 81q36 45.5 98 107T480-228Zm0-273Z"/>
-                                </svg>
-                                <div className="items-total">
-                                    3
-                                </div>
-                                Lista de desejos
                             </div>
                         </div>
                     </div>
@@ -159,20 +182,7 @@ export default function Header({ cartOpened, onCartToggle }) {
                                 <li>Outra página</li>
                             </ul>
                         </div>
-                        <div className="user">
-                            <div className="content-img">
-                                <Image
-                                    src={UserImg}
-                                    alt="Icone Usuário"
-                                    height={45}
-                                    width={45}
-                                />
-                            </div>
-                            <div className="content-text">
-                                <p className="nome">{user ? user.name : ''}</p>
-                                <p className="email">{user ? user.email : ''}</p>
-                            </div>
-                        </div>  
+                        
                     </div>
                 </div>
             </div>

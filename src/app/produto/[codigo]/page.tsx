@@ -6,6 +6,7 @@ import Image from 'next/image';
 import LogoColetek from '../../assets/img/logo_coletek.png';
 import HeadphoneImg from '../../assets/img/headphone.png';
 import BannerProd from '../../assets/img/banner_mouse.png';
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import { useEffect, useState } from 'react';
 import { getProduto } from '../../services/produto/page';
 import Cart from '../../components/cart';
@@ -14,8 +15,12 @@ import { useCart } from '../../context/cart';
 import { Alert, Snackbar, Slide, Button, CircularProgress } from '@mui/material';
 import { useToastSide } from '../../context/toastSide';
 import ScrollTopButton from '../../components/scrollTopButton';
+import useScrollToDiv from '../../components/useScrollToDiv';
+import Footer from '../../footer';
 
-const ProductPage = ({cart}) => {
+const ProductPage = () => {
+    const offsetTop = useState(0);
+    const scrollTo = useScrollToDiv();
     const { showToast } = useToastSide();
     const { addToCart, cartItems } = useCart();
     const [loadBtn, setLoadBtn] = useState(false);
@@ -31,6 +36,17 @@ const ProductPage = ({cart}) => {
     const [openedCart, setOpenedCart] = useState(false);
 
     useEffect(() => {
+        const header = document.getElementById("header-page");
+        const sticky = header.offsetTop;
+
+        const myFunction = (e) => {
+            if (window.scrollY > 600) {
+                header.classList.add("sticky");
+            } else {
+                header.classList.remove("sticky");
+            }
+        }
+        window.addEventListener('scroll', myFunction);
         const fetchProduto = async () => {
             try {
                 const response = await getProduto(codigo);
@@ -59,7 +75,7 @@ const ProductPage = ({cart}) => {
         }
     }
 
-    function formataClasse(str) {
+    function formatStr(str) {
         return str
             .normalize('NFD') // Normaliza a string para decompor caracteres acentuados
             .replace(/[\u0300-\u036f]/g, '') // Remove os caracteres de acentuação
@@ -79,9 +95,9 @@ const ProductPage = ({cart}) => {
                             <h2>{product.pro_descricao}</h2>
                             <span className='sku'>{product.pro_codigo}</span>
                             <div className="nav-product">
-                                <div className="button-nav"><b>Características</b></div>
-                                <div className="button-nav"><b>Especificações Técnicas</b></div>
-                                <div className="button-nav"><b>Avaliações</b></div>
+                                <div className="button-nav" onClick={() => scrollTo('caracteristicas')}><b>Características</b></div>
+                                <div className="button-nav" onClick={() => scrollTo('especificacoes')}><b>Especificações Técnicas</b></div>
+                                <div className="button-nav" onClick={() => scrollTo('tabs')}><b>Avaliações</b></div>
                             </div>
                         </div>
                         <div className="col-lg-6 d-flex" style={{paddingLeft: '80px'}}>
@@ -195,9 +211,9 @@ const ProductPage = ({cart}) => {
                                 <div className="colors">
                                     {product.cores.map((item) => (
                                         <div 
-                                        onClick={() => setIsActiveColorId(item.id)}
-                                        className={'color ' + (isActiveColorId == item.id ? ' active' : '')}
-                                        style={{backgroundColor: item.hex}}
+                                            onClick={() => setIsActiveColorId(item.id)}
+                                            className={'color ' + (isActiveColorId == item.id ? ' active' : '')}
+                                            style={{backgroundColor: item.hex}}
                                         ></div>
                                     ))}
                                 </div>
@@ -205,7 +221,7 @@ const ProductPage = ({cart}) => {
                             <hr />
                             <div className="content-price d-flex flex-direction-column align-items-center">
                                 <span className="price text-center">
-                                    R$ 389,90
+                                    R$ {Number(product.pro_valorultimacompra).toFixed(2).replace('.',',')}
                                 </span>
                                 <span className="card-info">
                                     Até 12x no cartão
@@ -744,72 +760,7 @@ const ProductPage = ({cart}) => {
                     </div>
                 </div>
             </section>
-            <footer>
-                <div className="container d-flex flex-wrap">
-                    <div className="col-lg-3">
-                        <div className="logo-footer">
-                            <img src="./assets/imgs/logo_coletek.png" alt=""/>
-                        </div>
-                        <h4>Siga-nos nas<br/>redes sociais!</h4>
-                        <ul>
-                            <li></li>
-                        </ul>
-                    </div>
-                    <div className="col-lg-3">
-                        <h4>Institucional</h4>
-                        <ul>
-                            <li>
-                                <a href="">Quem somos</a>
-                            </li>
-                            <li>
-                                <a href="">Blog</a>
-                            </li>
-                            <li>
-                                <a href="">Localização</a>
-                            </li>
-                            <li>
-                                <a href="">Trabalhe conosco</a>
-                            </li>
-                        </ul>
-                    </div>
-                    <div className="col-lg-3">
-                        <h4>Dúvidas</h4>
-                        <ul>
-                            <li>
-                                <a href="">Política de privacidade</a>
-                            </li>
-                            <li>
-                                <a href="">Política de entrega</a>
-                            </li>
-                            <li>
-                                <a href="">Termos e condições</a>
-                            </li>
-                            <li>
-                                <a href="">Central de atendimento</a>
-                            </li>
-                        </ul>
-                    </div>
-                    <div className="col-lg-3">
-                        <h4>Newsletter</h4>
-                        <p>Inscreva-se para receber nossas ofertas!</p>
-                        <form action="url" method="POST" id="newsletter-form">
-                            <div className="content-inp">
-                                <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e8eaed">
-                                    <path d="M160-160q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800h640q33 0 56.5 23.5T880-720v480q0 33-23.5 56.5T800-160H160Zm320-280 320-200v-80L480-520 160-720v80l320 200Z"/>
-                                </svg>
-                                <input type="text" name="email" placeholder="Digite seu email"/>
-                            </div>
-                            <button>
-                                Inscrever
-                            </button>
-                        </form>
-                    </div>
-                    <div className="copyright">
-                        <hr/>
-                        <p>©️ Coletek 2024.</p>
-                    </div>
-                </div>
-            </footer>
+            <Footer/>
         </main>
     </>
   );

@@ -10,7 +10,7 @@ const CartContext = createContext<CartContextType>({
     cartData: [],
     changeQtyItem: () => {},
     addToCart: () => false,
-    removeFromCart: () => {},
+    removeFromCart: () => false,
 });
 
 function debounce(func: (...args: any[]) => void, wait: number) {
@@ -55,15 +55,19 @@ export const CartProvider = ({ children }) => {
     };
 
     const removeFromCart = (id, idCor) => {
-        const itemExists = cartItems.find(p => p.pro_codigo === id);
-        setCartData([]);setCartItems([]);
+        const updatedCartData = cartData.filter(
+            item => !(item.id === id && item.colorId === idCor)
+        );
+        setCartData(updatedCartData);
+    
+        const hasOtherItemsWithSameId = updatedCartData.some(item => item.id === id);
+        if (!hasOtherItemsWithSameId) {
+            setCartItems(cartItems.filter(item => item.pro_codigo !== id));
+        }
+    
         debouncedSendCartToServer();
-        // if (itemExists) {
-        //     setCartData(cartData.filter(item => 
-        //         item.id !== id || item.colorId === idCor
-        //     ));
-        //     setCartItems(cartItems.filter(item => item.pro_codigo !== id));
-        // }
+    
+        return true;
     };
 
     const changeQtyItem = (id, newQty) => {
@@ -75,15 +79,19 @@ export const CartProvider = ({ children }) => {
 
     useEffect(() => {
         const fetchCartData = async () => {
-            console.log('entrou aqui')
             try {
                 const cart = await getCart(user.id);
-                localStorage.setItem('cart', JSON.stringify(cart.data))
-                if(cart.data && cart.data.length > 0) {
-                    const resp = await getProdsArr(cart.data.map(i => i.id));
-                    if(resp.data) {
-                        setCartItems(resp.data); 
-                        setCartData(cart.data);
+                localStorage.setItem('cart', JSON.stringify(cart.data.cart_data))
+                const cartdata = cart.data;
+                if(cartdata) {
+                    if(cartdata.cart_data) {
+                        if(cartdata.cart_data.length > 0) {
+                            const resp = await getProdsArr(cart.data.map(i => i.id));
+                            if(resp.data) {
+                                setCartItems(resp.data); 
+                                setCartData(cart.data);
+                            }
+                        }
                     }
                 }
             } catch (error) {
@@ -126,10 +134,10 @@ export const CartProvider = ({ children }) => {
 
     useEffect(() => {
         const fetchCartData = async (storage) => {
-            console.log('entrou aqui uééé´´e')
-            const data = storage ? localStorage.getItem('cart') : Cookies.get('cart')
+            const data = storage ? JSON.parse(localStorage.getItem('cart')) : Cookies.get('cart')
             if(data) {
-                const cookieCart = JSON.parse(data);
+                // console.log(data, 'avançando', JSON.parse(data))
+                const cookieCart = JSON.parse(JSON.stringify(data));
                 if (cookieCart.length > 0) {
                     try {
                         const cart = await getProdsArr(cookieCart.map(i => i.id));

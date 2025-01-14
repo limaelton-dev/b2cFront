@@ -21,7 +21,7 @@ export interface CartContextType {
     cartData: any[];
     changeQtyItem: (product: any, newV: number) => void;
     addToCart: (product: any, idCor: number) => boolean;
-    removeFromCart: (id: string, idCor: number) => void;
+    removeFromCart: (id: string, idCor: number) => boolean;
 }
 
 export interface AlertDialogContextType {

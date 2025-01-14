@@ -85,12 +85,26 @@ header .content-header .search .content-search .result-search {
     padding: 7px 5px 5px 5px;
     border: 1px solid #dedede
 }
+header .content-header .search .content-search .result-search li img {
+    color: transparent;
+    width: 50px;
+    height: 50px;
+    object-fit: contain;
+    margin-right: 7px;
+}
 header .content-header .search .content-search .result-search ul {
     margin: 0;
     list-style: none;
 }
 header .content-header .search .content-search .result-search ul li {
-    margin: 5px;
+    margin: 1px;
+    transition: all ease 0.3s;
+}
+header .content-header .search .content-search .result-search ul li a {
+    
+}
+header .content-header .search .content-search .result-search ul li:hover a {
+    text-decoration: underline !important;
 }
 header .content-header .search .content-search form {
     display: flex;
@@ -128,6 +142,16 @@ header .content-header .user-preference {
     display: flex;
     justify-content: space-around;
 }
+header .content-header .user-preference .entre-cad {
+    font-size: 13px;
+    line-height: 16px;
+}
+header .content-header .user-preference .entre-cad a {
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 13px;
+    color: #6c7ba3;
+}
 header .content-header .user-preference .content-preference {
     display: flex;
     align-items: center;
@@ -156,7 +180,6 @@ header .content-header .categories ul li {
     font-weight: bold;
 }
 header .content-header .user {
-    width: 23%;
     display: flex;
     justify-content: flex-end;
 }
@@ -165,6 +188,9 @@ header .content-header .user .content-img {
     border-radius: 12px;
     overflow: hidden;
     margin-right: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 header .content-header .user .content-img img {
     width: 42px;

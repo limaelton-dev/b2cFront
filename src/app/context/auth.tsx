@@ -1,6 +1,7 @@
 "use client"
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { AuthContextType, User } from '../interfaces/interfaces';
+import { checkAuth } from '../services/auth';
 
 const AuthContext = createContext<AuthContextType>({
     user: {
@@ -12,12 +13,32 @@ const AuthContext = createContext<AuthContextType>({
 });
 
 export const AuthProvider = ({ children }) => {
-    const [user, setUser] = useState<User | null>(null);
+    const [auth, setAuth] = useState(false);
+    const [user, setUser] = useState<User>({
+        id: 0,
+        name: '',
+        email: ''
+    });
 
     useEffect(() => {
-        if(localStorage.getItem('user') != null)
-            setUser(JSON.parse(localStorage.getItem('user')))
+        const validateAuth = async () => {
+            try {
+                const isAuthenticated = await checkAuth();
+                setAuth(isAuthenticated);
+            } catch (error) {
+                console.error('Erro ao verificar autenticação:', error);
+                setAuth(false);
+            }
+        };
+
+        validateAuth();
     }, []);
+    
+    useEffect(() => {
+        if(localStorage.getItem('user') != null && auth) {
+            setUser(JSON.parse(localStorage.getItem('user')))
+        }
+    }, [auth]);
     
     const setUserFn = (user: User) => {
         setUser(user);

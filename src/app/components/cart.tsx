@@ -79,7 +79,9 @@ export default function Cart({ cartOpened, onCartToggle }) {
     const handleAlertRemoveItem = (id, colorId) => {
         openDialog('Tem certeza que deseja remover este produto?', '', 'Não', 'Sim', (confirm) =>  {
             if(confirm) {
-                removeFromCart(id, colorId)
+                if(removeFromCart(id, colorId)) {
+                    showToast('Item removido.','success')
+                }
             }
         })
     }
@@ -247,9 +249,15 @@ export default function Cart({ cartOpened, onCartToggle }) {
                     <div className="totals">
                         <span>Subtotal: </span>
                         <span className='price-totals'>
-                            <b>R$ {cartItems
-                                    .reduce((total, item) => total + (item.pro_valorultimacompra * cartData[cartItems.findIndex(i => i.pro_codigo == item.pro_codigo)].qty), 0)
-                                    .toFixed(2).replace('.',',')
+                            <b>R$ {cartData.reduce((total, item) => {
+                                        const cartItem = cartItems.find(i => i.pro_codigo === item.id);
+                                        if (cartItem) {
+                                            return total + (cartItem.pro_valorultimacompra * item.qty);
+                                        }
+                                        return total;
+                                    }, 0)
+                                    .toFixed(2)
+                                    .replace('.', ',')
                                 }
                             </b>
                         </span>
@@ -290,7 +298,7 @@ export default function Cart({ cartOpened, onCartToggle }) {
                             </b>
                         </span>
                     </div>
-                    <a href="#" className="link-to-buy">Finalizar Pedido</a>
+                    <a href="/checkout" className="link-to-buy">Finalizar Pedido</a>
                 </div>
             </Box>
         </Drawer>

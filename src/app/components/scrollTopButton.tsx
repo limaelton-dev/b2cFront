@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 
 const ScrollTopButton = () => {
     const [isVisible, setIsVisible] = useState(false);
@@ -31,18 +32,19 @@ const ScrollTopButton = () => {
             position: 'fixed',
             bottom: '20px',
             right: '20px',
-            padding: '10px 20px',
+            padding: '15px 15px',
+            boxShadow: '0px 0px 8px 1px #0000007a',
             backgroundColor: '#007BFF',
             color: '#fff',
             border: 'none',
-            borderRadius: '5px',
+            borderRadius: '100%',
             cursor: 'pointer',
             zIndex: 1000,
             pointerEvents: isVisible ? 'all' : 'none',
             opacity: isVisible ? '1' : '0',
             transition: 'all ease 0.3s'
         }}>
-            Voltar ao topo
+            <ArrowUpwardIcon />
         </button>
     )
 };
