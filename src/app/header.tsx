@@ -12,6 +12,8 @@ import { useAuth } from './context/auth';
 import PersonOutlineOutlinedIcon from '@mui/icons-material/PersonOutlineOutlined';
 import { useRouter } from 'next/navigation';
 import { AuthContextType, User } from './interfaces/interfaces';
+import { Link } from '@mui/material';
+import MenuIcon from '@mui/icons-material/Menu';
 
 const URL = process.env.NEXT_PUBLIC_URL || '';
 export default function Header({ cartOpened, onCartToggle }) {
@@ -172,14 +174,37 @@ export default function Header({ cartOpened, onCartToggle }) {
                         </div>
                     </div>
                     <div className="row d-flex">
-                        <div className="categories">
+                        <div className="categories d-flex justify-content-between">
+                            <div className="menu" style={{color: '#1976d2'}}>
+                                <MenuIcon sx={{marginRight: '5px', color: "#1976d2"}} />
+                                Departamentos
+                            </div>
                             <ul>
-                                <li>Celulares/Tablets</li>
-                                <li>Headsets/fones</li>
-                                <li>Notebooks/computadores</li>
-                                <li>Televisão/Rádios</li>
-                                <li>Todos os acessórios</li>
-                                <li>Outra página</li>
+                                <li>
+                                    <Link underline="hover" color="inherit" href="/produtos?categoria=acessorio">
+                                        Acessórios
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link underline="hover" color="inherit" href="/produtos?categoria=audio">
+                                        Audio
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link underline="hover" color="inherit" href="/produtos?categoria=energia">
+                                        Energia
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link underline="hover" color="inherit" href="/produtos?categoria=gabinete">
+                                        Gabinete de refrigeração
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link className='btn-buy-primary ofertas-link' underline="hover" color="inherit" href="/produtos?offer=sim">
+                                        Super Ofertas
+                                    </Link>
+                                </li>
                             </ul>
                         </div>
                         

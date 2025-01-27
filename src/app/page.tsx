@@ -19,7 +19,7 @@ export default function HomePage() {
     const [marcas, setMarcas] = useState<object[]>([]);
     const [prodsOfertas, setProdOfertas] = useState<object[]>([]);
 
-    useEffect(() => {
+    useEffect(() => { //Apenas enquanto não a api não estiver pronta
         setProdsNew([
             {name: 'Bebedouro com Compressor ADD4923L 127V Philips', img: 'https://www.portalcoletek.com.br/Imagens/PHILIPS_ADD4923L_01.jpg', price: 'R$ 254,90', sku: 'ADD4923L127V-PL'},
             {name: 'Garrafa de Agua Daily AWP2731GRR Cinza Philips', img: 'https://www.portalcoletek.com.br/Imagens/PHILIPS_AWP2731GRR_01.jpg', price: 'R$ 119,90', sku: 'AWP2731GRR-PL'},

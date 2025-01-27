@@ -1,0 +1,23 @@
+@import url('--globalClasses.css');
+@import url('./produto/content.css');
+@import url('./produtos/filtros.css');
+@import url('./home/cart.css');
+@import url('./produto/tabs.css');
+@import url('./home/footer.css');
+@import url('./home/header.css');
+@import url('./produto/products.css');
+
+.products {
+    padding: 0px 10px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 5px;
+}
+.products .product {
+    width: 250px !important;
+}
+.products .product img {
+    width: 225px !important;
+    height: 225px !important;
+}

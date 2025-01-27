@@ -1,0 +1,50 @@
+.filtros-bg {
+
+}
+.filtros-bg .filtros {
+    
+}
+.MuiFormControlLabel-label {
+    font-size: 14px;
+}
+h4.title-filtros {
+    margin-top: 20px;
+    padding-left: 15px;
+}
+.filtro .categorias,
+.filtro .marcas {
+    padding-left: 15px !important
+}
+.filtro .MuiCheckbox-root {
+    padding: 3px;
+}
+.filtro .MuiFormControlLabel-root {
+    margin-left: 0px;
+    padding-left: 5px;
+}
+.filtro .MuiAccordionSummary-content.Mui-expanded {
+    margin: 12px 0px !important;
+}
+.filtro .MuiAccordionSummary-root {
+    height: 48px !important;
+}
+.filtro .MuiAccordionSummary-root.Mui-expanded {
+    height: 48px !important;
+    min-height: 48px !important;
+}
+.filtro .MuiAccordion-rounded.Mui-expanded {
+    margin-bottom: 0px !important;
+}
+.filtro .MuiAccordion-rounded {
+    --Paper-shadow: none !important;
+}
+.filtro .MuiAccordion-rounded.Mui-expanded {
+    --Paper-shadow: 0px 2px 1px -1px rgba(0,0,0,0.2),0px 1px 1px 0px rgba(0,0,0,0.14),0px 1px 3px 0px rgba(0,0,0,0.12);
+}
+.filtro .categorias a, .filtro .marcas a{
+    color: black;
+}
+.filtro .MuiFormControlLabel-labelPlacementStart {
+    display: flex !important;
+    justify-content: space-between !important; 
+}

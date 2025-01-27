@@ -166,7 +166,7 @@ header .content-header .user-preference .content-preference svg {
     position: relative;
 }
 header .content-header .categories {
-    width: 77%;
+    width: 100%;
     display: flex;
 }
 header .content-header .categories ul {
@@ -206,4 +206,19 @@ header .content-header .user .content-text p.email {
     font-size: 11px;
     font-weight: 600;
     color: gray;
+}
+header .ofertas-link {
+    text-transform: capitalize;
+    justify-content: center;
+    font-size: 12px;
+    padding: 6px 33px;
+    border: 1px solid #1976d2;
+    background-color: white;
+    color: #1976d2; 
+    text-decoration: none !important;
+    transition: all ease 0.3s;
+}
+header .ofertas-link:hover {
+    background-color: #1976d2;
+    color: white;
 }
