@@ -174,6 +174,9 @@ const ProductsPage = () => {
                                     (5% OFF)
                                 </div>
                             </div>
+                            <div className='addToCartBox d-flex justify-content-center'>
+                                <button type='button' className='addToCartButton'>Adicionar ao carrinho</button>
+                            </div>
                         </div>
                     ))}
                 </div>

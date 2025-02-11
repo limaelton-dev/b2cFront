@@ -10,6 +10,7 @@ import Header from './header';
 import Footer from './footer';
 import Cart from './components/cart';
 import { Carousel } from 'primereact/carousel';
+import { Typography } from '@mui/material';
 
 const URL = process.env.NEXT_PUBLIC_URL || '';
 export default function HomePage() {
@@ -53,7 +54,16 @@ export default function HomePage() {
             {name: 'Fone Com Microfone Game 7.1 USB H500GS Preto HP', img: 'https://www.portalcoletek.com.br/Imagens/HPGAMING_9AJ66AA_01.jpg', price: 'R$ 319,90', sku: 'H500GS-HP'}
         ]);
 
+        
     }, []);
+    
+    const responsiveOptions = [
+        { breakpoint: "1400px", numVisible: 4, numScroll: 2 },
+        { breakpoint: "1199px", numVisible: 3, numScroll: 2 },
+        { breakpoint: "991px", numVisible: 2, numScroll: 2 },
+        { breakpoint: "767px", numVisible: 1, numScroll: 1 },
+        { breakpoint: "575px", numVisible: 1, numScroll: 1 }  
+    ];
 
     const productTemplate = (product) => {
         return (
@@ -84,9 +94,18 @@ export default function HomePage() {
                         </svg>
                     </div>
                 </div>
-                <div className="title-product">
+                <Typography
+                    variant="body1"
+                    className='title-product'
+                    sx={{
+                        display: "-webkit-box",
+                        WebkitBoxOrient: "vertical",
+                        WebkitLineClamp: 2,
+                        overflow: "hidden",
+                    }}
+                >
                     {product.name}
-                </div>
+                </Typography>
                 <div className="description">
                     {product.sku}
                 </div>
@@ -215,7 +234,7 @@ export default function HomePage() {
                             <p>Lançamentos</p>
                         </div>
                         <div className="products prod-listing">
-                            <Carousel value={prodsNew} numVisible={4} numScroll={2} itemTemplate={productTemplate}/>
+                            <Carousel value={prodsNew} numVisible={4} numScroll={2} itemTemplate={productTemplate} responsiveOptions={responsiveOptions}/>
                             
                         </div>
                     </div>
@@ -236,7 +255,7 @@ export default function HomePage() {
                             <p>Mais vendidos</p>
                         </div>
                         <div className="products prod-listing">
-                            <Carousel value={prodsMaisVend} numVisible={4} numScroll={2} itemTemplate={productTemplate}/>
+                            <Carousel value={prodsMaisVend} numVisible={4} numScroll={2} itemTemplate={productTemplate} responsiveOptions={responsiveOptions}/>
                         </div>
                     </div>
                 </section>
