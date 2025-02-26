@@ -7,8 +7,8 @@ import { Alert, Snackbar, Slide, Typography, Box, List } from '@mui/material';
 import DadosPessoais from './components/DadosPessoais';
 import MinhasComprasPage from './components/MinhasComprasPage';
 import MeusEnderecos from './components/MeusEnderecos';
-import MeusCartoes from './components/MeusCartoes';
 import SideBar from './components/SideBar';
+import MeusCartoes from './components/MeusCartoes';
 
 import PlaceOutlinedIcon from '@mui/icons-material/PlaceOutlined';
 import CreditCardIcon from '@mui/icons-material/CreditCard';
@@ -18,7 +18,7 @@ import LocalMallOutlinedIcon from '@mui/icons-material/LocalMallOutlined';
 
 const mainItems = [
     {
-        icon: <FeaturedPlayListOutlinedIcon sx={{color: '#4C90F3'}} />,
+        icon: <FeaturedPlayListOutlinedIcon sx={{color: '#102d57'}} />,
         label: 'Meus dados',
         subItems: [
             { icon: <></>, label: 'Dados pessoais'},
@@ -26,11 +26,11 @@ const mainItems = [
         ],
     },
     {
-        icon: <LocalMallOutlinedIcon sx={{color: '#4C90F3'}}/>,
+        icon: <LocalMallOutlinedIcon sx={{color: '#102d57'}}/>,
         label: 'Minhas compras',
     },
     {
-        icon: <CreditCardIcon sx={{color: '#4C90F3'}}/>,
+        icon: <CreditCardIcon sx={{color: '#102d57'}}/>,
         label: 'Meus cartões',
     }
 ];
@@ -47,23 +47,23 @@ const MyAccountPage = () => {
     }
 
     const renderContent = () => {
-      switch (renderedSection) {
-        case 'Dados pessoais':
-          return <DadosPessoais />;
-        case 'Minhas compras':
-          return <MinhasComprasPage />;
-        case 'Meus endereços':
-          return <MeusEnderecos />;
-        case 'Meus cartões':
-          return <MeusCartoes />;
-        default:
-          return (
-            <Typography sx={{ marginBottom: 2 }}>
-              Selecione uma opção no menu.
-            </Typography>
-          );
-      }
-    };
+        switch (renderedSection) {
+          case 'Dados pessoais':
+            return <DadosPessoais />;
+          case 'Minhas compras':
+            return <MinhasComprasPage />;
+          case 'Meus endereços':
+            return <MeusEnderecos />;
+          case 'Meus cartões':
+            return <MeusCartoes />;
+          default:
+            return (
+              <Typography sx={{ marginBottom: 2 }}>
+                Selecione uma opção no menu.
+              </Typography>
+            );
+        }
+      };
 
     const handleClose = (event, reason) => {
         if (reason === 'clickaway') {
@@ -94,21 +94,20 @@ const MyAccountPage = () => {
         <Header cartOpened={openedCart} onCartToggle={setOpenedCart} />
         
         <main>
-            {/* <Typography sx={{padding:'0px 291.5px'}}> Minha Conta </Typography> */}
             <Box 
-    sx={{
-        padding: '0px 291.5px',
-        display: 'flex',
-        gap: '1',
-    }}
->
-    <Box sx={{ marginTop: '24px', width: '20%' }}>
-        <SideBar items={mainItems} onSectionChange={setRenderedSection} />
-    </Box>
-    <Box sx={{ marginTop: '24px', flex: 1 }}> {/* O restante do espaço será ocupado por este Box */}
-        {renderContent()}
-    </Box>
-</Box>
+                sx={{
+                    padding: '0px 291.5px',
+                    display: 'flex',
+                    gap: '1',
+                }}
+            >
+                <Box sx={{ marginTop: '24px', width: '20%' }}>
+                    <SideBar items={mainItems} onSectionChange={setRenderedSection} />
+                </Box>
+                <Box sx={{ marginTop: '24px', marginLeft: '40px', flex: 1 }}>
+                    {renderContent()}
+                </Box>
+            </Box>
         </main>
     </>
   );

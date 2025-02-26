@@ -21,7 +21,7 @@ const InfoCardPersonalData: React.FC<InfoCardProps> = ({ label, description }) =
           <Typography 
             sx={{ fontSize: '12px' }}
           >
-            {label} <VerifiedIcon sx={{color: 'green', marginLeft: '2px', fontSize: '15px'}}/>
+            {label} <VerifiedIcon sx={{color: '#102d57', marginLeft: '2px', fontSize: '15px'}}/>
           </Typography>
           <Typography
             color="text.secondary"

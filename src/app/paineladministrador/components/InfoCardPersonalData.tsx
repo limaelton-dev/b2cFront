@@ -10,9 +10,9 @@ interface InfoCardProps {
 const InfoCardPersonalData: React.FC<InfoCardProps> = ({ label, description }) => {
   return (
     <Card sx={{ display: 'flex', flexDirection: 'row', width: '100%' }}>
-      <CardContent sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+      <CardContent sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', py: 1 }}>
         <Box component="div">
-          <Typography variant="h6" component="div">
+          <Typography variant="subtitle1" component="div">
             {label} <VerifiedIcon fontSize="small" sx={{color: 'green', marginLeft: '2px'}}/>
           </Typography>
           <Typography variant="body2" component="div" color="text.secondary">
@@ -20,7 +20,7 @@ const InfoCardPersonalData: React.FC<InfoCardProps> = ({ label, description }) =
           </Typography>
         </Box>
         <Box component="div">
-          <Button variant="text">Alterar</Button>
+          <Button variant="text" size="small">Alterar</Button>
         </Box>
       </CardContent>
     </Card>
