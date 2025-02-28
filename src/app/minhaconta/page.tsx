@@ -32,7 +32,7 @@ const mainItems = [
     {
         icon: <CreditCardIcon sx={{color: '#102d57'}}/>,
         label: 'Meus cartões',
-    }
+    }//
 ];
 
 
