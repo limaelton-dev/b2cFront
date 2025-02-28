@@ -53,7 +53,7 @@ const MeusEnderecos: React.FC = () => {
   };
 
   return (
-    <Box>
+    <Box sx={{ mb: 2.5 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2.5 }}>
         <Typography 
           variant="h5" 
@@ -83,12 +83,14 @@ const MeusEnderecos: React.FC = () => {
         </Button>
       </Box>
       
+      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2.5 }} />
+      
       <Box sx={{ 
         backgroundColor: 'white', 
         borderRadius: '4px',
-        p: 3
+        p: 2.5
       }}>
-        <Grid container spacing={3}>
+        <Grid container spacing={2.5}>
           {enderecos.map((endereco) => (
             <Grid item xs={12} md={6} key={endereco.id}>
               <AddressCard 
@@ -105,9 +107,9 @@ const MeusEnderecos: React.FC = () => {
           <Box 
             sx={{ 
               textAlign: 'center', 
-              py: 6,
-              backgroundColor: 'white',
-              borderRadius: '4px',
+              py: 5,
+              backgroundColor: 'rgba(0, 0, 0, 0.02)',
+              borderRadius: '6px',
               mt: 2
             }}
           >
@@ -115,6 +117,7 @@ const MeusEnderecos: React.FC = () => {
               variant="body1"
               sx={{ 
                 color: '#666',
+                fontSize: '0.85rem',
                 mb: 2
               }}
             >
@@ -126,6 +129,8 @@ const MeusEnderecos: React.FC = () => {
               onClick={handleAddNew}
               sx={{ 
                 backgroundColor: '#102d57',
+                fontSize: '0.8rem',
+                padding: '6px 12px',
                 '&:hover': {
                   backgroundColor: '#0a1e3a',
                 }

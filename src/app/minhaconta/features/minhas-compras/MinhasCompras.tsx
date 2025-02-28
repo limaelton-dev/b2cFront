@@ -117,7 +117,8 @@ const MinhasCompras: React.FC = () => {
             width: 290,
             border: '1px solid #eaeaea',
             boxShadow: 'none',
-            borderRadius: '4px'
+            borderRadius: '4px',
+            height: '36px'
           }}
           onSubmit={handleSearch}
         >
@@ -129,7 +130,7 @@ const MinhasCompras: React.FC = () => {
           />
           <IconButton 
             type="submit" 
-            sx={{ p: '7px', color: '#102d57' }} 
+            sx={{ p: '6px', color: '#102d57' }} 
             aria-label="search"
           >
             <SearchIcon />

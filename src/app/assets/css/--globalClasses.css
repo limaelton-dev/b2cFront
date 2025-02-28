@@ -1,6 +1,30 @@
 * {
     scroll-behavior: smooth !important;
 }
+
+html {
+    overflow-y: scroll; /* Força a barra de rolagem vertical a ser sempre exibida */
+    scrollbar-width: thin; /* Para Firefox - barra de rolagem mais fina */
+}
+
+/* Estilização da barra de rolagem para navegadores baseados em WebKit (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+    width: 8px; /* Largura da barra de rolagem */
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1; /* Cor do fundo da barra */
+}
+
+::-webkit-scrollbar-thumb {
+    background: #c1c1c1; /* Cor da barra de rolagem */
+    border-radius: 4px; /* Borda arredondada */
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #a1a1a1; /* Cor da barra de rolagem ao passar o mouse */
+}
+
 .c-red {
     color: red;
 }

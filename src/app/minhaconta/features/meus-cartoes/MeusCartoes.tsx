@@ -40,7 +40,7 @@ const MeusCartoes: React.FC = () => {
   };
 
   return (
-    <Box>
+    <Box sx={{ mb: 2.5 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2.5 }}>
         <Typography 
           variant="h5" 
@@ -69,6 +69,8 @@ const MeusCartoes: React.FC = () => {
           Novo Cartão
         </Button>
       </Box>
+      
+      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2.5 }} />
       
       <Box sx={{ 
         p: 0.5

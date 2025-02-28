@@ -26,7 +26,7 @@ const DadosPessoais: React.FC = () => {
   };
 
   return (
-    <Box>
+    <Box sx={{ mb: 2.5 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2.5 }}>
         <Typography 
           variant="h5" 
@@ -54,13 +54,14 @@ const DadosPessoais: React.FC = () => {
         </Button>
       </Box>
       
+      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2.5 }} />
+      
       <Box sx={{ 
         backgroundColor: 'white', 
         borderRadius: '4px',
-        border: '1px solid #eaeaea',
-        overflow: 'hidden'
+        p: 2.5
       }}>
-        <Box sx={{ p: 3 }}>
+        <Box>
           <InfoCard 
             label="Nome completo" 
             description={dadosPessoais.nome} 
