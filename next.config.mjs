@@ -12,6 +12,12 @@ const nextConfig = {
                 port: '',
                 pathname: '/Imagens/**',
             },
+            {
+                protocol: 'http',
+                hostname: 'www.portalcoletek.com.br',
+                port: '',
+                pathname: '/imagens/**',
+            },
         ],
     },
 };

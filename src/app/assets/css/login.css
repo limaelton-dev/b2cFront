@@ -212,6 +212,9 @@ ul li {
     top: 45%;
     transform: translateY(-50%);
 }
+.login-register .icons-inputs.error input, .login-register .icons-inputs .error input{
+    border: 1px solid red;
+}
 .login-register .icons-inputs i:first-of-type {
     color: #555555;
 }

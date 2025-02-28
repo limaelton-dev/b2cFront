@@ -13,10 +13,19 @@ export const getProduto = async (id) => {
     }
 };
 
-
 export const getProdsArr = async (arr) => {
     try {
         const response = await axios.get(`${API_URL}/produtos/${arr.join(',')}`);
+        return response;
+    }
+    catch (err) {
+        return err;
+    }
+};
+
+export const getProdsLimit = async (limit) => {
+    try {
+        const response = await axios.get(`${API_URL}/produtos?limit=${limit}`);
         return response;
     }
     catch (err) {

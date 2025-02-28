@@ -6,7 +6,7 @@ const JWT_SECRET = process.env.NEXT_PUBLIC_JWT_SECRET || '';
 
 const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
-export const login = async (email, password) => {
+export const login = async (email, password, repassword) => {
     try {
         const response = await axios.post(`${API_URL}/user/login`, { email, password });
         return response.data;
