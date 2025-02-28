@@ -1,3 +1,5 @@
+"use client";
+import { useRouter, usePathname } from 'next/navigation';
 import * as React from 'react';
 //não esquecer de criar "Cartões*"
 import { styled, useTheme, Theme, CSSObject } from '@mui/material/styles';
@@ -28,7 +30,6 @@ import VerifiedIcon from '@mui/icons-material/Verified';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import AccountCircle from '@mui/icons-material/AccountCircle';
 import MoreIcon from '@mui/icons-material/MoreVert';
-import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import Avatar from '@mui/material/Avatar';
 import ArrowRightIcon from '@mui/icons-material/ArrowRight';
 
@@ -36,6 +37,25 @@ import Image from 'next/image';
 import LogoColetek from '../../assets/img/logo_coletek_white.png';
 import UserImage from '../../assets/img/user.jpg';
 import DadosPessoaisForm from './forms/DadosPessoaisForm';
+import ProductsPage from './ProductsPage';
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import Inventory2Icon from '@mui/icons-material/Inventory2';
+import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
+import PeopleIcon from '@mui/icons-material/People';
+import SettingsIcon from '@mui/icons-material/Settings';
+import {
+  Store,
+  Payment,
+  LocalShipping,
+  Notifications,
+  Security,
+  Email,
+  Receipt,
+  Api,
+  Language,
+  Group,
+  ShoppingCart as ShoppingCartMenuIcon
+} from '@mui/icons-material';
 
 const drawerWidth = 240;
 
@@ -108,18 +128,42 @@ const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' 
   }),
 );
 
-export default function FullPage() {
+const menuItems = [
+  {
+    title: 'Dashboard',
+    path: '/paineladministrador',
+    icon: <DashboardIcon />
+  },
+  {
+    title: 'Produtos',
+    path: '/paineladministrador/produtos',
+    icon: <Inventory2Icon />
+  },
+  {
+    title: 'Pedidos',
+    path: '/paineladministrador/pedidos',
+    icon: <ShoppingCartIcon />
+  },
+  {
+    title: 'Clientes',
+    path: '/paineladministrador/clientes',
+    icon: <PeopleIcon />
+  }
+];
+
+const configItems = [
+  {
+    title: 'Configurações',
+    path: '/paineladministrador/configuracoes',
+    icon: <SettingsIcon />
+  }
+];
+
+export default function FullPage({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
+  const pathname = usePathname();
   const theme = useTheme();
   const [open, setOpen] = React.useState(false);
-  const [selectedSection, setSelectedSection] = React.useState('Dados Pessoais');
-  const [fadeIn, setFadeIn] = React.useState(true);
-  const [renderedSection, setRenderedSection] = React.useState('Dados Pessoais');
-
-  const drawerIcons = [
-    <BadgeIcon />,
-    <ShoppingBagIcon />,
-    <PlaceIcon />,
-  ];
 
   const handleDrawerOpen = () => {
     setOpen(true);
@@ -129,29 +173,11 @@ export default function FullPage() {
     setOpen(false);
   };
 
-  const handleListItemClick = (section: string) => {
-    setSelectedSection(section); // Atualiza o titulo de guia dentro da página
-    setFadeIn(false); // Iniciar a transição de saída
-    setTimeout(() => {
-      setRenderedSection(section); // Atualiza o conteúdo após a transição de saída
-      setFadeIn(true); // Iniciar a transição de entrada
-    }, 300); // Tempo da transição de saída
+  const getCurrentPageTitle = () => {
+    const allItems = [...menuItems, ...configItems];
+    const currentItem = allItems.find(item => item.path === pathname);
+    return currentItem?.title || 'Painel';
   };
-
-  // const renderContent = () => {
-  //   switch (renderedSection) {
-  //     case 'Dados Pessoais':
-  //       return <DadosPessoaisForm />;
-  //     case 'Produtos'
-  //        return <Produtos />;
-  //     default:
-  //       return (
-  //         <Typography sx={{ marginBottom: 2 }}>
-  //           Selecione uma opção no menu.
-  //         </Typography>
-  //       );
-  //   }
-  // };
 
   return (
     <Box sx={{ display: 'flex' }}>
@@ -179,7 +205,7 @@ export default function FullPage() {
             </Typography>
           <Box component="div">
           </Box>
-          {/**esse box eu quero deixar no final a direita */}
+          
           <Box sx={{ display: { xs: 'none', md: 'flex' }, marginLeft: 'auto' }}>
             {/* <IconButton size="large" aria-label="show 4 new mails" color="inherit">
               <Badge badgeContent={4} color="error">
@@ -225,12 +251,35 @@ export default function FullPage() {
           }}
         >
           <Box sx={{ display: 'flex', alignItems: 'center', overflow: 'hidden' }}>
-            <Avatar alt="Joao" src={UserImage.src} sx={{ width: 40, height: 40, marginRight: 2 }} />
-            <Box sx={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' , justifyContent: 'center'}}>
-              <Typography variant="caption" noWrap>
+            <Avatar 
+              alt="Joao" 
+              src={UserImage.src} 
+              sx={{ 
+                width: 28, 
+                height: 28, 
+                marginRight: 1,
+                border: '2px solid #691111'
+              }} 
+            />
+            <Box sx={{ 
+              display: 'flex', 
+              flexDirection: 'column', 
+              overflow: 'hidden', 
+              justifyContent: 'center' 
+            }}>
+              <Typography 
+                variant="caption" 
+                noWrap 
+                sx={{ fontSize: '0.7rem', fontWeight: 500 }}
+              >
                 João Silva
               </Typography>
-              <Typography variant="caption" color="textSecondary" noWrap>
+              <Typography 
+                variant="caption" 
+                color="text.secondary" 
+                noWrap 
+                sx={{ fontSize: '0.65rem' }}
+              >
                 joaosilva24@email.com
               </Typography>
             </Box>
@@ -243,29 +292,79 @@ export default function FullPage() {
         <Divider/>
 
         <List>
-          {['Dados Pessoais', 'Produtos'].map((text, index) => (
-            <ListItem key={text} disablePadding sx={{ display: 'block' }}>
+          {menuItems.map((item) => (
+            <ListItem key={item.path} disablePadding sx={{ display: 'block' }}>
               <ListItemButton
-                onClick={() => handleListItemClick(text)}
                 sx={{
-                  minHeight: 48,
-                  px: 2.5,
+                  minHeight: 42,
                   justifyContent: open ? 'initial' : 'center',
+                  px: 2.5,
+                  backgroundColor: pathname === item.path ? 'rgba(0, 0, 0, 0.04)' : 'transparent'
                 }}
+                onClick={() => router.push(item.path)}
               >
                 <ListItemIcon
                   sx={{
                     minWidth: 0,
                     mr: open ? 3 : 'auto',
                     justifyContent: 'center',
-                    color: '#691111'
+                    color: pathname === item.path ? 'primary.main' : 'inherit',
+                    '& .MuiSvgIcon-root': {
+                      fontSize: '1.2rem'
+                    }
                   }}
                 >
-                  {drawerIcons[index]}
+                  {item.icon}
                 </ListItemIcon>
-                <ListItemText
-                  primary={text}
-                  sx={{ opacity: open ? 1 : 0 }}
+                <ListItemText 
+                  primary={item.title} 
+                  sx={{ 
+                    opacity: open ? 1 : 0,
+                    color: pathname === item.path ? 'primary.main' : 'inherit',
+                    '& .MuiTypography-root': {
+                      fontSize: '0.85rem'
+                    }
+                  }} 
+                />
+              </ListItemButton>
+            </ListItem>
+          ))}
+        </List>
+        <Divider />
+        <List>
+          {configItems.map((item) => (
+            <ListItem key={item.path} disablePadding sx={{ display: 'block' }}>
+              <ListItemButton
+                sx={{
+                  minHeight: 42,
+                  justifyContent: open ? 'initial' : 'center',
+                  px: 2.5,
+                  backgroundColor: pathname === item.path ? 'rgba(0, 0, 0, 0.04)' : 'transparent'
+                }}
+                onClick={() => router.push(item.path)}
+              >
+                <ListItemIcon
+                  sx={{
+                    minWidth: 0,
+                    mr: open ? 3 : 'auto',
+                    justifyContent: 'center',
+                    color: pathname === item.path ? 'primary.main' : 'inherit',
+                    '& .MuiSvgIcon-root': {
+                      fontSize: '1.2rem'
+                    }
+                  }}
+                >
+                  {item.icon}
+                </ListItemIcon>
+                <ListItemText 
+                  primary={item.title} 
+                  sx={{ 
+                    opacity: open ? 1 : 0,
+                    color: pathname === item.path ? 'primary.main' : 'inherit',
+                    '& .MuiTypography-root': {
+                      fontSize: '0.85rem'
+                    }
+                  }} 
                 />
               </ListItemButton>
             </ListItem>
@@ -274,21 +373,25 @@ export default function FullPage() {
       </Drawer>
       <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
         <DrawerHeader />
-        <Typography variant="caption">
-          <span style={{ color: '#691111' }}>Minha conta</span>
-          <span style={{ color: '#0C114E' }}><ArrowRightIcon /></span>
-          <span style={{ color: '#0C114E' }}>{selectedSection}</span>
+        <Typography variant="caption" sx={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <span style={{ color: '#691111', fontSize: '0.75rem' }}>Painel Admin</span>
+          <ArrowRightIcon sx={{ fontSize: '0.9rem', color: '#0C114E' }} />
+          <span style={{ color: '#0C114E', fontSize: '0.75rem' }}>{getCurrentPageTitle()}</span>
         </Typography>
 
-        {selectedSection && (
-          <Fade in={fadeIn} timeout={500}>
-            <Box 
-              sx={{padding:'20px 200px'}}
-            > 
-              {/* {renderContent()} */}
-            </Box>
-          </Fade>
-        )}
+        <Box 
+          sx={{
+            padding: { 
+              xs: '12px', 
+              sm: '16px 60px', 
+              md: '20px 100px' 
+            },
+            maxWidth: '1000px',
+            margin: '0 auto'
+          }}
+        > 
+          {children}
+        </Box>
       </Box>
     </Box>
   );

@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Box } from '@mui/material';
-import InfoCardPersonalData from '../../minhaconta/components/InfoCardPersonalData';
+import InfoCardPersonalData from '../InfoCardPersonalData';
 
-const DadosPessoais = () => {
+const DadosContaForm = () => {
   const [formData, setFormData] = useState({
     nome: 'João Alvino Silva',
     cpf: '581.728.380-85',
@@ -13,14 +13,7 @@ const DadosPessoais = () => {
   });
 
   return (
-    <Box 
-      component="div" 
-      display="flex" 
-      flexWrap="wrap" 
-      gap={2} 
-      margin={1} 
-      sx={{ flexShrink: '0'}}
-    >
+    <Box component="div" display="flex" flexWrap="wrap" gap={2} margin={3}>
       <InfoCardPersonalData label="Nome completo" description={formData.nome} />
       <InfoCardPersonalData label="Data Nascimento" description={formData.dob} />
       <InfoCardPersonalData label="CPF" description={formData.cpf} />
@@ -31,4 +24,4 @@ const DadosPessoais = () => {
   );
 };
 
-export default DadosPessoais;
+export default DadosContaForm; 

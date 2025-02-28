@@ -1,115 +1,127 @@
 "use client"
-import React from 'react';
-import '../assets/css/minhaconta.css';
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Box } from '@mui/material';
 import Header from '../header';
-import { Alert, Snackbar, Slide, Typography, Box, List } from '@mui/material';
-import DadosPessoais from './components/DadosPessoais';
-import MinhasComprasPage from './components/MinhasComprasPage';
-import MeusEnderecos from './components/MeusEnderecos';
-import MeusCartoes from './components/MeusCartoes';
-import SideBar from './components/SideBar';
+import SideBar from './components/layout/SideBar';
+import DadosPessoais from './features/dados-pessoais/DadosPessoais';
+import MeusEnderecos from './features/meus-enderecos/MeusEnderecos';
+import MeusCartoes from './features/meus-cartoes/MeusCartoes';
+import MinhasCompras from './features/minhas-compras/MinhasCompras';
+import Cart from '../components/cart';
+import { useNotificationContext } from './context/NotificationContext';
+import { MainItemType } from './types';
 
+// Importações de CSS necessárias para o header
+import '../assets/css/--globalClasses.css';
+import '../assets/css/home.css';
+import '../assets/css/home/header.css';
+import '../assets/css/home/cart.css';
+import '../assets/css/home/footer.css';
+import '../assets/css/home/categorias.css';
+
+// Ícones
 import PlaceOutlinedIcon from '@mui/icons-material/PlaceOutlined';
 import CreditCardIcon from '@mui/icons-material/CreditCard';
 import FeaturedPlayListOutlinedIcon from '@mui/icons-material/FeaturedPlayListOutlined';
 import BadgeOutlinedIcon from '@mui/icons-material/BadgeOutlined';
 import LocalMallOutlinedIcon from '@mui/icons-material/LocalMallOutlined';
 
-const mainItems = [
-    {
-        icon: <FeaturedPlayListOutlinedIcon sx={{color: '#4C90F3'}} />,
-        label: 'Meus dados',
-        subItems: [
-            { icon: <></>, label: 'Dados pessoais'},
-            { icon: <></>, label: 'Meus endereços'},
-        ],
-    },
-    {
-        icon: <LocalMallOutlinedIcon sx={{color: '#4C90F3'}}/>,
-        label: 'Minhas compras',
-    },
-    {
-        icon: <CreditCardIcon sx={{color: '#4C90F3'}}/>,
-        label: 'Meus cartões',
-    }
+// Definição dos itens do menu lateral
+const mainItems: MainItemType[] = [
+  {
+    icon: <FeaturedPlayListOutlinedIcon sx={{color: '#102d57'}} />,
+    label: 'Meus dados',
+    subItems: [
+      { icon: <BadgeOutlinedIcon sx={{color: '#102d57', fontSize: 20}} />, label: 'Dados pessoais'},
+      { icon: <PlaceOutlinedIcon sx={{color: '#102d57', fontSize: 20}} />, label: 'Meus endereços'},
+    ],
+  },
+  {
+    icon: <LocalMallOutlinedIcon sx={{color: '#102d57'}}/>,
+    label: 'Minhas compras',
+  },
+  {
+    icon: <CreditCardIcon sx={{color: '#102d57'}}/>,
+    label: 'Meus cartões',
+  }
 ];
 
+const MyAccountPage: React.FC = () => {
+  // Estado para controlar o carrinho
+  const [openedCart, setOpenedCart] = useState(false);
+  
+  // Estado para controlar a seção atual
+  const [activeSection, setActiveSection] = useState('Dados pessoais');
+  
+  // Usando o contexto de notificação
+  const { showSuccess } = useNotificationContext();
 
-const MyAccountPage = () => {
+  // Adiciona classes CSS necessárias ao body
+  useEffect(() => {
+    // Exibe uma mensagem de boas-vindas
+    showSuccess('Bem-vindo à sua área de cliente!');
+    
+    // Limpa as classes ao desmontar o componente
+    return () => {
+    };
+  }, [showSuccess]);
 
-    const [openedCart, setOpenedCart] = useState(false);
-
-    const [renderedSection, setRenderedSection] = React.useState('Dados Pessoais');
-
-    const handleSectionChange = (section) => {
-        setRenderedSection(section);
+  // Função para renderizar o conteúdo com base na seção ativa
+  const renderContent = () => {
+    switch (activeSection) {
+      case 'Dados pessoais':
+        return <DadosPessoais />;
+      case 'Meus endereços':
+        return <MeusEnderecos />;
+      case 'Minhas compras':
+        return <MinhasCompras />;
+      case 'Meus cartões':
+        return <MeusCartoes />;
+      default:
+        return <DadosPessoais />;
     }
+  };
 
-    const renderContent = () => {
-      switch (renderedSection) {
-        case 'Dados pessoais':
-          return <DadosPessoais />;
-        case 'Minhas compras':
-          return <MinhasComprasPage />;
-        case 'Meus endereços':
-          return <MeusEnderecos />;
-        case 'Meus cartões':
-          return <MeusCartoes />;
-        default:
-          return (
-            <Typography sx={{ marginBottom: 2 }}>
-              Selecione uma opção no menu.
-            </Typography>
-          );
-      }
-    };
-
-    const handleClose = (event, reason) => {
-        if (reason === 'clickaway') {
-          return;
-        }
-
-    };
-
-    return (
+  return (
     <>
-        <Snackbar
-            sx={{ borderRadius: '3px'}}
-            autoHideDuration={6000}
-            onClose={handleClose}
-            TransitionComponent={Slide}
-        >   
-            <Alert severity="info" sx={{ 
-                width: '100%',
-                boxShadow: '0px 0px 1px 1px red;',
-                background: 'white',
-                color: 'red',
-                '.MuiAlert-icon': {
-                    color: 'red',
-                }
-            }}>
-            </Alert>
-        </Snackbar>
+      <div className="container-fluid p-0">
         <Header cartOpened={openedCart} onCartToggle={setOpenedCart} />
-        
-        <main>
-            {/* <Typography sx={{padding:'0px 291.5px'}}> Minha Conta </Typography> */}
-            <Box 
-    sx={{
-        padding: '0px 291.5px',
-        display: 'flex',
-        gap: '1',
-    }}
->
-    <Box sx={{ marginTop: '24px', width: '20%' }}>
-        <SideBar items={mainItems} onSectionChange={setRenderedSection} />
-    </Box>
-    <Box sx={{ marginTop: '24px', flex: 1 }}> {/* O restante do espaço será ocupado por este Box */}
-        {renderContent()}
-    </Box>
-</Box>
-        </main>
+        <Cart cartOpened={openedCart} onCartToggle={setOpenedCart} />
+      </div>
+      
+      <main>
+        <Box 
+          sx={{
+            maxWidth: '1296px',
+            width: '100%',
+            margin: '0 auto',
+            display: 'flex',
+            flexDirection: { xs: 'column', md: 'row' },
+            gap: { xs: 3, md: 4 },
+            pb: 6,
+            mt: 4,
+          }}
+        >
+          <Box sx={{ 
+            width: { xs: '100%', md: '280px' }, 
+            flexShrink: 0,
+            mt: { xs: 2, md: 0 },
+          }}>
+            <SideBar 
+              items={mainItems} 
+              onSectionChange={setActiveSection} 
+              activeSection={activeSection}
+            />
+          </Box>
+          
+          <Box sx={{ 
+            flex: 1, 
+            mt: { xs: 0, md: 0 },
+          }}>
+            {renderContent()}
+          </Box>
+        </Box>
+      </main>
     </>
   );
 };
