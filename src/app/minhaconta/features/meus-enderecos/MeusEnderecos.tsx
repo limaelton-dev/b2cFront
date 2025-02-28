@@ -54,12 +54,13 @@ const MeusEnderecos: React.FC = () => {
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2.5 }}>
         <Typography 
           variant="h5" 
           sx={{ 
             color: '#102d57',
             fontWeight: 500,
+            fontSize: '1.15rem'
           }}
         >
           Meus Endereços
@@ -71,6 +72,8 @@ const MeusEnderecos: React.FC = () => {
           onClick={handleAddNew}
           sx={{ 
             backgroundColor: '#102d57',
+            fontSize: '0.8rem',
+            padding: '6px 12px',
             '&:hover': {
               backgroundColor: '#0a1e3a',
             }
@@ -80,53 +83,59 @@ const MeusEnderecos: React.FC = () => {
         </Button>
       </Box>
       
-      <Grid container spacing={3}>
-        {enderecos.map((endereco) => (
-          <Grid item xs={12} md={6} key={endereco.id}>
-            <AddressCard 
-              endereco={endereco}
-              onEdit={() => handleEdit(endereco.id)}
-              onDelete={() => handleDelete(endereco.id)}
-              onSetDefault={!endereco.isPrincipal ? () => handleSetDefault(endereco.id) : undefined}
-            />
-          </Grid>
-        ))}
-      </Grid>
-      
-      {enderecos.length === 0 && (
-        <Box 
-          sx={{ 
-            textAlign: 'center', 
-            py: 6,
-            backgroundColor: 'rgba(0, 0, 0, 0.02)',
-            borderRadius: '8px',
-            mt: 2
-          }}
-        >
-          <Typography 
-            variant="body1"
+      <Box sx={{ 
+        backgroundColor: 'white', 
+        borderRadius: '4px',
+        p: 3
+      }}>
+        <Grid container spacing={3}>
+          {enderecos.map((endereco) => (
+            <Grid item xs={12} md={6} key={endereco.id}>
+              <AddressCard 
+                endereco={endereco}
+                onEdit={() => handleEdit(endereco.id)}
+                onDelete={() => handleDelete(endereco.id)}
+                onSetDefault={!endereco.isPrincipal ? () => handleSetDefault(endereco.id) : undefined}
+              />
+            </Grid>
+          ))}
+        </Grid>
+        
+        {enderecos.length === 0 && (
+          <Box 
             sx={{ 
-              color: '#666',
-              mb: 2
+              textAlign: 'center', 
+              py: 6,
+              backgroundColor: 'white',
+              borderRadius: '4px',
+              mt: 2
             }}
           >
-            Você ainda não possui endereços cadastrados.
-          </Typography>
-          <Button 
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={handleAddNew}
-            sx={{ 
-              backgroundColor: '#102d57',
-              '&:hover': {
-                backgroundColor: '#0a1e3a',
-              }
-            }}
-          >
-            Adicionar Endereço
-          </Button>
-        </Box>
-      )}
+            <Typography 
+              variant="body1"
+              sx={{ 
+                color: '#666',
+                mb: 2
+              }}
+            >
+              Você ainda não possui endereços cadastrados.
+            </Typography>
+            <Button 
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={handleAddNew}
+              sx={{ 
+                backgroundColor: '#102d57',
+                '&:hover': {
+                  backgroundColor: '#0a1e3a',
+                }
+              }}
+            >
+              Adicionar Endereço
+            </Button>
+          </Box>
+        )}
+      </Box>
     </Box>
   );
 };

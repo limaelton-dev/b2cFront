@@ -41,12 +41,13 @@ const MeusCartoes: React.FC = () => {
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2.5 }}>
         <Typography 
           variant="h5" 
           sx={{ 
             color: '#102d57',
             fontWeight: 500,
+            fontSize: '1.15rem'
           }}
         >
           Meus Cartões
@@ -58,6 +59,8 @@ const MeusCartoes: React.FC = () => {
           onClick={handleAddNew}
           sx={{ 
             backgroundColor: '#102d57',
+            fontSize: '0.8rem',
+            padding: '6px 12px',
             '&:hover': {
               backgroundColor: '#0a1e3a',
             }
@@ -67,52 +70,59 @@ const MeusCartoes: React.FC = () => {
         </Button>
       </Box>
       
-      <Grid container spacing={3}>
-        {cartoes.map((cartao) => (
-          <Grid item xs={12} md={6} key={cartao.id}>
-            <CreditCard 
-              cartao={cartao}
-              onEdit={() => handleEdit(cartao.id)}
-              onDelete={() => handleDelete(cartao.id)}
-            />
-          </Grid>
-        ))}
-      </Grid>
-      
-      {cartoes.length === 0 && (
-        <Box 
-          sx={{ 
-            textAlign: 'center', 
-            py: 6,
-            backgroundColor: 'rgba(0, 0, 0, 0.02)',
-            borderRadius: '8px',
-            mt: 2
-          }}
-        >
-          <Typography 
-            variant="body1"
+      <Box sx={{ 
+        p: 0.5
+      }}>
+        <Grid container spacing={2.5}>
+          {cartoes.map((cartao) => (
+            <Grid item xs={12} sm={6} md={4} key={cartao.id}>
+              <CreditCard 
+                cartao={cartao}
+                onEdit={() => handleEdit(cartao.id)}
+                onDelete={() => handleDelete(cartao.id)}
+              />
+            </Grid>
+          ))}
+        </Grid>
+        
+        {cartoes.length === 0 && (
+          <Box 
             sx={{ 
-              color: '#666',
-              mb: 2
+              textAlign: 'center', 
+              py: 5,
+              backgroundColor: 'rgba(0, 0, 0, 0.02)',
+              borderRadius: '6px',
+              mt: 2
             }}
           >
-            Você ainda não possui cartões cadastrados.
-          </Typography>
-          <Button 
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={handleAddNew}
-            sx={{ 
-              backgroundColor: '#102d57',
-              '&:hover': {
-                backgroundColor: '#0a1e3a',
-              }
-            }}
-          >
-            Adicionar Cartão
-          </Button>
-        </Box>
-      )}
+            <Typography 
+              variant="body1"
+              sx={{ 
+                color: '#666',
+                fontSize: '0.85rem',
+                mb: 2
+              }}
+            >
+              Você ainda não possui cartões cadastrados.
+            </Typography>
+            <Button 
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={handleAddNew}
+              sx={{ 
+                backgroundColor: '#102d57',
+                fontSize: '0.8rem',
+                padding: '6px 12px',
+                '&:hover': {
+                  backgroundColor: '#0a1e3a',
+                }
+              }}
+            >
+              Adicionar Cartão
+            </Button>
+          </Box>
+        )}
+      </Box>
     </Box>
   );
 };

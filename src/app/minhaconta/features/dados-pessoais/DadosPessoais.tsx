@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { Box, Typography, Grid, Button } from '@mui/material';
+import { Box, Typography, Button, Divider } from '@mui/material';
 import InfoCard from '../../components/ui/InfoCard';
-import VerifiedIcon from '@mui/icons-material/Verified';
 import PersonIcon from '@mui/icons-material/Person';
 import EmailIcon from '@mui/icons-material/Email';
 import PhoneIcon from '@mui/icons-material/Phone';
@@ -28,12 +27,13 @@ const DadosPessoais: React.FC = () => {
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2.5 }}>
         <Typography 
           variant="h5" 
           sx={{ 
             color: '#102d57',
             fontWeight: 500,
+            fontSize: '1.15rem'
           }}
         >
           Dados Pessoais
@@ -43,6 +43,8 @@ const DadosPessoais: React.FC = () => {
           variant="contained"
           sx={{ 
             backgroundColor: '#102d57',
+            fontSize: '0.8rem',
+            padding: '6px 12px',
             '&:hover': {
               backgroundColor: '#0a1e3a',
             }
@@ -52,61 +54,56 @@ const DadosPessoais: React.FC = () => {
         </Button>
       </Box>
       
-      <Grid container spacing={2}>
-        <Grid item xs={12} md={6}>
+      <Box sx={{ 
+        backgroundColor: 'white', 
+        borderRadius: '4px',
+        border: '1px solid #eaeaea',
+        overflow: 'hidden'
+      }}>
+        <Box sx={{ p: 3 }}>
           <InfoCard 
             label="Nome completo" 
             description={dadosPessoais.nome} 
             icon={<PersonIcon sx={{ color: '#102d57', fontSize: 20 }} />}
             onAction={() => handleEdit('nome')}
           />
-        </Grid>
-        
-        <Grid item xs={12} md={6}>
+          
           <InfoCard 
             label="Data de Nascimento" 
             description={dadosPessoais.dob} 
             icon={<CakeIcon sx={{ color: '#102d57', fontSize: 20 }} />}
             onAction={() => handleEdit('dob')}
           />
-        </Grid>
-        
-        <Grid item xs={12} md={6}>
+          
           <InfoCard 
             label="CPF" 
             description={dadosPessoais.cpf} 
             icon={<BadgeIcon sx={{ color: '#102d57', fontSize: 20 }} />}
             onAction={() => handleEdit('cpf')}
           />
-        </Grid>
-        
-        <Grid item xs={12} md={6}>
+          
           <InfoCard 
             label="Username" 
             description={dadosPessoais.username} 
             icon={<AccountCircleIcon sx={{ color: '#102d57', fontSize: 20 }} />}
             onAction={() => handleEdit('username')}
           />
-        </Grid>
-        
-        <Grid item xs={12} md={6}>
+          
           <InfoCard 
             label="E-mail" 
             description={dadosPessoais.email} 
             icon={<EmailIcon sx={{ color: '#102d57', fontSize: 20 }} />}
             onAction={() => handleEdit('email')}
           />
-        </Grid>
-        
-        <Grid item xs={12} md={6}>
+          
           <InfoCard 
             label="Telefone" 
             description={dadosPessoais.phone} 
             icon={<PhoneIcon sx={{ color: '#102d57', fontSize: 20 }} />}
             onAction={() => handleEdit('phone')}
           />
-        </Grid>
-      </Grid>
+        </Box>
+      </Box>
     </Box>
   );
 };

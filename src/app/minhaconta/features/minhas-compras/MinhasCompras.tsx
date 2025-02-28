@@ -23,7 +23,7 @@ function TabPanel(props: TabPanelProps) {
       {...other}
     >
       {value === index && (
-        <Box sx={{ pt: 3 }}>
+        <Box sx={{ pt: 2.5 }}>
           {children}
         </Box>
       )}
@@ -76,39 +76,33 @@ const MinhasCompras: React.FC = () => {
     setTabValue(newValue);
   };
 
-  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(event.target.value);
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log(`Pesquisando por: ${searchTerm}`);
+    // Aqui será implementada a lógica para pesquisar pedidos
   };
 
-  // Filtra os pedidos com base na aba selecionada e no termo de pesquisa
+  // Filtrar pedidos com base no status e termo de pesquisa
   const filteredPedidos = pedidos.filter(pedido => {
-    // Filtra por status com base na aba selecionada
-    if (tabValue === 1 && pedido.status !== 'A caminho') return false;
-    if (tabValue === 2 && pedido.status !== 'Entregue') return false;
-    if (tabValue === 3 && pedido.status !== 'Cancelada') return false;
+    // Filtrar por status (tab)
+    if (tabValue === 1 && pedido.status !== 'Entregue') return false;
+    if (tabValue === 2 && pedido.status !== 'Cancelada') return false;
     
-    // Filtra por termo de pesquisa
-    if (searchTerm) {
-      const searchTermLower = searchTerm.toLowerCase();
-      const hasProdutoMatch = pedido.produtos.some(produto => 
-        produto.nome.toLowerCase().includes(searchTermLower)
-      );
-      const hasIdMatch = pedido.id.toString().includes(searchTerm);
-      
-      return hasProdutoMatch || hasIdMatch;
-    }
+    // Filtrar por termo de pesquisa
+    if (searchTerm && !pedido.id.toString().includes(searchTerm)) return false;
     
     return true;
   });
 
   return (
-    <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+    <Box sx={{ mb: 2.5 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2.5 }}>
         <Typography 
           variant="h5" 
           sx={{ 
             color: '#102d57',
             fontWeight: 500,
+            fontSize: '1.15rem'
           }}
         >
           Minhas Compras
@@ -120,20 +114,24 @@ const MinhasCompras: React.FC = () => {
             p: '2px 4px', 
             display: 'flex', 
             alignItems: 'center', 
-            width: 300,
-            border: '1px solid #e0e0e0',
+            width: 290,
+            border: '1px solid #eaeaea',
             boxShadow: 'none',
-            borderRadius: '8px'
+            borderRadius: '4px'
           }}
+          onSubmit={handleSearch}
         >
           <InputBase
-            sx={{ ml: 1, flex: 1 }}
-            placeholder="Buscar pedidos..."
-            inputProps={{ 'aria-label': 'buscar pedidos' }}
+            sx={{ ml: 1, flex: 1, fontSize: '0.8rem' }}
+            placeholder="Pesquisar por número do pedido"
             value={searchTerm}
-            onChange={handleSearchChange}
+            onChange={(e) => setSearchTerm(e.target.value)}
           />
-          <IconButton type="button" sx={{ p: '10px' }} aria-label="search">
+          <IconButton 
+            type="submit" 
+            sx={{ p: '7px', color: '#102d57' }} 
+            aria-label="search"
+          >
             <SearchIcon />
           </IconButton>
         </Paper>
@@ -142,139 +140,116 @@ const MinhasCompras: React.FC = () => {
       <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
         <Tabs 
           value={tabValue} 
-          onChange={handleTabChange}
-          variant="scrollable"
-          scrollButtons="auto"
+          onChange={handleTabChange} 
+          aria-label="pedidos tabs"
           sx={{
-            '.MuiTab-root': {
+            '& .MuiTab-root': {
+              fontSize: '0.8rem',
               textTransform: 'none',
               fontWeight: 500,
-              fontSize: '14px',
+              color: '#666',
+              px: 2.5,
               minWidth: 'auto',
-              px: 3,
+              '&.Mui-selected': {
+                color: '#102d57',
+              }
             },
-            '.Mui-selected': {
-              color: '#102d57',
-            },
-            '.MuiTabs-indicator': {
+            '& .MuiTabs-indicator': {
               backgroundColor: '#102d57',
             }
           }}
         >
-          <Tab label="Todos" />
-          <Tab label="Em andamento" />
+          <Tab label="Todos os pedidos" />
           <Tab label="Entregues" />
           <Tab label="Cancelados" />
         </Tabs>
       </Box>
       
-      <TabPanel value={tabValue} index={0}>
-        {filteredPedidos.length > 0 ? (
-          filteredPedidos.map(pedido => (
-            <OrderCard key={pedido.id} pedido={pedido} />
-          ))
-        ) : (
-          <Box 
-            sx={{ 
-              textAlign: 'center', 
-              py: 6,
-              backgroundColor: 'rgba(0, 0, 0, 0.02)',
-              borderRadius: '8px',
-              mt: 2
-            }}
-          >
-            <Typography 
-              variant="body1"
+      <Box sx={{ backgroundColor: 'white', p: 2.5, borderRadius: '4px' }}>
+        <TabPanel value={tabValue} index={0}>
+          {filteredPedidos.length > 0 ? (
+            filteredPedidos.map(pedido => (
+              <OrderCard key={pedido.id} pedido={pedido} />
+            ))
+          ) : (
+            <Box 
               sx={{ 
-                color: '#666'
+                textAlign: 'center', 
+                py: 5,
+                backgroundColor: 'rgba(0, 0, 0, 0.02)',
+                borderRadius: '6px',
+                mt: 2
               }}
             >
-              Nenhum pedido encontrado.
-            </Typography>
-          </Box>
-        )}
-      </TabPanel>
-      
-      <TabPanel value={tabValue} index={1}>
-        {filteredPedidos.length > 0 ? (
-          filteredPedidos.map(pedido => (
-            <OrderCard key={pedido.id} pedido={pedido} />
-          ))
-        ) : (
-          <Box 
-            sx={{ 
-              textAlign: 'center', 
-              py: 6,
-              backgroundColor: 'rgba(0, 0, 0, 0.02)',
-              borderRadius: '8px',
-              mt: 2
-            }}
-          >
-            <Typography 
-              variant="body1"
+              <Typography 
+                variant="body1"
+                sx={{ 
+                  color: '#666',
+                  fontSize: '0.85rem'
+                }}
+              >
+                Nenhum pedido encontrado.
+              </Typography>
+            </Box>
+          )}
+        </TabPanel>
+        
+        <TabPanel value={tabValue} index={1}>
+          {filteredPedidos.length > 0 ? (
+            filteredPedidos.map(pedido => (
+              <OrderCard key={pedido.id} pedido={pedido} />
+            ))
+          ) : (
+            <Box 
               sx={{ 
-                color: '#666'
+                textAlign: 'center', 
+                py: 5,
+                backgroundColor: 'rgba(0, 0, 0, 0.02)',
+                borderRadius: '6px',
+                mt: 2
               }}
             >
-              Nenhum pedido em andamento.
-            </Typography>
-          </Box>
-        )}
-      </TabPanel>
-      
-      <TabPanel value={tabValue} index={2}>
-        {filteredPedidos.length > 0 ? (
-          filteredPedidos.map(pedido => (
-            <OrderCard key={pedido.id} pedido={pedido} />
-          ))
-        ) : (
-          <Box 
-            sx={{ 
-              textAlign: 'center', 
-              py: 6,
-              backgroundColor: 'rgba(0, 0, 0, 0.02)',
-              borderRadius: '8px',
-              mt: 2
-            }}
-          >
-            <Typography 
-              variant="body1"
+              <Typography 
+                variant="body1"
+                sx={{ 
+                  color: '#666',
+                  fontSize: '0.85rem'
+                }}
+              >
+                Nenhum pedido entregue.
+              </Typography>
+            </Box>
+          )}
+        </TabPanel>
+        
+        <TabPanel value={tabValue} index={2}>
+          {filteredPedidos.length > 0 ? (
+            filteredPedidos.map(pedido => (
+              <OrderCard key={pedido.id} pedido={pedido} />
+            ))
+          ) : (
+            <Box 
               sx={{ 
-                color: '#666'
+                textAlign: 'center', 
+                py: 5,
+                backgroundColor: 'rgba(0, 0, 0, 0.02)',
+                borderRadius: '6px',
+                mt: 2
               }}
             >
-              Nenhum pedido entregue.
-            </Typography>
-          </Box>
-        )}
-      </TabPanel>
-      
-      <TabPanel value={tabValue} index={3}>
-        {filteredPedidos.length > 0 ? (
-          filteredPedidos.map(pedido => (
-            <OrderCard key={pedido.id} pedido={pedido} />
-          ))
-        ) : (
-          <Box 
-            sx={{ 
-              textAlign: 'center', 
-              py: 6,
-              backgroundColor: 'rgba(0, 0, 0, 0.02)',
-              borderRadius: '8px',
-              mt: 2
-            }}
-          >
-            <Typography 
-              variant="body1"
-              sx={{ 
-                color: '#666'
-              }}
-            >
-              Nenhum pedido cancelado.
-            </Typography>
-          </Box>
-        )}
-      </TabPanel>
+              <Typography 
+                variant="body1"
+                sx={{ 
+                  color: '#666',
+                  fontSize: '0.85rem'
+                }}
+              >
+                Nenhum pedido cancelado.
+              </Typography>
+            </Box>
+          )}
+        </TabPanel>
+      </Box>
     </Box>
   );
 };

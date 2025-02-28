@@ -46,22 +46,14 @@ export default function SideBar({ items, onSectionChange, activeSection }: SideB
   };
 
   return (
-    <Box
-      sx={{
-        width: '100%',
-        bgcolor: 'background.paper',
-        borderRadius: '8px',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-        overflow: 'hidden',
-      }}
-    >
+    <Box>
       <Typography
         variant="h6"
         sx={{
-          padding: '16px',
-          borderBottom: '1px solid #f0f0f0',
           fontWeight: 500,
           color: '#102d57',
+          mb: 2,
+          fontSize: '1.1rem',
         }}
       >
         Minha Conta
@@ -69,7 +61,7 @@ export default function SideBar({ items, onSectionChange, activeSection }: SideB
       <List
         component="nav"
         aria-labelledby="nested-list-subheader"
-        sx={{ padding: '8px 0' }}
+        sx={{ padding: 0 }}
       >
         {items.map((item, index) => (
           <React.Fragment key={`main-item-${index}`}>
@@ -78,7 +70,9 @@ export default function SideBar({ items, onSectionChange, activeSection }: SideB
               selected={activeSection === item.label || (item.subItems?.some(subItem => subItem.label === activeSection))}
               sx={{
                 borderRadius: '4px',
-                margin: '2px 8px',
+                pl: 0,
+                pr: 2,
+                py: 0.75,
                 '&.Mui-selected': {
                   backgroundColor: 'rgba(16, 45, 87, 0.08)',
                   '&:hover': {
@@ -90,19 +84,18 @@ export default function SideBar({ items, onSectionChange, activeSection }: SideB
                 },
               }}
             >
-              <ListItemIcon sx={{ minWidth: '40px' }}>
+              <ListItemIcon sx={{ minWidth: '36px' }}>
                 {item.icon}
               </ListItemIcon>
               <ListItemText 
                 primary={item.label} 
                 primaryTypographyProps={{ 
-                  sx: { 
-                    fontWeight: activeSection === item.label ? 500 : 400,
-                    fontSize: '0.95rem',
+                  sx: {
+                    fontSize: '0.85rem',
                   } 
                 }}
               />
-              {item.subItems && (openIndexes.includes(index) ? <ExpandLess /> : <ExpandMore />)}
+              {item.subItems && (openIndexes.includes(index) ? <ExpandLess fontSize="small" /> : <ExpandMore fontSize="small" />)}
             </ListItemButton>
             
             {item.subItems && (
@@ -121,27 +114,33 @@ export default function SideBar({ items, onSectionChange, activeSection }: SideB
                             key={`sub-item-${index}-${subIndex}`}
                             sx={{
                               pl: 4,
+                              pr: 2,
+                              py: 0.75,
                               borderRadius: '4px',
-                              margin: '2px 8px 2px 16px',
                               '&.Mui-selected': {
-                                backgroundColor: 'rgba(16, 45, 87, 0.08)',
+                                backgroundColor: 'transparent',
+                                color: '#102d57',
                                 '&:hover': {
-                                  backgroundColor: 'rgba(16, 45, 87, 0.12)',
+                                  backgroundColor: 'rgba(0, 0, 0, 0.04)',
                                 },
+                              },
+                              '&:hover': {
+                                backgroundColor: 'rgba(0, 0, 0, 0.04)',
                               },
                             }}
                             selected={activeSection === subItem.label}
                             onClick={() => handleSubItemClick(subItem.label)}
                           >
-                            <ListItemIcon sx={{ minWidth: '40px' }}>
+                            <ListItemIcon sx={{ minWidth: '36px' }}>
                               {subItem.icon}
                             </ListItemIcon>
                             <ListItemText 
                               primary={subItem.label} 
                               primaryTypographyProps={{ 
                                 sx: { 
-                                  fontWeight: activeSection === subItem.label ? 500 : 400,
-                                  fontSize: '0.9rem',
+                                  fontWeight: activeSection === subItem.label ? 600 : 400,
+                                  fontSize: '0.8rem',
+                                  color: activeSection === subItem.label ? '#102d57' : 'inherit',
                                 } 
                               }}
                             />

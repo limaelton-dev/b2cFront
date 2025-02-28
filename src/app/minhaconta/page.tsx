@@ -92,8 +92,8 @@ const MyAccountPage: React.FC = () => {
       <main>
         <Box 
           sx={{
-            padding: { xs: '0 16px', sm: '0 24px', md: '0 48px', lg: '0 64px', xl: '0 120px' },
-            maxWidth: '1440px',
+            maxWidth: '1296px',
+            width: '100%',
             margin: '0 auto',
             display: 'flex',
             flexDirection: { xs: 'column', md: 'row' },
@@ -105,7 +105,7 @@ const MyAccountPage: React.FC = () => {
           <Box sx={{ 
             width: { xs: '100%', md: '280px' }, 
             flexShrink: 0,
-            mt: { xs: 2, md: 4 }
+            mt: { xs: 2, md: 0 },
           }}>
             <SideBar 
               items={mainItems} 
@@ -116,11 +116,7 @@ const MyAccountPage: React.FC = () => {
           
           <Box sx={{ 
             flex: 1, 
-            mt: { xs: 0, md: 4 },
-            backgroundColor: 'white',
-            borderRadius: '8px',
-            padding: { xs: '16px', sm: '24px' },
-            boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+            mt: { xs: 0, md: 0 },
           }}>
             {renderContent()}
           </Box>

@@ -25,14 +25,13 @@ const AddressCard: React.FC<AddressCardProps> = ({
     <Card 
       elevation={0}
       sx={{ 
-        border: '1px solid #e0e0e0',
-        borderRadius: '12px',
-        transition: 'all 0.3s ease',
+        border: '1px solid #eaeaea',
+        borderRadius: '4px',
+        transition: 'all 0.2s ease',
         position: 'relative',
         overflow: 'visible',
         '&:hover': {
-          boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-          transform: 'translateY(-2px)'
+          boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
         }
       }}
     >
@@ -43,34 +42,35 @@ const AddressCard: React.FC<AddressCardProps> = ({
           color="primary"
           sx={{ 
             position: 'absolute', 
-            top: '-10px', 
-            right: '16px',
+            top: '-8px', 
+            right: '12px',
             backgroundColor: '#102d57',
             fontWeight: 500,
-            fontSize: '0.7rem'
+            fontSize: '0.65rem',
+            height: '20px'
           }}
         />
       )}
       
       <CardContent 
         sx={{ 
-          padding: '24px',
-          '&:last-child': { paddingBottom: '24px' }
+          padding: '16px',
+          '&:last-child': { paddingBottom: '16px' }
         }}
       >
         <Box 
           sx={{ 
             display: 'flex', 
             flexDirection: 'column',
-            gap: 2
+            gap: 1.5
           }}
         >
           <Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-              <LocationOnIcon sx={{ color: '#102d57', mr: 1, fontSize: '20px' }} />
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
+              <LocationOnIcon sx={{ color: '#102d57', mr: 1, fontSize: '18px' }} />
               <Typography 
                 sx={{ 
-                  fontSize: '14px',
+                  fontSize: '13px',
                   fontWeight: 500,
                   color: '#666'
                 }}
@@ -80,7 +80,7 @@ const AddressCard: React.FC<AddressCardProps> = ({
             </Box>
             <Typography 
               sx={{ 
-                fontSize: '16px',
+                fontSize: '14px',
                 color: '#333',
                 ml: '28px'
               }}
@@ -91,11 +91,11 @@ const AddressCard: React.FC<AddressCardProps> = ({
           </Box>
           
           <Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-              <LocationCityIcon sx={{ color: '#102d57', mr: 1, fontSize: '20px' }} />
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
+              <LocationCityIcon sx={{ color: '#102d57', mr: 1, fontSize: '18px' }} />
               <Typography 
                 sx={{ 
-                  fontSize: '14px',
+                  fontSize: '13px',
                   fontWeight: 500,
                   color: '#666'
                 }}
@@ -105,7 +105,7 @@ const AddressCard: React.FC<AddressCardProps> = ({
             </Box>
             <Typography 
               sx={{ 
-                fontSize: '16px',
+                fontSize: '14px',
                 color: '#333',
                 ml: '28px'
               }}
@@ -120,7 +120,7 @@ const AddressCard: React.FC<AddressCardProps> = ({
               display: 'flex', 
               justifyContent: 'flex-end',
               gap: 1,
-              mt: 1
+              mt: 0.5
             }}
           >
             {!isPrincipal && onSetDefault && (
@@ -130,7 +130,8 @@ const AddressCard: React.FC<AddressCardProps> = ({
                 onClick={onSetDefault}
                 sx={{ 
                   color: '#102d57',
-                  fontSize: '12px'
+                  fontSize: '11px',
+                  padding: '2px 8px'
                 }}
               >
                 Definir como principal
@@ -139,16 +140,16 @@ const AddressCard: React.FC<AddressCardProps> = ({
             
             {onEdit && (
               <Button 
-                variant="outlined" 
+                variant="text" 
                 size="small"
                 startIcon={<EditIcon fontSize="small" />}
                 onClick={onEdit}
                 sx={{ 
-                  borderColor: '#102d57',
                   color: '#102d57',
+                  fontSize: '11px',
+                  padding: '2px 8px',
                   '&:hover': {
-                    borderColor: '#102d57',
-                    backgroundColor: 'rgba(16, 45, 87, 0.04)',
+                    backgroundColor: 'rgba(16, 45, 87, 0.04)'
                   }
                 }}
               >
@@ -158,11 +159,15 @@ const AddressCard: React.FC<AddressCardProps> = ({
             
             {onDelete && (
               <Button 
-                variant="outlined" 
+                variant="text" 
                 size="small"
                 color="error"
                 startIcon={<DeleteOutlineIcon fontSize="small" />}
                 onClick={onDelete}
+                sx={{
+                  fontSize: '11px',
+                  padding: '2px 8px'
+                }}
               >
                 Excluir
               </Button>

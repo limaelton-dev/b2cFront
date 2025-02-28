@@ -34,13 +34,13 @@ const OrderCard: React.FC<OrderCardProps> = ({ pedido }) => {
   const getStatusIcon = () => {
     switch (status) {
       case 'A caminho':
-        return <LocalShippingIcon sx={{ fontSize: '16px' }} />;
+        return <LocalShippingIcon sx={{ fontSize: '13px' }} />;
       case 'Entregue':
-        return <CheckCircleIcon sx={{ fontSize: '16px' }} />;
+        return <CheckCircleIcon sx={{ fontSize: '13px' }} />;
       case 'Cancelada':
-        return <CancelIcon sx={{ fontSize: '16px' }} />;
+        return <CancelIcon sx={{ fontSize: '13px' }} />;
       case 'Processando':
-        return <ScheduleIcon sx={{ fontSize: '16px' }} />;
+        return <ScheduleIcon sx={{ fontSize: '13px' }} />;
       default:
         return null;
     }
@@ -72,40 +72,40 @@ const OrderCard: React.FC<OrderCardProps> = ({ pedido }) => {
       elevation={0}
       sx={{
         border: '1px solid #e0e0e0',
-        borderRadius: '12px',
+        borderRadius: '7px',
         overflow: 'hidden',
         transition: 'all 0.2s ease',
-        mb: 3,
+        mb: 1.75,
         '&:hover': {
-          boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+          boxShadow: '0 2px 7px rgba(0,0,0,0.05)',
         }
       }}
     >
-      <CardContent sx={{ padding: '16px', '&:last-child': { paddingBottom: '16px' } }}>
+      <CardContent sx={{ padding: '14px', '&:last-child': { paddingBottom: '14px' } }}>
         <Box 
           sx={{ 
             display: 'flex', 
             justifyContent: 'space-between',
             alignItems: 'center',
-            mb: 1
+            mb: 0.75
           }}
         >
           <Typography 
             variant="subtitle1"
             sx={{ 
               fontWeight: 500,
-              fontSize: '16px'
+              fontSize: '0.9rem'
             }}
           >
             Pedido #{id}
           </Typography>
           
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.75 }}>
             <Typography 
               variant="body2"
               sx={{ 
                 color: '#666',
-                fontSize: '14px'
+                fontSize: '0.75rem'
               }}
             >
               {data}
@@ -119,6 +119,8 @@ const OrderCard: React.FC<OrderCardProps> = ({ pedido }) => {
                 backgroundColor: `${getStatusColor()}10`,
                 color: getStatusColor(),
                 fontWeight: 500,
+                fontSize: '0.68rem',
+                height: '19px',
                 '.MuiChip-icon': {
                   color: getStatusColor()
                 }
@@ -132,7 +134,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ pedido }) => {
             display: 'flex', 
             justifyContent: 'space-between',
             alignItems: 'center',
-            mt: 2
+            mt: 1.75
           }}
         >
           <Box>
@@ -140,8 +142,8 @@ const OrderCard: React.FC<OrderCardProps> = ({ pedido }) => {
               variant="body2"
               sx={{ 
                 color: '#666',
-                fontSize: '14px',
-                mb: 0.5
+                fontSize: '0.75rem',
+                mb: 0.35
               }}
             >
               {totalItems} {totalItems === 1 ? 'item' : 'itens'}
@@ -150,7 +152,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ pedido }) => {
               variant="h6"
               sx={{ 
                 fontWeight: 500,
-                fontSize: '18px',
+                fontSize: '0.95rem',
                 color: '#102d57'
               }}
             >
@@ -163,12 +165,13 @@ const OrderCard: React.FC<OrderCardProps> = ({ pedido }) => {
             size="small"
             sx={{ 
               backgroundColor: 'rgba(0, 0, 0, 0.04)',
+              padding: '3.5px',
               '&:hover': {
                 backgroundColor: 'rgba(0, 0, 0, 0.08)',
               }
             }}
           >
-            {expanded ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
+            {expanded ? <KeyboardArrowUpIcon fontSize="small" /> : <KeyboardArrowDownIcon fontSize="small" />}
           </IconButton>
         </Box>
         
@@ -180,7 +183,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ pedido }) => {
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.3 }}
             >
-              <Divider sx={{ my: 2 }} />
+              <Divider sx={{ my: 1.75 }} />
               
               <List disablePadding>
                 {produtos.map((produto, index) => (
@@ -188,7 +191,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ pedido }) => {
                     key={`produto-${index}`}
                     disablePadding
                     sx={{ 
-                      py: 1,
+                      py: 0.85,
                       px: 0
                     }}
                   >
@@ -196,17 +199,17 @@ const OrderCard: React.FC<OrderCardProps> = ({ pedido }) => {
                       <Avatar 
                         variant="rounded"
                         sx={{ 
-                          width: 60, 
-                          height: 60,
-                          borderRadius: '8px',
+                          width: 45, 
+                          height: 45,
+                          borderRadius: '5px',
                           backgroundColor: 'transparent'
                         }}
                       >
                         <Image 
                           src={produto.imagem} 
                           alt={produto.nome}
-                          width={60}
-                          height={60}
+                          width={45}
+                          height={45}
                           style={{ objectFit: 'contain' }}
                         />
                       </Avatar>
@@ -217,19 +220,19 @@ const OrderCard: React.FC<OrderCardProps> = ({ pedido }) => {
                           variant="body1"
                           sx={{ 
                             fontWeight: 500,
-                            fontSize: '15px'
+                            fontSize: '0.85rem'
                           }}
                         >
                           {produto.nome}
                         </Typography>
                       }
                       secondary={
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.5 }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.35 }}>
                           <Typography 
                             variant="body2"
                             sx={{ 
                               color: '#666',
-                              fontSize: '14px'
+                              fontSize: '0.75rem'
                             }}
                           >
                             Qtd: {produto.quantidade}
@@ -238,14 +241,14 @@ const OrderCard: React.FC<OrderCardProps> = ({ pedido }) => {
                             variant="body2"
                             sx={{ 
                               fontWeight: 500,
-                              fontSize: '14px'
+                              fontSize: '0.75rem'
                             }}
                           >
                             {produto.valor}
                           </Typography>
                         </Box>
                       }
-                      sx={{ ml: 1 }}
+                      sx={{ ml: 0.75 }}
                     />
                   </ListItem>
                 ))}
