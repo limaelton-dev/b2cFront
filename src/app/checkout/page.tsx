@@ -1,6 +1,6 @@
 "use client"
 import React from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import '../assets/css/checkout.css';
 import Image from 'next/image';
 import LogoColetek from '../assets/img/logo_coletek.png';
@@ -19,9 +19,12 @@ import { useAuth } from '../context/auth';
 import ReactInputMask from 'react-input-mask';
 import axios from 'axios';
 import { PaymentIcon } from 'react-svg-credit-card-payment-icons';
+import { useToastSide } from '../context/toastSide';
 
 
 const CheckoutPage = () => {
+    const router = useRouter();
+    const { showToast } = useToastSide();
     const { statusMessage, activeCoupon, coupon, setCouponFn } = useCoupon();
     const [tipoPessoa, setTipoPessoa] = useState('1');
     const [tipoCompra, setTipoCompra] = useState('1');
@@ -38,6 +41,22 @@ const CheckoutPage = () => {
     const { cartItems, cartData } = useCart();
     const [discountPix, setDiscountPix] = useState(5);
     const { user } = useAuth();
+
+    // Verificar se o usuário está logado
+    useEffect(() => {
+        if (!user || !user.id) {
+            showToast('Você precisa estar logado para finalizar a compra', 'error');
+            router.push('/login?redirect=checkout');
+        }
+    }, [user, router]);
+
+    // Verificar se há itens no carrinho
+    useEffect(() => {
+        if (cartItems.length === 0 || cartData.length === 0) {
+            showToast('Seu carrinho está vazio', 'error');
+            router.push('/');
+        }
+    }, [cartItems, cartData, router]);
 
     // Função para caso tenha descontos diferentes
     const applyDiscounts = (val) => {

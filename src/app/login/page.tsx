@@ -6,7 +6,7 @@ import LockIcon from '@mui/icons-material/Lock';
 import { useEffect, useState } from 'react';
 import { login } from '../services/auth';
 import { CookiesProvider, useCookies } from 'react-cookie';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Logo from '../assets/img/logo_coletek_white.png';
 import svgG from '../assets/img/svg/google.svg';
@@ -15,6 +15,8 @@ import { useAuth } from '../context/auth';
 
 export default function LoginPage() {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const redirect = searchParams.get('redirect');
     const { setUserFn } = useAuth();
     const [cookies, setCookie] = useCookies(['jwt','user']);
     const [isLoading, setIsLoading] = useState(false);
@@ -40,7 +42,13 @@ export default function LoginPage() {
         if(response.status == 200) {
             setUserFn(response.user);
             setCookie('jwt', response.token);
-            router.push('/');
+            
+            // Redirecionar para a página de checkout se o usuário veio de lá
+            if (redirect === 'checkout') {
+                router.push('/checkout');
+            } else {
+                router.push('/');
+            }
         }
         else {
             setIsLoading(false);

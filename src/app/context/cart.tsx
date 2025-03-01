@@ -33,8 +33,9 @@ export const CartProvider = ({ children }) => {
     const [cartItems, setCartItems] = useState([]); // Produtos
     const [cartData, setCartData] = useState([]); // Quantidade, Cor
     const { user } = useAuth();
+    const [previousLoginState, setPreviousLoginState] = useState(false);
 
-    const isLoggedIn = user;
+    const isLoggedIn = !!user && !!user.id;
 
     const addToCart = (product, idCor) => {
         const itemExists = cartItems.some(item => item.pro_codigo === product.pro_codigo && item.colorId == idCor);
@@ -77,47 +78,119 @@ export const CartProvider = ({ children }) => {
         setCartData(updatedItems);
     }
 
-    useEffect(() => {
-        const fetchCartData = async () => {
-            try {
-                const cart = await getCart(user.id);
-                if (cart && cart.data) {
-                    if (cart.data.cart_data) {
-                        localStorage.setItem('cart', JSON.stringify(cart.data.cart_data));
-                        const cartdata = cart.data;
-                        if (cartdata.cart_data && cartdata.cart_data.length > 0) {
-                            try {
-                                const resp = await getProdsArr(cartdata.cart_data.map(i => i.id));
-                                if (resp && resp.data && Array.isArray(resp.data)) {
-                                    // Filtra os itens do carrinho para incluir apenas aqueles que têm produtos correspondentes
-                                    const validCartData = cartdata.cart_data.filter(item => 
-                                        resp.data.some(product => product.pro_codigo == item.id)
-                                    );
-                                    
-                                    setCartItems(resp.data);
-                                    setCartData(validCartData);
-                                } else {
-                                    console.error('Dados de produtos inválidos recebidos do servidor');
-                                    setCartData([]);
-                                    setCartItems([]);
-                                }
-                            } catch (error) {
-                                console.error('Erro ao buscar produtos do carrinho:', error);
-                                setCartData([]);
-                                setCartItems([]);
+    // Função para carregar o carrinho do servidor
+    const loadServerCart = async () => {
+        try {
+            const cart = await getCart();
+            if (cart && cart.data) {
+                if (cart.data.cart_data) {
+                    const cartdata = cart.data;
+                    if (cartdata.cart_data && cartdata.cart_data.length > 0) {
+                        try {
+                            const resp = await getProdsArr(cartdata.cart_data.map(i => i.id));
+                            if (resp && resp.data && Array.isArray(resp.data)) {
+                                // Filtra os itens do carrinho para incluir apenas aqueles que têm produtos correspondentes
+                                const validCartData = cartdata.cart_data.filter(item => 
+                                    resp.data.some(product => product.pro_codigo == item.id)
+                                );
+                                
+                                setCartItems(resp.data);
+                                setCartData(validCartData);
+                                localStorage.setItem('cart', JSON.stringify(validCartData));
+                                return true;
                             }
+                        } catch (error) {
+                            console.error('Erro ao buscar produtos do carrinho:', error);
                         }
                     }
                 }
-            } catch (error) {
-                console.error('Erro ao buscar dados do carrinho:', error);
-                setCartData([]);
-                setCartItems([]);
             }
+            return false;
+        } catch (error) {
+            console.error('Erro ao buscar dados do carrinho:', error);
+            return false;
         }
-        if(isLoggedIn)
-            fetchCartData();
-    }, [user]);
+    };
+
+    // Função para carregar o carrinho local
+    const loadLocalCart = async () => {
+        try {
+            let data;
+            const storedData = localStorage.getItem('cart');
+            if (storedData) {
+                try {
+                    data = JSON.parse(storedData);
+                } catch (e) {
+                    console.error('Erro ao analisar dados do localStorage:', e);
+                    localStorage.removeItem('cart');
+                    return false;
+                }
+            } else {
+                const cookieData = Cookies.get('cart');
+                if (cookieData) {
+                    try {
+                        data = JSON.parse(cookieData);
+                    } catch (e) {
+                        console.error('Erro ao analisar dados do cookie:', e);
+                        Cookies.remove('cart');
+                        return false;
+                    }
+                }
+            }
+            
+            if (data && Array.isArray(data) && data.length > 0) {
+                try {
+                    const cart = await getProdsArr(data.map(i => i.id));
+                    if (cart && cart.data && Array.isArray(cart.data)) {
+                        // Filtra os itens do carrinho para incluir apenas aqueles que têm produtos correspondentes
+                        const validCartData = data.filter(item => 
+                            cart.data.some(product => product.pro_codigo == item.id)
+                        );
+                        
+                        setCartData(validCartData);
+                        setCartItems(cart.data);
+                        return true;
+                    }
+                } catch (error) {
+                    console.error('Erro ao buscar produtos do carrinho:', error);
+                }
+            }
+            return false;
+        } catch (error) {
+            console.error('Erro ao processar dados do carrinho:', error);
+            return false;
+        }
+    };
+
+    // Efeito para sincronizar o carrinho quando o estado de login muda
+    useEffect(() => {
+        const syncCart = async () => {
+            // Se o usuário acabou de fazer login
+            if (isLoggedIn && !previousLoginState) {
+                // Verifica se há um carrinho local
+                const hasLocalCart = await loadLocalCart();
+                
+                // Se houver um carrinho local com produtos, atualiza o carrinho do servidor
+                if (hasLocalCart && cartData.length > 0) {
+                    await cartUpdate(cartData);
+                } else {
+                    // Se não houver um carrinho local ou estiver vazio, carrega o carrinho do servidor
+                    await loadServerCart();
+                }
+            } else if (isLoggedIn) {
+                // Se o usuário já estava logado, apenas carrega o carrinho do servidor
+                await loadServerCart();
+            } else {
+                // Se o usuário está deslogado, carrega o carrinho local
+                await loadLocalCart();
+            }
+            
+            // Atualiza o estado anterior de login
+            setPreviousLoginState(isLoggedIn);
+        };
+        
+        syncCart();
+    }, [isLoggedIn]);
 
     const debouncedSendCartToServer = () => {
         if (timeoutRef.current) {
@@ -130,92 +203,43 @@ export const CartProvider = ({ children }) => {
     };
 
     const sendCartToServer = () => {
-        if(user) {
-            cartUpdate(user.id, cartData);
+        // Sempre salva no localStorage/cookies
+        if (cartData.length > 0) {
+            localStorage.setItem('cart', JSON.stringify(cartData));
+            Cookies.set('cart', JSON.stringify(cartData), { expires: 7 });
+        } else {
+            localStorage.removeItem('cart');
+            Cookies.remove('cart');
+        }
+        
+        // Se estiver logado, também envia para o servidor
+        if (isLoggedIn) {
+            cartUpdate(cartData);
         }
     };
       
     useEffect(() => {
-        if (cartData.length > 0) {
-            if (isLoggedIn) {
-                if (JSON.stringify(cartData) !== localStorage.getItem('cart')) {
-                    localStorage.setItem('cart', JSON.stringify(cartData));
-                }
-            } else {
-                Cookies.set('cart', JSON.stringify(cartData), { expires: 7 });
-            }
-        }
         debouncedSendCartToServer();
-
     }, [cartData]);
 
+    // Carrega o carrinho inicial
     useEffect(() => {
-        const fetchCartData = async (storage) => {
-            try {
-                let data;
-                if (storage) {
-                    const storedData = localStorage.getItem('cart');
-                    if (storedData) {
-                        try {
-                            data = JSON.parse(storedData);
-                        } catch (e) {
-                            console.error('Erro ao analisar dados do localStorage:', e);
-                            localStorage.removeItem('cart');
-                            return;
-                        }
-                    }
-                } else {
-                    const cookieData = Cookies.get('cart');
-                    if (cookieData) {
-                        try {
-                            data = JSON.parse(cookieData);
-                        } catch (e) {
-                            console.error('Erro ao analisar dados do cookie:', e);
-                            Cookies.remove('cart');
-                            return;
-                        }
-                    }
-                }
+        const loadInitialCart = async () => {
+            if (isLoggedIn) {
+                // Se o usuário estiver logado, tenta carregar o carrinho do servidor
+                const serverCartLoaded = await loadServerCart();
                 
-                if (data && Array.isArray(data) && data.length > 0) {
-                    try {
-                        const cart = await getProdsArr(data.map(i => i.id));
-                        if (cart && cart.data && Array.isArray(cart.data)) {
-                            // Filtra os itens do carrinho para incluir apenas aqueles que têm produtos correspondentes
-                            const validCartData = data.filter(item => 
-                                cart.data.some(product => product.pro_codigo == item.id)
-                            );
-                            
-                            setCartData(validCartData);
-                            setCartItems(cart.data);
-                        } else {
-                            // Se não houver dados válidos, limpa o carrinho
-                            console.error('Dados de produtos inválidos recebidos do servidor');
-                            setCartData([]);
-                            setCartItems([]);
-                        }
-                    } catch (error) {
-                        console.error('Erro ao buscar produtos do carrinho:', error);
-                        // Em caso de erro, limpa o carrinho para evitar inconsistências
-                        setCartData([]);
-                        setCartItems([]);
-                    }
+                // Se não conseguir carregar do servidor ou o carrinho estiver vazio, tenta carregar do local
+                if (!serverCartLoaded || cartData.length === 0) {
+                    await loadLocalCart();
                 }
-            } catch (error) {
-                console.error('Erro ao processar dados do carrinho:', error);
-                setCartData([]);
-                setCartItems([]);
+            } else {
+                // Se o usuário não estiver logado, carrega o carrinho local
+                await loadLocalCart();
             }
         };
-
         
-        if (isLoggedIn) {
-            if (timeoutRef.current) {
-                clearTimeout(timeoutRef.current);
-            }
-            fetchCartData(true);
-        }
-        fetchCartData(false);
+        loadInitialCart();
     }, []);
 
     return (
