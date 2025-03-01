@@ -75,11 +75,11 @@ export default function HomePage() {
 
                 </div>
                 <Image
-                        src={product.img}
-                        width={200}
-                        height={200}
-                        alt="Headphone"
-                        layout="responsive"
+                    src={product.img}
+                    alt="Produto"
+                    width={200}
+                    height={200}
+                    layout="responsive"
                 />
                 <div className="promo green">
                     Até 20% OFF
@@ -149,6 +149,7 @@ export default function HomePage() {
                     <Image
                         src={Banner}
                         alt="Banner"
+                        layout="responsive"
                     />
                 </section>
                 <section id="info-cards">
@@ -278,6 +279,8 @@ export default function HomePage() {
                                     <Image
                                         src={HeadphoneImg}
                                         alt="Headphone"
+                                        width={200}
+                                        height={200}
                                         layout="responsive"
                                     />
                                 </div>
@@ -290,6 +293,8 @@ export default function HomePage() {
                                     <Image
                                         src={HeadphoneImg}
                                         alt="Headphone"
+                                        width={200}
+                                        height={200}
                                         layout="responsive"
                                     />
                                 </div>
@@ -302,6 +307,8 @@ export default function HomePage() {
                                     <Image
                                         src={HeadphoneImg}
                                         alt="Headphone"
+                                        width={200}
+                                        height={200}
                                         layout="responsive"
                                     />
                                 </div>
@@ -314,6 +321,8 @@ export default function HomePage() {
                                     <Image
                                         src={HeadphoneImg}
                                         alt="Headphone"
+                                        width={200}
+                                        height={200}
                                         layout="responsive"
                                     />
                                 </div>
@@ -329,6 +338,8 @@ export default function HomePage() {
                                     <Image
                                         src={HeadphoneImg}
                                         alt="Headphone"
+                                        width={200}
+                                        height={200}
                                         layout="responsive"
                                     />
                                 </div>
@@ -344,6 +355,8 @@ export default function HomePage() {
                                     <Image
                                         src={HeadphoneImg}
                                         alt="Headphone"
+                                        width={200}
+                                        height={200}
                                         layout="responsive"
                                     />
                                 </div>

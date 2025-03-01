@@ -1,7 +1,7 @@
 "use client"
-import { createContext, useContext, useState, useEffect, useRef } from 'react';
+import { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import Cookies from 'js-cookie';
-import { getProdsArr, cartUpdate, getCart } from '../services/produto/page';
+import { getProdsArr, cartUpdate, getCart, syncCartAfterLogin } from '../services/produto/page';
 import { CartContextType } from '../interfaces/interfaces';
 import { useAuth } from './auth';
 
@@ -13,14 +13,18 @@ const CartContext = createContext<CartContextType>({
     removeFromCart: () => false,
 });
 
+// Função de debounce para limitar chamadas à API
 function debounce(func: (...args: any[]) => void, wait: number) {
     let timeout: NodeJS.Timeout;
     
     return function executedFunction(...args: any[]) {
-        clearTimeout(timeout);
-        timeout = setTimeout(() => {
+        const later = () => {
+            clearTimeout(timeout);
             func(...args);
-        }, wait);
+        };
+        
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
     };
 }
 
@@ -33,8 +37,9 @@ export const CartProvider = ({ children }) => {
     const [cartItems, setCartItems] = useState([]); // Produtos
     const [cartData, setCartData] = useState([]); // Quantidade, Cor
     const { user } = useAuth();
+    const [previousLoginState, setPreviousLoginState] = useState(false);
 
-    const isLoggedIn = user;
+    const isLoggedIn = !!user && !!user.id;
 
     const addToCart = (product, idCor) => {
         const itemExists = cartItems.some(item => item.pro_codigo === product.pro_codigo && item.colorId == idCor);
@@ -77,146 +82,178 @@ export const CartProvider = ({ children }) => {
         setCartData(updatedItems);
     }
 
+    // Efeito para carregar o carrinho quando o componente é montado ou quando o usuário muda
     useEffect(() => {
-        const fetchCartData = async () => {
-            try {
-                const cart = await getCart(user.id);
-                if (cart && cart.data) {
-                    if (cart.data.cart_data) {
-                        localStorage.setItem('cart', JSON.stringify(cart.data.cart_data));
-                        const cartdata = cart.data;
-                        if (cartdata.cart_data && cartdata.cart_data.length > 0) {
+        console.log('Efeito de carregamento do carrinho acionado, usuário:', user?.id || 'não logado');
+        fetchCartData();
+    }, [user]);
+
+    // Efeito para detectar login e sincronizar o carrinho
+    useEffect(() => {
+        const handleLoginStateChange = async () => {
+            console.log('Estado de login mudou:', isLoggedIn ? 'logado' : 'deslogado', 'anterior:', previousLoginState ? 'logado' : 'deslogado');
+            
+            // Se o usuário acabou de fazer login
+            if (isLoggedIn && !previousLoginState) {
+                console.log('Usuário fez login, sincronizando carrinho...');
+                try {
+                    const localCartCookie = Cookies.get('cart');
+                    const localCart = localCartCookie ? JSON.parse(localCartCookie) : [];
+                    
+                    //Se houver carrinho local com produtos, sincroniza com o backend
+                    if (localCart && Array.isArray(localCart) && localCart.length > 0) {
+                        console.log('Carrinho local encontrado com produtos, sincronizando com o backend...');
+                        
+                        // Sincroniza o carrinho local com o backend
+                        // Isso vai manter o carrinho local e atualizar o backend
+                        const syncResult = await syncCartAfterLogin();
+                        console.log('Resultado da sincronização:', syncResult);
+                        
+                        if (syncResult.success) {
+                            // Carrega os produtos correspondentes aos IDs no carrinho local
                             try {
-                                const resp = await getProdsArr(cartdata.cart_data.map(i => i.id));
+                                const resp = await getProdsArr(localCart.map(i => i.id));
                                 if (resp && resp.data && Array.isArray(resp.data)) {
                                     // Filtra os itens do carrinho para incluir apenas aqueles que têm produtos correspondentes
-                                    const validCartData = cartdata.cart_data.filter(item => 
+                                    const validCartData = localCart.filter(item => 
                                         resp.data.some(product => product.pro_codigo == item.id)
                                     );
                                     
                                     setCartItems(resp.data);
                                     setCartData(validCartData);
-                                } else {
-                                    console.error('Dados de produtos inválidos recebidos do servidor');
-                                    setCartData([]);
-                                    setCartItems([]);
                                 }
                             } catch (error) {
-                                console.error('Erro ao buscar produtos do carrinho:', error);
+                                console.error('Erro ao carregar produtos do carrinho local:', error);
+                            }
+                        } else if (syncResult.message === 'Token JWT inválido') {
+                            // Se o token for inválido, tratamos como usuário deslogado
+                            console.log('Token JWT inválido, tratando como usuário deslogado');
+                            // Carrega os produtos correspondentes aos IDs no carrinho local
+                            try {
+                                const resp = await getProdsArr(localCart.map(i => i.id));
+                                if (resp && resp.data && Array.isArray(resp.data)) {
+                                    // Filtra os itens do carrinho para incluir apenas aqueles que têm produtos correspondentes
+                                    const validCartData = localCart.filter(item => 
+                                        resp.data.some(product => product.pro_codigo == item.id)
+                                    );
+                                    
+                                    setCartItems(resp.data);
+                                    setCartData(validCartData);
+                                }
+                            } catch (error) {
+                                console.error('Erro ao carregar produtos do carrinho local:', error);
+                            }
+                        }
+                    } else {
+                        console.log('Nenhum carrinho local encontrado, carregando do backend...');
+                        // Se não houver carrinho local, carrega do backend
+                        await fetchCartData();
+                    }
+                } catch (error) {
+                    console.error('Erro ao sincronizar carrinho após login:', error);
+                    // Em caso de erro, tenta carregar do backend
+                    await fetchCartData();
+                }
+            }
+            
+            setPreviousLoginState(isLoggedIn);
+        };
+        
+        handleLoginStateChange();
+    }, [isLoggedIn]);
+
+    // Função para buscar dados do carrinho (tanto do backend quanto local)
+    const fetchCartData = async () => {
+        try {
+            console.log('Buscando dados do carrinho...');
+            const cart = await getCart();
+            
+            if (cart && cart.data) {
+                if (cart.data.cart_data) {
+                    // Se estiver logado, salva no localStorage também
+                    if (isLoggedIn) {
+                        localStorage.setItem('cart', JSON.stringify(cart.data.cart_data));
+                    }
+                    
+                    const cartdata = cart.data;
+                    if (cartdata.cart_data && Array.isArray(cartdata.cart_data) && cartdata.cart_data.length > 0) {
+                        try {
+                            console.log('Carregando produtos do carrinho...');
+                            const resp = await getProdsArr(cartdata.cart_data.map(i => i.id));
+                            if (resp && resp.data && Array.isArray(resp.data)) {
+                                // Filtra os itens do carrinho para incluir apenas aqueles que têm produtos correspondentes
+                                const validCartData = cartdata.cart_data.filter(item => 
+                                    resp.data.some(product => product.pro_codigo == item.id)
+                                );
+                                
+                                setCartItems(resp.data);
+                                setCartData(validCartData);
+                            } else {
+                                console.error('Dados de produtos inválidos recebidos do servidor');
                                 setCartData([]);
                                 setCartItems([]);
                             }
+                        } catch (error) {
+                            console.error('Erro ao buscar produtos do carrinho:', error);
+                            setCartData([]);
+                            setCartItems([]);
                         }
+                    } else {
+                        // Se o carrinho estiver vazio, limpa os estados
+                        setCartData([]);
+                        setCartItems([]);
                     }
                 }
-            } catch (error) {
-                console.error('Erro ao buscar dados do carrinho:', error);
-                setCartData([]);
-                setCartItems([]);
             }
+        } catch (error) {
+            console.error('Erro ao buscar dados do carrinho:', error);
+            setCartData([]);
+            setCartItems([]);
         }
-        if(isLoggedIn)
-            fetchCartData();
-    }, [user]);
-
-    const debouncedSendCartToServer = () => {
-        if (timeoutRef.current) {
-            clearTimeout(timeoutRef.current);
-        }
-    
-        timeoutRef.current = setTimeout(() => {
-            sendCartToServer();
-        }, 1000);
     };
 
-    const sendCartToServer = () => {
-        if(user) {
-            cartUpdate(user.id, cartData);
+    const debouncedSendCartToServer = useCallback(
+        debounce(() => {
+            sendCartToServer();
+        }, 1000),
+        []
+    );
+
+    const sendCartToServer = async () => {
+        try {
+            // Sempre envia para o servidor (a função cartUpdate lida com usuários deslogados)
+            console.log('Enviando carrinho para o servidor...');
+            await cartUpdate(cartData);
+        } catch (error) {
+            console.error('Erro ao enviar carrinho para o servidor:', error);
         }
     };
       
     useEffect(() => {
         if (cartData.length > 0) {
+            // Se estiver logado, salva no localStorage
             if (isLoggedIn) {
                 if (JSON.stringify(cartData) !== localStorage.getItem('cart')) {
                     localStorage.setItem('cart', JSON.stringify(cartData));
                 }
+                
+                // Também mantém no cookie para garantir consistência
+                Cookies.set('cart', JSON.stringify(cartData), { expires: 7 });
             } else {
+                // Se não estiver logado, salva apenas no cookie
                 Cookies.set('cart', JSON.stringify(cartData), { expires: 7 });
             }
-        }
-        debouncedSendCartToServer();
-
-    }, [cartData]);
-
-    useEffect(() => {
-        const fetchCartData = async (storage) => {
-            try {
-                let data;
-                if (storage) {
-                    const storedData = localStorage.getItem('cart');
-                    if (storedData) {
-                        try {
-                            data = JSON.parse(storedData);
-                        } catch (e) {
-                            console.error('Erro ao analisar dados do localStorage:', e);
-                            localStorage.removeItem('cart');
-                            return;
-                        }
-                    }
-                } else {
-                    const cookieData = Cookies.get('cart');
-                    if (cookieData) {
-                        try {
-                            data = JSON.parse(cookieData);
-                        } catch (e) {
-                            console.error('Erro ao analisar dados do cookie:', e);
-                            Cookies.remove('cart');
-                            return;
-                        }
-                    }
-                }
-                
-                if (data && Array.isArray(data) && data.length > 0) {
-                    try {
-                        const cart = await getProdsArr(data.map(i => i.id));
-                        if (cart && cart.data && Array.isArray(cart.data)) {
-                            // Filtra os itens do carrinho para incluir apenas aqueles que têm produtos correspondentes
-                            const validCartData = data.filter(item => 
-                                cart.data.some(product => product.pro_codigo == item.id)
-                            );
-                            
-                            setCartData(validCartData);
-                            setCartItems(cart.data);
-                        } else {
-                            // Se não houver dados válidos, limpa o carrinho
-                            console.error('Dados de produtos inválidos recebidos do servidor');
-                            setCartData([]);
-                            setCartItems([]);
-                        }
-                    } catch (error) {
-                        console.error('Erro ao buscar produtos do carrinho:', error);
-                        // Em caso de erro, limpa o carrinho para evitar inconsistências
-                        setCartData([]);
-                        setCartItems([]);
-                    }
-                }
-            } catch (error) {
-                console.error('Erro ao processar dados do carrinho:', error);
-                setCartData([]);
-                setCartItems([]);
+            
+            // Sempre envia para o servidor (a função cartUpdate lida com usuários deslogados)
+            sendCartToServer();
+        } else if (cartData.length === 0) {
+            // Se o carrinho estiver vazio, limpa os cookies e localStorage
+            Cookies.remove('cart');
+            if (isLoggedIn) {
+                localStorage.removeItem('cart');
             }
-        };
-
-        
-        if (isLoggedIn) {
-            if (timeoutRef.current) {
-                clearTimeout(timeoutRef.current);
-            }
-            fetchCartData(true);
         }
-        fetchCartData(false);
-    }, []);
+    }, [cartData, isLoggedIn]);
 
     return (
         <CartContext.Provider value={{ cartItems, cartData, changeQtyItem, addToCart, removeFromCart }}>
