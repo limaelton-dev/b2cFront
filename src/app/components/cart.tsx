@@ -127,6 +127,17 @@ export default function Cart({ cartOpened, onCartToggle }) {
         console.log(cartItems)
     }, [cartItems])
 
+    // Verifica se os dados do carrinho estão sincronizados
+    const isCartDataValid = () => {
+        if (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0) return false;
+        if (!cartData || !Array.isArray(cartData) || cartData.length === 0) return false;
+        
+        // Verifica se todos os itens no cartData têm um produto correspondente em cartItems
+        return cartData.every(item => 
+            cartItems.some(product => product && product.pro_codigo == item.id)
+        );
+    };
+
     return (
         <Drawer open={cartOpened} anchor="right">
             <Box component="div" sx={{ width: '30vw', display: 'flex', flexDirection: 'column', flexWrap: 'wrap' }} role="presentation">
@@ -137,43 +148,50 @@ export default function Cart({ cartOpened, onCartToggle }) {
                 </div>
                 <Divider style={{background: 'gray'}}/>
                 <div className="products-cart">
-                {cartData.length === 0 ? (
+                {!isCartDataValid() ? (
                     <p style={{textAlign: 'center', marginTop: '25px'}}>Carrinho vazio</p>
                 ) : (
                     <>
-                        {cartData.map((item, index) => (
-                            <div className="product" data-test={item.id} key={item.id}>
-                                <div style={{ display: 'flex', justifyContent: 'flex-end'}}>
-                                    <IconButton style={{padding: '0px'}} aria-label="delete" onClick={() => handleAlertRemoveItem(item.id, item.colorId)}>
-                                        <DeleteOutlineIcon />
-                                    </IconButton>
-                                </div>
-                                <Image
-                                    src={HeadphoneImg}
-                                    alt="HeadphoneImg"
-                                    width={100}
-                                />
-                                <div className="name-qty">
-                                    <span>{cartItems ? cartItems.find(r => r.pro_codigo == item.id).pro_descricao : ''}</span>
-                                    <div className="quantity">
-                                        <button 
-                                            type='button'
-                                            onClick={() => handleDec(index, item.id)}
-                                            className="btn-qty decrement">-</button>
-                                        <input value={item.qty} min={min} max={max} onChange={(e) => handleInputChange(item, e)} type="number"/>
-                                        <button 
-                                            type='button'
-                                            onClick={() => handleInc(index, item.id)}
-                                            className="btn-qty increment">+</button>
+                        {cartData.map((item, index) => {
+                            // Encontra o produto correspondente ao item do carrinho
+                            const product = cartItems.find(r => r && r.pro_codigo == item.id);
+                            // Se não encontrar o produto, pula este item
+                            if (!product) return <React.Fragment key={item.id}></React.Fragment>;
+                            
+                            return (
+                                <div className="product" data-test={item.id} key={item.id}>
+                                    <div style={{ display: 'flex', justifyContent: 'flex-end'}}>
+                                        <IconButton style={{padding: '0px'}} aria-label="delete" onClick={() => handleAlertRemoveItem(item.id, item.colorId)}>
+                                            <DeleteOutlineIcon />
+                                        </IconButton>
+                                    </div>
+                                    <Image
+                                        src={HeadphoneImg}
+                                        alt="HeadphoneImg"
+                                        width={100}
+                                    />
+                                    <div className="name-qty">
+                                        <span>{product.pro_descricao}</span>
+                                        <div className="quantity">
+                                            <button 
+                                                type='button'
+                                                onClick={() => handleDec(index, item.id)}
+                                                className="btn-qty decrement">-</button>
+                                            <input value={item.qty} min={min} max={max} onChange={(e) => handleInputChange(item, e)} type="number"/>
+                                            <button 
+                                                type='button'
+                                                onClick={() => handleInc(index, item.id)}
+                                                className="btn-qty increment">+</button>
+                                        </div>
+                                    </div>
+                                    <div className="product-price">
+                                        <span className="price">
+                                            <b>R$ {(product.pro_valorultimacompra * item.qty).toFixed(2).toString().replace('.',',')}</b>
+                                        </span>
                                     </div>
                                 </div>
-                                <div className="product-price">
-                                    <span className="price">
-                                        <b>R$ {cartItems ? (cartItems.find(r => r.pro_codigo == item.id).pro_valorultimacompra * item.qty).toFixed(2).toString().replace('.',',') : '0,00'}</b>
-                                    </span>
-                                </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </>
                 )}
                 </div>

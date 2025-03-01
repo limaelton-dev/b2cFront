@@ -81,21 +81,38 @@ export const CartProvider = ({ children }) => {
         const fetchCartData = async () => {
             try {
                 const cart = await getCart(user.id);
-                localStorage.setItem('cart', JSON.stringify(cart.data.cart_data))
-                const cartdata = cart.data;
-                if(cartdata) {
-                    if(cartdata.cart_data) {
-                        if(cartdata.cart_data.length > 0) {
-                            const resp = await getProdsArr(cart.data.map(i => i.id));
-                            if(resp.data) {
-                                setCartItems(resp.data); 
-                                setCartData(cart.data);
+                if (cart && cart.data) {
+                    if (cart.data.cart_data) {
+                        localStorage.setItem('cart', JSON.stringify(cart.data.cart_data));
+                        const cartdata = cart.data;
+                        if (cartdata.cart_data && cartdata.cart_data.length > 0) {
+                            try {
+                                const resp = await getProdsArr(cartdata.cart_data.map(i => i.id));
+                                if (resp && resp.data && Array.isArray(resp.data)) {
+                                    // Filtra os itens do carrinho para incluir apenas aqueles que têm produtos correspondentes
+                                    const validCartData = cartdata.cart_data.filter(item => 
+                                        resp.data.some(product => product.pro_codigo == item.id)
+                                    );
+                                    
+                                    setCartItems(resp.data);
+                                    setCartData(validCartData);
+                                } else {
+                                    console.error('Dados de produtos inválidos recebidos do servidor');
+                                    setCartData([]);
+                                    setCartItems([]);
+                                }
+                            } catch (error) {
+                                console.error('Erro ao buscar produtos do carrinho:', error);
+                                setCartData([]);
+                                setCartItems([]);
                             }
                         }
                     }
                 }
             } catch (error) {
-                console.error('Erro: ', error);
+                console.error('Erro ao buscar dados do carrinho:', error);
+                setCartData([]);
+                setCartItems([]);
             }
         }
         if(isLoggedIn)
@@ -134,19 +151,60 @@ export const CartProvider = ({ children }) => {
 
     useEffect(() => {
         const fetchCartData = async (storage) => {
-            const data = storage ? JSON.parse(localStorage.getItem('cart')) : Cookies.get('cart')
-            if(data) {
-                // console.log(data, 'avançando', JSON.parse(data))
-                const cookieCart = JSON.parse(JSON.stringify(data));
-                if (cookieCart.length > 0) {
-                    try {
-                        const cart = await getProdsArr(cookieCart.map(i => i.id));
-                        setCartData(cookieCart);
-                        setCartItems(cart.data);
-                    } catch (error) {
-                        console.error('Erro: ', error);
+            try {
+                let data;
+                if (storage) {
+                    const storedData = localStorage.getItem('cart');
+                    if (storedData) {
+                        try {
+                            data = JSON.parse(storedData);
+                        } catch (e) {
+                            console.error('Erro ao analisar dados do localStorage:', e);
+                            localStorage.removeItem('cart');
+                            return;
+                        }
+                    }
+                } else {
+                    const cookieData = Cookies.get('cart');
+                    if (cookieData) {
+                        try {
+                            data = JSON.parse(cookieData);
+                        } catch (e) {
+                            console.error('Erro ao analisar dados do cookie:', e);
+                            Cookies.remove('cart');
+                            return;
+                        }
                     }
                 }
+                
+                if (data && Array.isArray(data) && data.length > 0) {
+                    try {
+                        const cart = await getProdsArr(data.map(i => i.id));
+                        if (cart && cart.data && Array.isArray(cart.data)) {
+                            // Filtra os itens do carrinho para incluir apenas aqueles que têm produtos correspondentes
+                            const validCartData = data.filter(item => 
+                                cart.data.some(product => product.pro_codigo == item.id)
+                            );
+                            
+                            setCartData(validCartData);
+                            setCartItems(cart.data);
+                        } else {
+                            // Se não houver dados válidos, limpa o carrinho
+                            console.error('Dados de produtos inválidos recebidos do servidor');
+                            setCartData([]);
+                            setCartItems([]);
+                        }
+                    } catch (error) {
+                        console.error('Erro ao buscar produtos do carrinho:', error);
+                        // Em caso de erro, limpa o carrinho para evitar inconsistências
+                        setCartData([]);
+                        setCartItems([]);
+                    }
+                }
+            } catch (error) {
+                console.error('Erro ao processar dados do carrinho:', error);
+                setCartData([]);
+                setCartItems([]);
             }
         };
 
