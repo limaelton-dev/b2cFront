@@ -7,6 +7,7 @@
 export interface AuthContextType {
     user: User;
     setUserFn: (user: User) => void;
+    logout: () => void;
 }
 
 export interface CouponContextType {

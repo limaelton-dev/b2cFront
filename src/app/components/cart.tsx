@@ -24,22 +24,6 @@ export default function Cart({ cartOpened, onCartToggle }) {
     const [discountPix, setDiscountPix] = useState(5);
     const [loadingCoupon, setLoadingCoupon] = useState(false);
 
-    // Verificar se os dados do carrinho são válidos
-    const isCartDataValid = () => {
-        if (!Array.isArray(cartData) || !Array.isArray(cartItems)) {
-            console.error('Dados do carrinho inválidos:', { cartData, cartItems });
-            return false;
-        }
-        return true;
-    };
-
-    useEffect(() => {
-        console.log('Componente do carrinho montado, dados:', { 
-            cartItems: Array.isArray(cartItems) ? cartItems.length : 'não é array', 
-            cartData: Array.isArray(cartData) ? cartData.length : 'não é array' 
-        });
-    }, [cartItems, cartData]);
-
     const handleCloseCart = () => {
         onCartToggle(false);
     }
@@ -143,189 +127,198 @@ export default function Cart({ cartOpened, onCartToggle }) {
         console.log(cartItems)
     }, [cartItems])
 
+    // Verifica se os dados do carrinho estão sincronizados
+    const isCartDataValid = () => {
+        if (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0) return false;
+        if (!cartData || !Array.isArray(cartData) || cartData.length === 0) return false;
+        
+        // Verifica se todos os itens no cartData têm um produto correspondente em cartItems
+        return cartData.every(item => 
+            cartItems.some(product => product && product.pro_codigo == item.id)
+        );
+    };
+
     return (
-        <Drawer
-            anchor="right"
-            open={cartOpened}
-            onClose={handleCloseCart}
-            sx={{
-                '& .MuiDrawer-paper': {
-                    width: '100%',
-                    maxWidth: '450px',
-                    boxSizing: 'border-box',
-                    backgroundColor: '#fff',
-                    padding: '20px',
-                    paddingTop: '10px',
-                },
-            }}
-        >
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                <h2 style={{ margin: 0 }}>Meu Carrinho</h2>
-                <IconButton onClick={handleCloseCart}>
-                    <Close />
-                </IconButton>
-            </Box>
-            <Divider />
-            
-            {!isCartDataValid() ? (
-                <Box sx={{ padding: '20px', textAlign: 'center' }}>
-                    <p>Seu carrinho está vazio ou ocorreu um erro ao carregar os produtos.</p>
-                    <Button 
-                        variant="contained" 
-                        color="primary" 
-                        onClick={handleCloseCart}
-                        sx={{ marginTop: '10px' }}
-                    >
-                        Continuar Comprando
-                    </Button>
-                </Box>
-            ) : cartData.length === 0 ? (
-                <Box sx={{ padding: '20px', textAlign: 'center' }}>
-                    <p>Seu carrinho está vazio.</p>
-                    <Button 
-                        variant="contained" 
-                        color="primary" 
-                        onClick={handleCloseCart}
-                        sx={{ marginTop: '10px' }}
-                    >
-                        Continuar Comprando
-                    </Button>
-                </Box>
-            ) : (
-                <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-                    <Box sx={{ flex: 1, overflowY: 'auto', marginBottom: '20px' }}>
-                        {cartData.map((i, index) => {
-                            const product = cartItems.find(item => item.pro_codigo == i.id);
-                            if (!product) return null; // Pula itens sem produto correspondente
+        <Drawer open={cartOpened} anchor="right">
+            <Box component="div" sx={{ width: '30vw', display: 'flex', flexDirection: 'column', flexWrap: 'wrap' }} role="presentation">
+                <div style={{ display: 'flex', justifyContent: 'flex-end'}}>
+                    <IconButton aria-label="delete" onClick={handleCloseCart}>
+                        <Close />
+                    </IconButton>
+                </div>
+                <Divider style={{background: 'gray'}}/>
+                <div className="products-cart">
+                {!isCartDataValid() ? (
+                    <p style={{textAlign: 'center', marginTop: '25px'}}>Carrinho vazio</p>
+                ) : (
+                    <>
+                        {cartData.map((item, index) => {
+                            // Encontra o produto correspondente ao item do carrinho
+                            const product = cartItems.find(r => r && r.pro_codigo == item.id);
+                            // Se não encontrar o produto, pula este item
+                            if (!product) return <React.Fragment key={item.id}></React.Fragment>;
                             
                             return (
-                                <Box 
-                                    key={`${i.id}-${i.colorId || 'default'}`} 
-                                    className="cart-item" 
-                                    sx={{ 
-                                        display: 'flex', 
-                                        flexDirection: 'column',
-                                        padding: '10px',
-                                        marginBottom: '10px',
-                                        borderBottom: '1px solid #eee'
-                                    }}
-                                >
-                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                                        <Box sx={{ display: 'flex', gap: '10px', flex: 1 }}>
-                                            <Box sx={{ width: '80px', height: '80px', position: 'relative' }}>
-                                                <Image
-                                                    src={product.imagens && product.imagens.length > 0 ? product.imagens[0].url : HeadphoneImg}
-                                                    alt={product.pro_descricao || 'Produto'}
-                                                    width={80}
-                                                    height={80}
-                                                    style={{ objectFit: 'contain' }}
-                                                />
-                                            </Box>
-                                            <Box sx={{ flex: 1 }}>
-                                                <h4 style={{ margin: '0 0 5px 0', fontSize: '16px' }}>{product.pro_descricao || 'Produto'}</h4>
-                                                <p style={{ margin: '0', fontSize: '14px', color: '#666' }}>SKU: {product.pro_partnum_sku || 'N/A'}</p>
-                                            </Box>
-                                        </Box>
-                                        <IconButton 
-                                            size="small" 
-                                            onClick={() => handleAlertRemoveItem(i.id, i.colorId)}
-                                            sx={{ padding: '4px' }}
-                                        >
-                                            <DeleteOutlineIcon fontSize="small" />
+                                <div className="product" data-test={item.id} key={item.id}>
+                                    <div style={{ display: 'flex', justifyContent: 'flex-end'}}>
+                                        <IconButton style={{padding: '0px'}} aria-label="delete" onClick={() => handleAlertRemoveItem(item.id, item.colorId)}>
+                                            <DeleteOutlineIcon />
                                         </IconButton>
-                                    </Box>
-                                    
-                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px' }}>
-                                        <Box sx={{ display: 'flex', alignItems: 'center', border: '1px solid #ddd', borderRadius: '4px' }}>
-                                            <Button 
-                                                size="small" 
-                                                onClick={() => handleDec(index, i.id)}
-                                                sx={{ minWidth: '30px', padding: '2px' }}
-                                            >-</Button>
-                                            <input 
-                                                value={i.qty} 
-                                                min={min} 
-                                                max={max} 
-                                                onChange={(e) => handleInputChange(i, e)} 
-                                                type="number"
-                                                style={{ 
-                                                    width: '40px', 
-                                                    textAlign: 'center', 
-                                                    border: 'none',
-                                                    outline: 'none'
-                                                }}
-                                            />
-                                            <Button 
-                                                size="small" 
-                                                onClick={() => handleInc(index, i.id)}
-                                                sx={{ minWidth: '30px', padding: '2px' }}
-                                            >+</Button>
-                                        </Box>
-                                        <Box sx={{ fontWeight: 'bold' }}>
-                                            R$ {(product.pro_valorultimacompra * i.qty).toFixed(2).toString().replace('.',',')}
-                                        </Box>
-                                    </Box>
-                                </Box>
+                                    </div>
+                                    <Image
+                                        src={HeadphoneImg}
+                                        alt="HeadphoneImg"
+                                        width={100}
+                                    />
+                                    <div className="name-qty">
+                                        <span>{product.pro_descricao}</span>
+                                        <div className="quantity">
+                                            <button 
+                                                type='button'
+                                                onClick={() => handleDec(index, item.id)}
+                                                className="btn-qty decrement">-</button>
+                                            <input value={item.qty} min={min} max={max} onChange={(e) => handleInputChange(item, e)} type="number"/>
+                                            <button 
+                                                type='button'
+                                                onClick={() => handleInc(index, item.id)}
+                                                className="btn-qty increment">+</button>
+                                        </div>
+                                    </div>
+                                    <div className="product-price">
+                                        <span className="price">
+                                            <b>R$ {(product.pro_valorultimacompra * item.qty).toFixed(2).toString().replace('.',',')}</b>
+                                        </span>
+                                    </div>
+                                </div>
                             );
                         })}
-                    </Box>
-                    <Box sx={{ padding: '15px 0' }}>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
-                            <span>Subtotal:</span>
-                            <span>
-                                <b>
-                                    R$ {cartData.reduce((total, item) => {
-                                        const product = cartItems.find(p => p.pro_codigo == item.id);
-                                        return total + (product ? product.pro_valorultimacompra * item.qty : 0);
-                                    }, 0).toFixed(2).replace('.', ',')}
-                                </b>
-                            </span>
-                        </Box>
-                        
-                        <Box sx={{ marginBottom: '15px' }}>
-                            <TextField
-                                label="Cupom de desconto"
-                                variant="outlined"
-                                size="small"
-                                fullWidth
-                                value={inpCoupon}
-                                onChange={handleChangeInpCoupon}
+                    </>
+                )}
+                </div>
+                <div className="cart-moreprod">
+                    <Button
+                        onClick={linkToProducts}
+                        variant="outlined"
+                        style={{
+                            borderBottomLeftRadius: '0px',
+                            borderTopLeftRadius: '0px',
+                            borderRadius: '15px',
+                        }}
+                    >
+                        Escolha mais produtos
+                    </Button>
+                </div>
+                <Divider style={{background: 'gray'}}/>
+                <div className="coupon-code">
+                    <span>Digite um cupom de desconto:</span>
+                    <div className="apply">
+                        <div className="input-cupom">
+                            {loadingCoupon && <>
+                                <div className="circle1 circles"></div>
+                                <div className="circle2 circles"></div>
+                                <div className="circle3 circles"></div>
+                            </>
+                            }
+                            <TextField 
                                 error={errorCoupon}
-                                sx={{ marginBottom: '10px' }}
-                            />
-                            <Button 
-                                variant="outlined" 
-                                color="primary" 
-                                fullWidth
-                                onClick={handleCouponApply}
+                                id="outlined-basic"
+                                sx={{
+                                    '& .MuiInputBase-root': {
+                                        borderBottomRightRadius: '0px',
+                                        borderTopRightRadius: '0px',
+                                    },
+                                    '& .MuiOutlinedInput-root input': {
+                                        padding: '8px 10px 8px 10px',
+                                    },
+                                }}
+                                placeholder="Cupom"
+                                variant="outlined"
+                                value={inpCoupon}
                                 disabled={loadingCoupon}
-                            >
-                                {loadingCoupon ? 'Aplicando...' : 'Aplicar Cupom'}
-                            </Button>
-                        </Box>
-                        
-                        <Button 
-                            variant="contained" 
-                            color="primary" 
-                            fullWidth
-                            sx={{ marginTop: '10px' }}
-                            onClick={() => window.location.href = '/checkout'}
+                                onChange={(e) => {setInpCoupon(e.target.value)}}
+                            />
+                        </div>
+                        <Button
+                            onClick={handleCouponApply}
+                            variant="contained"
+                            style={{
+                                borderBottomLeftRadius: '0px',
+                                borderTopLeftRadius: '0px',
+                            }}
+                     
                         >
-                            Finalizar Compra
+                            Aplicar
                         </Button>
-                        
-                        <Button 
-                            variant="outlined" 
-                            color="primary" 
-                            fullWidth
-                            sx={{ marginTop: '10px' }}
-                            onClick={handleCloseCart}
-                        >
-                            Continuar Comprando
-                        </Button>
-                    </Box>
-                </Box>
-            )}
+                    </div>
+                    {coupon && loadingCoupon != true &&
+                        <span className='coupon-status' style={{color: activeCoupon ? 'green' : 'red'}}>
+                            {activeCoupon == true && 
+                                <CheckIcon fontSize="inherit" />
+                            }
+                            {activeCoupon == false && 
+                                <CloseIcon fontSize="inherit" />
+                            }
+                            {statusMessage}
+                        </span>
+                    }
+                </div>
+                <Divider style={{background: 'gray'}}/>
+                <div className="cart-totals">
+                    <div className="totals">
+                        <span>Subtotal: </span>
+                        <span className='price-totals'>
+                            <b>R$ {cartData.reduce((total, item) => {
+                                        const cartItem = cartItems.find(i => i.pro_codigo === item.id);
+                                        if (cartItem) {
+                                            return total + (cartItem.pro_valorultimacompra * item.qty);
+                                        }
+                                        return total;
+                                    }, 0)
+                                    .toFixed(2)
+                                    .replace('.', ',')
+                                }
+                            </b>
+                        </span>
+                    </div>
+                    <div className="totals discount">
+                        <span style={{height: '32px'}}>Descontos: 
+                            {activeCoupon && (
+                                <span className="mini">(Cupom {coupon.percent_discount}%)</span>
+                            )}
+                        </span>
+                        <span className='price-totals'>
+                            <b>R$ {applyCouponDiscount(cartItems
+                                    .reduce((total, item) => total + (item.pro_valorultimacompra * cartData[cartItems.findIndex(i => i.pro_codigo == item.pro_codigo)].qty), 0))
+                                    .toFixed(2).replace('.',',')
+                                }
+                            </b>
+                        </span>
+                    </div>
+                    <div className="totals discount">
+                        <span>Total no Pix: 
+                            <span className='mini'>({discountPix}% de desconto)</span>
+                        </span>
+                        <span className='price-totals c-red'>
+                            <b>R$ {applyPixDiscount(cartItems
+                                    .reduce((total, item) => total + (item.pro_valorultimacompra * cartData[cartItems.findIndex(i => i.pro_codigo == item.pro_codigo)].qty), 0))
+                                    .toFixed(2).replace('.',',')
+                                }
+                            </b>
+                        </span>
+                    </div>
+                    <div className="totals discount">
+                        <span><b>Total à vista: </b></span>
+                        <span className='price-totals'>
+                            <b>R$ {applyDiscounts(cartItems
+                                    .reduce((total, item) => total + (item.pro_valorultimacompra * cartData[cartItems.findIndex(i => i.pro_codigo == item.pro_codigo)].qty), 0))
+                                    .toFixed(2).replace('.',',')
+                                }
+                            </b>
+                        </span>
+                    </div>
+                    <a href="/checkout" className="link-to-buy">Finalizar Pedido</a>
+                </div>
+            </Box>
         </Drawer>
     );
 }
