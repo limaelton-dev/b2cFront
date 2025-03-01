@@ -23,9 +23,19 @@ export const getProdsArr = async (arr) => {
     }
 };
 
-export const getProdsLimit = async (limit) => {
+export const getProdsLimit = async (limit, category = '') => {
     try {
-        const response = await axios.get(`${API_URL}/produtos?limit=${limit}`);
+        const response = await axios.get(`${API_URL}/produtos?limit=${limit}${category? '&categoria='+category : ''}`);
+        return response;
+    }
+    catch (err) {
+        return err;
+    }
+};
+
+export const getProdutosCategoria = async (limit) => {
+    try {
+        const response = await axios.get(`${API_URL}/produtotipo?limit=${limit}`);
         return response;
     }
     catch (err) {

@@ -19,15 +19,51 @@ import Accordion from '@mui/material/Accordion';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+import { getProdsLimit, getProdutosCategoria } from '../services/produto/page';
+import NoImage from "../assets/img/noimage.png";
+
+const getProdutos = async (limit: number, category) => {
+    try {
+        const resp = await getProdsLimit(limit, category);
+        const prodFormatted = resp.data.map((produto: any) => ({
+            id: produto.id,
+            name: produto.pro_desc_tecnica,
+            img: produto.imagens.length > 0 ? produto.imagens[0].url : NoImage,
+            price: 'R$ '+produto.pro_precovenda.toFixed(2).replace('.', ','),
+            sku: produto.pro_partnum_sku,
+        }));
+        return prodFormatted;
+    } catch (error) {
+        console.error('Erro: ', error);
+        return [];
+    }
+};
+
+const getProdutoCategory = async (limit: number) => {
+    try {
+        const resp = await getProdutosCategoria(limit);
+        const prodFormatted = resp.data.map((produto: any) => ({
+            id: produto.id,
+            tpo_codigo: produto.tpo_codigo,
+            tpo_descricao: produto.tpo_descricao,
+        }));
+        return prodFormatted;
+    } catch (error) {
+        console.error('Erro: ', error);
+        return [];
+    }
+};
 
 const ProductsPage = () => {
     const [openedCart, setOpenedCart] = useState(false);
     const [loadBtn, setLoadBtn] = useState(false);
     const { showToast } = useToastSide();
     const { addToCart, cartItems } = useCart();
-    const [products, serProducts] = useState<{ name: string; img: string; price: string; sku: string }[]>([]);
+    const [products, setProducts] = useState<{id: number, name: string; img: string; price: string; sku: string }[]>([]);
     const [isActiveColorId, setIsActiveColorId] = useState(null)
     const { codigo } = useParams();
+    const [categories, setCategories] = useState<{id: number,tpo_codigo: number,tpo_descricao: string}[]>([]);
+    const [catSett, setCatSett] = useState([]);
     const [product, setProduct] = useState({
         pro_codigo: 54862,
         pro_descricao: 'DISCO FLAP 4 1/2" GRÃO 400',
@@ -38,6 +74,39 @@ const ProductsPage = () => {
 
     const category = searchParams.get("categoria");
     const offer = searchParams.get("offer");
+
+    useEffect(() => {
+        const loadProdutos = async () => {
+            const products = await getProdutos(12,category);
+            setProducts(products);
+        };
+        const loadCategories = async () => {
+            const categories = await getProdutoCategory(10);
+            setCategories(categories);
+        };
+        if (category) {
+            const categoriasArray = category.split(",").map(Number);
+            setCatSett(categoriasArray);
+        }
+        loadProdutos();
+        loadCategories()
+    },[]);
+
+    const handleAtualizaFiltros = async () => {
+        const atualizaProdutos = async () => {
+            const products = await getProdutos(12,catSett.join(','));
+            setProducts(products);
+        };
+        atualizaProdutos();
+    }
+    
+    const handleCheckboxChange = (event: React.ChangeEvent<HTMLInputElement>, id: number) => {
+        setCatSett((prev) =>
+          event.target.checked ? [...prev, id] : prev.filter((item) => item !== id)
+        );
+    };
+    
+    
     
     const handleAddToCart = async () => {
         setLoadBtn(true);
@@ -53,17 +122,6 @@ const ProductsPage = () => {
             }, 500)
         }
     }
-
-    useEffect(() => {
-        serProducts([
-            {name: 'Bebedouro com Compressor ADD4923L 127V Philips', img: 'https://www.portalcoletek.com.br/Imagens/PHILIPS_ADD4923L_01.jpg', price: 'R$ 254,90', sku: 'ADD4923L127V-PL'},
-            {name: 'Garrafa de Agua Daily AWP2731GRR Cinza Philips', img: 'https://www.portalcoletek.com.br/Imagens/PHILIPS_AWP2731GRR_01.jpg', price: 'R$ 119,90', sku: 'AWP2731GRR-PL'},
-            {name: 'Mouse Pad Game MP7035 Preto HP', img: 'https://www.portalcoletek.com.br/Imagens/HPGAMING_7JH36AA_01.jpg', price: 'R$ 29,90', sku: 'MP7035-HP'},
-            {name: 'Mouse Game USB M270 Preto HP', img: 'https://www.portalcoletek.com.br/Imagens/HPGAMING_7ZZ87AA_01.jpg', price: 'R$ 149,90', sku: 'M270-HP'},
-            {name: 'Teclado Game USB K500F HP', img: 'https://www.portalcoletek.com.br/Imagens/HPGAMING_7ZZ97AA_01.jpg', price: 'R$ 199,90', sku: 'K500F-HP'},
-            {name: 'Fone Com Microfone Game 7.1 USB H500GS Preto HP', img: 'https://www.portalcoletek.com.br/Imagens/HPGAMING_9AJ66AA_01.jpg', price: 'R$ 319,90', sku: 'H500GS-HP'}
-        ]);
-    }, []);
 
     return (
         <>
@@ -85,16 +143,11 @@ const ProductsPage = () => {
                                     </AccordionSummary>
                                     <AccordionDetails>
                                         <FormGroup>
-                                            <FormControlLabel control={<Checkbox defaultChecked={category == 'acessorio'} size='small' />} label="Acessórios" />
-                                            <FormControlLabel control={<Checkbox size='small' />} label="Gamer" />
-                                            <FormControlLabel control={<Checkbox size='small' />} label="Teclado e Mouse" />
-                                            <FormControlLabel control={<Checkbox defaultChecked={category == 'energia'} size='small' />} label="Energia" />
-                                            <FormControlLabel control={<Checkbox size='small' />} label="Cabos e Adaptadores" />
-                                            <FormControlLabel control={<Checkbox size='small' />} label="Mobilidade" />
-                                            <FormControlLabel control={<Checkbox defaultChecked={category == 'gabinete'} size='small' />} label="Gabinete" />
-                                            <FormControlLabel control={<Checkbox size='small' />} label="Streaming" />
-                                            <FormControlLabel control={<Checkbox defaultChecked={category == 'audio'} size='small' />} label="Audio" />
-                                            <FormControlLabel control={<Checkbox size='small' />} label="Video" />
+                                            {categories.map((c) => (
+                                                <>
+                                                    <FormControlLabel key={c.id} control={<Checkbox onChange={(event) => handleCheckboxChange(event, c.id)} checked={catSett.includes(c.id)} size='small' />} label={c.tpo_descricao} />
+                                                </>
+                                            ))}
                                         </FormGroup>
                                     </AccordionDetails>
                                 </Accordion>
@@ -129,6 +182,9 @@ const ProductsPage = () => {
                                         </FormGroup>
                                     </AccordionDetails>
                                 </Accordion>
+                                <div style={{padding: '10px'}}>
+                                    <button type='button' onClick={handleAtualizaFiltros} className='refreshFillters'>Atualizar Filtros</button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -140,11 +196,11 @@ const ProductsPage = () => {
             
                             </div>
                             <Image
-                                src={produto.img}
-                                width={200}
-                                height={200}
-                                alt="Headphone"
-                                layout="responsive"
+                                    src={produto.img}
+                                    width={200}
+                                    height={200}
+                                    alt="Headphone"
+                                    layout="responsive"
                             />
                             <div className="promo green">
                                 Até 20% OFF
@@ -162,9 +218,20 @@ const ProductsPage = () => {
                                     </svg>
                                 </div>
                             </div>
-                            <div className="title-product">
-                                {produto.name}
-                            </div>
+                            <a className='title-link-product' href={`/produto/${produto.id}`}>
+                                <Typography
+                                    variant="body1"
+                                    className='title-product'
+                                    sx={{
+                                        display: "-webkit-box",
+                                        WebkitBoxOrient: "vertical",
+                                        WebkitLineClamp: 2,
+                                        overflow: "hidden",
+                                    }}
+                                >
+                                    {produto.name}
+                                </Typography>
+                            </a>
                             <div className="description">
                                 {produto.sku}
                             </div>
