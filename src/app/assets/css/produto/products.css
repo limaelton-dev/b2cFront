@@ -31,6 +31,13 @@
 .products .product .rating svg {
     width: 15px;
 }
+.products .product a.title-link-product {
+    color: black;
+    text-decoration: none;
+}
+.products .product a.title-link-product:hover {
+    text-decoration: underline;
+}
 .products .product .title-product {
     font-weight: 600;
     font-size: 15px;

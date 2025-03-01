@@ -13,18 +13,17 @@ import { Carousel } from 'primereact/carousel';
 import { Typography } from '@mui/material';
 import { getProdsLimit } from './services/produto/page';
 
-const URL = process.env.NEXT_PUBLIC_URL || '';
-
 const getProdutosPage = async (limit: number) => {
     try {
         const resp = await getProdsLimit(limit);
         const prodFormatted = resp.data.map((produto: any) => ({
+            id: produto.id,
             name: produto.pro_desc_tecnica,
             img: produto.imagens.length > 0 ? produto.imagens[0].url : "",
             price: 'R$ 254,90',
             sku: produto.pro_partnum_sku,
         }));
-      return prodFormatted;
+        return prodFormatted;
     } catch (error) {
         console.error('Erro: ', error);
         return [];
@@ -98,18 +97,20 @@ export default function HomePage() {
                         </svg>
                     </div>
                 </div>
-                <Typography
-                    variant="body1"
-                    className='title-product'
-                    sx={{
-                        display: "-webkit-box",
-                        WebkitBoxOrient: "vertical",
-                        WebkitLineClamp: 2,
-                        overflow: "hidden",
-                    }}
-                >
-                    {product.name}
-                </Typography>
+                <a className='title-link-product' href={`/produto/${product.id}`}>
+                    <Typography
+                        variant="body1"
+                        className='title-product'
+                        sx={{
+                            display: "-webkit-box",
+                            WebkitBoxOrient: "vertical",
+                            WebkitLineClamp: 2,
+                            overflow: "hidden",
+                        }}
+                    >
+                        {product.name}
+                    </Typography>
+                </a>
                 <div className="description">
                     {product.sku}
                 </div>
@@ -118,6 +119,9 @@ export default function HomePage() {
                     <div className="discount">
                         (5% OFF)
                     </div>
+                </div>
+                <div className='addToCartBox d-flex justify-content-center'>
+                    <button type='button' className='addToCartButton'>Adicionar ao carrinho</button>
                 </div>
             </div>
         )

@@ -55,6 +55,7 @@ html {
 
 .colors {
     display: flex;
+    visibility: hidden;
 }
 .colors .color {
     border-radius: 100%;
@@ -86,7 +87,7 @@ html {
 .addToCartBox {
     margin-top: 3px;
 }
-.addToCartButton {
+.addToCartButton, .refreshFillters {
     width: 100%;
     background-color: #209c20;
     color: white;
@@ -96,7 +97,7 @@ html {
     border-radius: 3px;
     padding: 4px 0px;
 }
-.addToCartButton:hover {
+.addToCartButton:hover, .refreshFillters:hover {
     background-color: white;
     color: #209c20;
 }
