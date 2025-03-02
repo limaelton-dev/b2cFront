@@ -130,7 +130,7 @@ export default function Header({ cartOpened, onCartToggle }) {
                                                         src={Headphone}
                                                         alt="Logo Coletek"
                                                     />
-                                                    <a target="_blank" className='search-product-link' style={{textDecoration: 'none', color: 'black', display: 'flex',flexGrow: '1', justifyContent: 'space-between', height: '50px', alignItems: 'center'}} href={URL+'/produto/'+result.pro_codigo}>{result.pro_descricao}<LaunchIcon sx={{width: '18px'}} /></a>
+                                                    <a target="_blank" className='search-product-link' style={{textDecoration: 'none', color: 'black', display: 'flex',flexGrow: '1', justifyContent: 'space-between', height: '50px', alignItems: 'center'}} href={URL+'/produto/'+result.id}>{result.pro_desc_tecnica}<LaunchIcon sx={{width: '18px'}} /></a>
                                                 </li>
                                             ))}
                                             {results.length > 5 && 

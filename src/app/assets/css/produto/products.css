@@ -103,3 +103,10 @@
 .products.prod-listing .product {
     width: 95%;
 }
+
+#especificacoes .txt-espec-prods p {
+    margin-bottom: 0px;
+}
+#especificacoes .txt-espec-prods {
+    margin-bottom: 45px;
+}

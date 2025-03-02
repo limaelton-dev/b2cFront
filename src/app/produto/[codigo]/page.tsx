@@ -8,7 +8,7 @@ import HeadphoneImg from '../../assets/img/headphone.png';
 import BannerProd from '../../assets/img/banner_mouse.png';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import { useEffect, useState } from 'react';
-import { getProduto } from '../../services/produto/page';
+import { getProdsLimit, getProduto } from '../../services/produto/page';
 import Cart from '../../components/cart';
 import Header from '../../header';
 import { useCart } from '../../context/cart';
@@ -18,6 +18,23 @@ import ScrollTopButton from '../../components/scrollTopButton';
 import useScrollToDiv from '../../components/useScrollToDiv';
 import Footer from '../../footer';
 
+const getProdutosPage = async (limit: number) => {
+    try {
+        const resp = await getProdsLimit(limit);
+        const prodFormatted = resp.data.map((produto: any) => ({
+            id: produto.id,
+            name: produto.pro_desc_tecnica,
+            img: produto.imagens.length > 0 ? produto.imagens[0].url : "",
+            price: 'R$ 254,90',
+            sku: produto.pro_partnum_sku,
+        }));
+        return prodFormatted;
+    } catch (error) {
+        console.error('Erro: ', error);
+        return [];
+    }
+};
+
 const ProductPage = () => {
     const offsetTop = useState(0);
     const scrollTo = useScrollToDiv();
@@ -25,13 +42,27 @@ const ProductPage = () => {
     const { addToCart, cartItems } = useCart();
     const [loadBtn, setLoadBtn] = useState(false);
     const [isPromoProd, setIsPromoProd] = useState(false);
+    const [selectedImg, setSelectedImg] = useState('');
     const [isActiveColorId, setIsActiveColorId] = useState(null)
     const { codigo } = useParams();
     const [product, setProduct] = useState({
-        pro_codigo: 54862,
+        id: 54862,
         pro_descricao: 'DISCO FLAP 4 1/2" GRÃO 400',
-        pro_valorultimacompra: 139.90,
-        cores: []
+        pro_precovenda: 139.90,
+        pro_modelo_com: '',
+        pro_apresentacao: '',
+        pro_referencia: '',
+        pro_desc_tecnica: '',
+        pro_codigobarra: '',
+        pro_prazogarantia: '',
+        pro_conteudo_emb: '',
+        cores: [],
+        imagens: [],
+        fabricante: {
+            id: 1,
+            fab_codigo: 1,
+            fab_descricao: '',
+        }
     });
     const [openedCart, setOpenedCart] = useState(false);
 
@@ -52,6 +83,7 @@ const ProductPage = () => {
                 const response = await getProduto(codigo);
                 if(response.status === 200 && response.data) {
                     setProduct(response.data[0]);
+                    setSelectedImg(response.data[0].imagens[0].url)
                 }
             } catch (error) {
                 console.error('Erro ao buscar produtos', error);
@@ -82,6 +114,10 @@ const ProductPage = () => {
             .replace(/[^a-zA-Z0-9 ]/g, ''); // Remove caracteres especiais, mantendo apenas letras, números e espaços
     }
 
+    const changePicture = (id) => {
+        setSelectedImg(product.imagens.find((imagem) => imagem.id === id).url)
+    }
+
     return (
     <>
         <Cart cartOpened={openedCart} onCartToggle={setOpenedCart}/>
@@ -93,7 +129,7 @@ const ProductPage = () => {
                     <div className="container d-flex">
                         <div className="col-lg-6 d-flex flex-column">
                             <h2>{product.pro_descricao}</h2>
-                            <span className='sku'>{product.pro_codigo}</span>
+                            <span className='sku'>{product.pro_modelo_com}</span>
                             <div className="nav-product">
                                 <div className="button-nav" onClick={() => scrollTo('caracteristicas')}><b>Características</b></div>
                                 <div className="button-nav" onClick={() => scrollTo('especificacoes')}><b>Especificações Técnicas</b></div>
@@ -104,16 +140,16 @@ const ProductPage = () => {
                             <div className="price-info-head col-lg-6">
                                 <span className='price'>
                                     {isPromoProd ? 
-                                        <span>R$ {Number(product.pro_valorultimacompra).toFixed(2).replace('.',',')}</span>
+                                        <span>R$ {Number(product.pro_precovenda).toFixed(2).replace('.',',')}</span>
                                             :
                                         <>
-                                            <span>De <b style={{textDecoration: 'line-through'}}>R$ {Number(product.pro_valorultimacompra).toFixed(2).replace('.',',')}</b></span>
-                                            <span>Por <b>R$ {Number((product.pro_valorultimacompra - 5)).toFixed(2).replace('.',',')}</b></span>
+                                            <span>De <b style={{textDecoration: 'line-through'}}>R$ {Number(product.pro_precovenda).toFixed(2).replace('.',',')}</b></span>
+                                            <span>Por <b>R$ {Number((product.pro_precovenda - 5)).toFixed(2).replace('.',',')}</b></span>
                                         </>
                                     }
                                 </span>
-                                <span>Em até 12x de <b>R$ {Number(product.pro_valorultimacompra).toFixed(2).replace('.',',')}</b></span>
-                                <span>ou <span style={{textDecoration: 'underline'}}>R$ {Number((product.pro_valorultimacompra - 5)).toFixed(2).replace('.',',')}</span> no pagamento pix</span>
+                                <span>Em até 12x de <b>R$ {Number(product.pro_precovenda).toFixed(2).replace('.',',')}</b></span>
+                                <span>ou <span style={{textDecoration: 'underline'}}>R$ {Number((product.pro_precovenda - 5)).toFixed(2).replace('.',',')}</span> no pagamento pix</span>
                             </div>
                             <div className="button-buy col-lg-6 d-flex align-items-center justify-content-center">
                                 <button type='button'
@@ -132,54 +168,37 @@ const ProductPage = () => {
                 </div>
                 <div className="container d-flex flex-wrap">
                     <div className="content-img">
-                        <Image
-                            src={HeadphoneImg}
-                            alt="Headphone"
-                            layout="responsive"
-                        />
+                        <div className="img-carrousel">
+                            <Image
+                                src={selectedImg}
+                                alt="Headphone"
+                                layout="responsive"
+                                width={400}
+                                height={400}
+                            />
+                        </div>
                         <div className="carrousel mt-4">
-                            <div className="img-carrousel">
-                                <Image
-                                    src={HeadphoneImg}
-                                    alt="Headphone"
-                                    layout="responsive"
-                                />
-                            </div>
-                            <div className="img-carrousel">
-                                <Image
-                                    src={HeadphoneImg}
-                                    alt="Headphone"
-                                    layout="responsive"
-                                />
-                            </div>
-                            <div className="img-carrousel">
-                                <Image
-                                    src={HeadphoneImg}
-                                    alt="Headphone"
-                                    layout="responsive"
-                                />
-                            </div>
-                            <div className="img-carrousel">
-                                <Image
-                                    src={HeadphoneImg}
-                                    alt="Headphone"
-                                    layout="responsive"
-                                />
-                            </div>
-                            <div className="img-carrousel">
-                                <Image
-                                    src={HeadphoneImg}
-                                    alt="Headphone"
-                                    layout="responsive"
-                                />
-                            </div>
+                            {product.imagens.map((p) => (
+                                <div className="img-carrousel">
+                                    <Image
+                                        key={p.id}
+                                        src={p.url}
+                                        alt="Headphone"
+                                        layout="responsive"
+                                        width={150}
+                                        height={150}
+
+                                        onClick={() => changePicture(p.id)}
+                                    />
+                                </div>
+                            ))}
                         </div>
                     </div>
                     <div className="content-infoprod">
                         <div className="content-title-prod">
                             <h1>{product.pro_descricao}</h1>
                             <div className="rating-infoprod">
-                                <div className="sku">SKU: {product.pro_codigo}</div>
+                                <div className="sku">SKU: {product.pro_modelo_com}</div>
                                 <div className="label-stars">
                                     <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e8eaed">
                                         <path d="m233-120 65-281L80-590l288-25 112-265 112 265 288 25-218 189 65 281-247-149-247 149Z"/>
@@ -201,12 +220,9 @@ const ProductPage = () => {
                             </div>
                             <hr/>
                             <div className="content-product-info">
-                                <p>O famoso headset Voicer Comfort da C3TECH agora com conexão USB. Com som limpo e claro, use em call centers, aulas ou residência.
-                                    O controle de volume integrado ao cabo, haste do microfone flexível, almofadas e arco revestidos de espuma tornam o uso fácil,
-                                     além de proporcionar um conforto inexplicável, 
-                                     ideal para te acompanhar em todas as chamadas.</p>
+                                <p>{product.pro_apresentacao}</p>
                             </div>
-                            <div className='d-flex flex-direction-column align-items-center'>
+                            {/* <div className='d-flex flex-direction-column align-items-center'>
                                 <p className="text-colors">Cores:</p>
                                 <div className="colors">
                                     {product.cores.map((item) => (
@@ -217,17 +233,17 @@ const ProductPage = () => {
                                         ></div>
                                     ))}
                                 </div>
-                            </div>
+                            </div> */}
                             <hr />
                             <div className="content-price d-flex flex-direction-column align-items-center">
                                 <span className="price text-center">
-                                    R$ {Number(product.pro_valorultimacompra).toFixed(2).replace('.',',')}
+                                    R$ {Number(product.pro_precovenda).toFixed(2).replace('.',',')}
                                 </span>
                                 <span className="card-info">
                                     Até 12x no cartão
                                 </span>
-                                <span>Em até 12x de <b>R$ {Number(product.pro_valorultimacompra).toFixed(2).replace('.',',')}</b></span>
-                                <span>ou <span style={{textDecoration: 'underline'}}>R$ {Number((product.pro_valorultimacompra - 5)).toFixed(2).replace('.',',')}</span> no pagamento pix</span>
+                                <span>Em até 12x de <b>R$ {Number(product.pro_precovenda).toFixed(2).replace('.',',')}</b></span>
+                                <span>ou <span style={{textDecoration: 'underline'}}>R$ {Number((product.pro_precovenda - 5)).toFixed(2).replace('.',',')}</span> no pagamento pix</span>
                                 <button type='button'
                                     onClick={handleAddToCart}
                                     className='btn-buy-primary mt-3'
@@ -408,7 +424,7 @@ const ProductPage = () => {
                     </div>
                 </div>
             </section>
-            <section id="banner_prod">
+            {/* <section id="banner_prod">
                 <div className="container">
                     <Image
                         height={500}
@@ -417,44 +433,23 @@ const ProductPage = () => {
                         layout="responsive"
                     />
                 </div>
-            </section>
+            </section> */}
             <section id='especificacoes' style={{margin: '25px 0px'}}>
                 <div className="container">
                     <div className="title-section">
                         <p>Especificações</p>
                     </div>
-                    <p>
-                    Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br/>
-                    Sed feugiat neque lacinia tellus elementum, et fringilla orci posuere.<br/>
-                    Nulla viverra risus id facilisis varius.<br/>
-
-                    Nunc at mauris sed lectus euismod efficitur in blandit dolor.<br/>
-                    Sed cursus velit porttitor vehicula egestas.<br/>
-                    Mauris vel tortor at arcu interdum vehicula eget vel diam.<br/>
-                    Praesent sodales urna vitae faucibus vulputate.<br/>
-                    Mauris gravida diam sit amet magna porta, vel rutrum velit scelerisque.<br/>
-                    Integer euismod dolor quis ligula accumsan pretium.<br/>
-
-                    Maecenas ultricies lectus eget egestas sollicitudin.<br/>
-                    Phasellus at turpis ut sem ullamcorper fringilla in sed orci.<br/>
-                    Aliquam a dolor eget eros ultrices facilisis.<br/>
-                    Donec eu tortor eu urna lobortis tincidunt a quis arcu.<br/>
-                    Morbi vulputate enim eu euismod mollis.<br/>
-                    Aenean pretium ex sit amet massa cursus, suscipit scelerisque ligula posuere.<br/>
-
-                    Donec volutpat lacus eu purus lobortis, nec semper urna lobortis.<br/>
-                    Integer sed sapien molestie, elementum justo quis, lacinia odio.<br/>
-                    Pellentesque eu nibh efficitur, posuere sapien sit amet, consequat sem.<br/>
-                    Proin non orci sit amet sem fringilla commodo vitae aliquet nisi.<br/>
-                    Etiam sed felis ut odio porttitor sagittis in ac lacus.<br/>
-                    Nulla eu nisl blandit, bibendum enim vel, auctor felis.<br/>
-
-                    Nulla egestas nisl bibendum eros gravida congue.<br/>
-                    Mauris commodo felis sit amet sem consequat, non commodo nulla volutpat.<br/>
-                    Duis at nisl in arcu accumsan bibendum.<br/>
-                    In quis quam nec felis hendrerit pretium vitae sed urna.<br/>
-                    Vestibulum semper sem at nisl euismod, interdum tristique sem fringilla.<br/>
-                    </p>
+                    <div className="txt-espec-prods">
+                        <p><strong>Referência:</strong> {product.pro_referencia}</p>
+                        <p><strong>Descrição Técnica:</strong> {product.pro_desc_tecnica}</p>
+                        <p><strong>Modelo Comercial:</strong> {product.pro_modelo_com}</p>
+                        <p><strong>Marca:</strong> {product.fabricante.fab_descricao}</p>
+                        <p><strong>Apresentação:</strong> {product.pro_apresentacao}</p>
+                        {/* <p><strong>Tipo Giro:</strong> {product.pro_descricao}</p> */}
+                        <p><strong>DUN14:</strong> {product.pro_codigobarra}</p>
+                        <p><strong>Prazo de Garantia:</strong> {product.pro_prazogarantia}</p>
+                        <p><strong>Conteúdo Embalagem:</strong> {product.pro_conteudo_emb}</p>
+                    </div>
                 </div>
             </section>
             <section id="tabs">

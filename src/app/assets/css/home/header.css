@@ -120,14 +120,17 @@ header .content-header .search .content-search select {
     padding: 0px 5px;
     font-size: 13px;
     outline: none;
+    display: none;
 }
 header .content-header .search .content-search input {
     height: 40px;
     border: 1px solid #dedede;
-    border-left: none;
     flex-grow: 1;
     padding-left: 5px;
     outline: none;
+    border-top-left-radius: 3px;
+    border-bottom-left-radius: 3px;
+    padding-left: 15px;
 }
 header .content-header .search .content-search button {
     border: 1px solid #102d57;

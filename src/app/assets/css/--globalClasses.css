@@ -101,3 +101,12 @@ html {
     background-color: white;
     color: #209c20;
 }
+#prod-newest .p-carousel.p-component {
+    width: 100%;
+}
+#prod-trending .p-carousel.p-component {
+    width: 100%;
+}
+#prod-categorias .p-carousel.p-component {
+    width: 100%;
+}

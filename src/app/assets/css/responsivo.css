@@ -33,15 +33,6 @@
     #info-cards .card-info .content:last-of-type{
         margin-right: 55px;
     }
-    #prod-newest .p-carousel.p-component {
-        width: 100%;
-    }
-    #prod-trending .p-carousel.p-component {
-        width: 100%;
-    }
-    #prod-categorias .p-carousel.p-component {
-        width: 100%;
-    }
     #info-cards .container {
         flex-wrap: wrap;
         justify-content: space-between;

@@ -178,128 +178,143 @@ export default function Cart({ cartOpened, onCartToggle }) {
                 )}
                 </div>
                 <div className="cart-moreprod">
-                    <Button
-                        onClick={linkToProducts}
-                        variant="outlined"
+                    <a
+                        href='/produtos'
+                        className='btn-buy-primary'
                         style={{
                             borderBottomLeftRadius: '0px',
                             borderTopLeftRadius: '0px',
                             borderRadius: '15px',
+                            padding: '10px 4px',
+                            width: '250px',
+                            maxWidth: '250px',
+                            display: 'flex',
+                            justifyContent: 'center',
+                            textDecoration: 'none',
+                            fontFamily: 'system-ui'
                         }}
                     >
-                        Escolha mais produtos
-                    </Button>
+                        {cartItems.length == 0 ? 'Veja todos os produtos' : 'Escolha mais produtos'}
+                    </a>
                 </div>
-                <Divider style={{background: 'gray'}}/>
-                <div className="coupon-code">
-                    <span>Digite um cupom de desconto:</span>
-                    <div className="apply">
-                        <div className="input-cupom">
-                            {loadingCoupon && <>
-                                <div className="circle1 circles"></div>
-                                <div className="circle2 circles"></div>
-                                <div className="circle3 circles"></div>
-                            </>
+                {
+                    cartItems.length != 0 ?
+                    <>
+                        <Divider style={{background: 'gray'}}/>
+                        <div className="coupon-code">
+                            <span>Digite um cupom de desconto:</span>
+                            <div className="apply">
+                                <div className="input-cupom">
+                                    {loadingCoupon && <>
+                                        <div className="circle1 circles"></div>
+                                        <div className="circle2 circles"></div>
+                                        <div className="circle3 circles"></div>
+                                    </>
+                                    }
+                                    <TextField 
+                                        error={errorCoupon}
+                                        id="outlined-basic"
+                                        sx={{
+                                            '& .MuiInputBase-root': {
+                                                borderBottomRightRadius: '0px',
+                                                borderTopRightRadius: '0px',
+                                            },
+                                            '& .MuiOutlinedInput-root input': {
+                                                padding: '8px 10px 8px 10px',
+                                            },
+                                        }}
+                                        placeholder="Cupom"
+                                        variant="outlined"
+                                        value={inpCoupon}
+                                        disabled={loadingCoupon}
+                                        onChange={(e) => {setInpCoupon(e.target.value)}}
+                                    />
+                                </div>
+                                <Button
+                                    onClick={handleCouponApply}
+                                    variant="contained"
+                                    style={{
+                                        borderBottomLeftRadius: '0px',
+                                        borderTopLeftRadius: '0px',
+                                    }}
+                            
+                                >
+                                    Aplicar
+                                </Button>
+                            </div>
+                            {coupon && loadingCoupon != true &&
+                                <span className='coupon-status' style={{color: activeCoupon ? 'green' : 'red'}}>
+                                    {activeCoupon == true && 
+                                        <CheckIcon fontSize="inherit" />
+                                    }
+                                    {activeCoupon == false && 
+                                        <CloseIcon fontSize="inherit" />
+                                    }
+                                    {statusMessage}
+                                </span>
                             }
-                            <TextField 
-                                error={errorCoupon}
-                                id="outlined-basic"
-                                sx={{
-                                    '& .MuiInputBase-root': {
-                                        borderBottomRightRadius: '0px',
-                                        borderTopRightRadius: '0px',
-                                    },
-                                    '& .MuiOutlinedInput-root input': {
-                                        padding: '8px 10px 8px 10px',
-                                    },
-                                }}
-                                placeholder="Cupom"
-                                variant="outlined"
-                                value={inpCoupon}
-                                disabled={loadingCoupon}
-                                onChange={(e) => {setInpCoupon(e.target.value)}}
-                            />
                         </div>
-                        <Button
-                            onClick={handleCouponApply}
-                            variant="contained"
-                            style={{
-                                borderBottomLeftRadius: '0px',
-                                borderTopLeftRadius: '0px',
-                            }}
-                     
-                        >
-                            Aplicar
-                        </Button>
-                    </div>
-                    {coupon && loadingCoupon != true &&
-                        <span className='coupon-status' style={{color: activeCoupon ? 'green' : 'red'}}>
-                            {activeCoupon == true && 
-                                <CheckIcon fontSize="inherit" />
-                            }
-                            {activeCoupon == false && 
-                                <CloseIcon fontSize="inherit" />
-                            }
-                            {statusMessage}
-                        </span>
-                    }
-                </div>
-                <Divider style={{background: 'gray'}}/>
-                <div className="cart-totals">
-                    <div className="totals">
-                        <span>Subtotal: </span>
-                        <span className='price-totals'>
-                            <b>R$ {cartData.reduce((total, item) => {
-                                        const cartItem = cartItems.find(i => i.pro_codigo === item.id);
-                                        if (cartItem) {
-                                            return total + (cartItem.pro_valorultimacompra * item.qty);
+                        <Divider style={{background: 'gray'}}/>
+                        <div className="cart-totals">
+                            <div className="totals">
+                                <span>Subtotal: </span>
+                                <span className='price-totals'>
+                                    <b>R$ {cartData.reduce((total, item) => {
+                                                const cartItem = cartItems.find(i => i.pro_codigo === item.id);
+                                                if (cartItem) {
+                                                    return total + (cartItem.pro_valorultimacompra * item.qty);
+                                                }
+                                                return total;
+                                            }, 0)
+                                            .toFixed(2)
+                                            .replace('.', ',')
                                         }
-                                        return total;
-                                    }, 0)
-                                    .toFixed(2)
-                                    .replace('.', ',')
-                                }
-                            </b>
-                        </span>
-                    </div>
-                    <div className="totals discount">
-                        <span style={{height: '32px'}}>Descontos: 
-                            {activeCoupon && (
-                                <span className="mini">(Cupom {coupon.percent_discount}%)</span>
-                            )}
-                        </span>
-                        <span className='price-totals'>
-                            <b>R$ {applyCouponDiscount(cartItems
-                                    .reduce((total, item) => total + (item.pro_valorultimacompra * cartData[cartItems.findIndex(i => i.pro_codigo == item.pro_codigo)].qty), 0))
-                                    .toFixed(2).replace('.',',')
-                                }
-                            </b>
-                        </span>
-                    </div>
-                    <div className="totals discount">
-                        <span>Total no Pix: 
-                            <span className='mini'>({discountPix}% de desconto)</span>
-                        </span>
-                        <span className='price-totals c-red'>
-                            <b>R$ {applyPixDiscount(cartItems
-                                    .reduce((total, item) => total + (item.pro_valorultimacompra * cartData[cartItems.findIndex(i => i.pro_codigo == item.pro_codigo)].qty), 0))
-                                    .toFixed(2).replace('.',',')
-                                }
-                            </b>
-                        </span>
-                    </div>
-                    <div className="totals discount">
-                        <span><b>Total à vista: </b></span>
-                        <span className='price-totals'>
-                            <b>R$ {applyDiscounts(cartItems
-                                    .reduce((total, item) => total + (item.pro_valorultimacompra * cartData[cartItems.findIndex(i => i.pro_codigo == item.pro_codigo)].qty), 0))
-                                    .toFixed(2).replace('.',',')
-                                }
-                            </b>
-                        </span>
-                    </div>
-                    <a href="/checkout" className="link-to-buy">Finalizar Pedido</a>
-                </div>
+                                    </b>
+                                </span>
+                            </div>
+                            <div className="totals discount">
+                                <span style={{height: '32px'}}>Descontos: 
+                                    {activeCoupon && (
+                                        <span className="mini">(Cupom {coupon.percent_discount}%)</span>
+                                    )}
+                                </span>
+                                <span className='price-totals'>
+                                    <b>R$ {applyCouponDiscount(cartItems
+                                            .reduce((total, item) => total + (item.pro_valorultimacompra * cartData[cartItems.findIndex(i => i.pro_codigo == item.pro_codigo)].qty), 0))
+                                            .toFixed(2).replace('.',',')
+                                        }
+                                    </b>
+                                </span>
+                            </div>
+                            <div className="totals discount">
+                                <span>Total no Pix: 
+                                    <span className='mini'>({discountPix}% de desconto)</span>
+                                </span>
+                                <span className='price-totals c-red'>
+                                    <b>R$ {applyPixDiscount(cartItems
+                                            .reduce((total, item) => total + (item.pro_valorultimacompra * cartData[cartItems.findIndex(i => i.pro_codigo == item.pro_codigo)].qty), 0))
+                                            .toFixed(2).replace('.',',')
+                                        }
+                                    </b>
+                                </span>
+                            </div>
+                            <div className="totals discount">
+                                <span><b>Total à vista: </b></span>
+                                <span className='price-totals'>
+                                    <b>R$ {applyDiscounts(cartItems
+                                            .reduce((total, item) => total + (item.pro_valorultimacompra * cartData[cartItems.findIndex(i => i.pro_codigo == item.pro_codigo)].qty), 0))
+                                            .toFixed(2).replace('.',',')
+                                        }
+                                    </b>
+                                </span>
+                            </div>
+                            <a href="/checkout" className="link-to-buy">Finalizar Pedido</a>
+                        </div>
+                    </>
+                    :
+                    <>
+                    </>
+                }
             </Box>
         </Drawer>
     );
