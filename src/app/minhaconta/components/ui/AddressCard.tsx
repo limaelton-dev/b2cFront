@@ -19,7 +19,10 @@ const AddressCard: React.FC<AddressCardProps> = ({
   onDelete,
   onSetDefault
 }) => {
-  const { address, bairro, city, state, cep, isPrincipal } = endereco;
+  const { street, number, complement, neighborhood, city, state, postal_code, is_default } = endereco;
+  
+  // Formatar o endereço completo
+  const fullAddress = `${street}, ${number}${complement ? `, ${complement}` : ''}`;
   
   return (
     <Card 
@@ -35,7 +38,7 @@ const AddressCard: React.FC<AddressCardProps> = ({
         }
       }}
     >
-      {isPrincipal && (
+      {is_default && (
         <Chip 
           label="Principal" 
           size="small"
@@ -85,8 +88,8 @@ const AddressCard: React.FC<AddressCardProps> = ({
                 ml: '28px'
               }}
             >
-              {address}
-              {bairro && `, ${bairro}`}
+              {fullAddress}
+              {neighborhood && `, ${neighborhood}`}
             </Typography>
           </Box>
           
@@ -111,7 +114,7 @@ const AddressCard: React.FC<AddressCardProps> = ({
               }}
             >
               {city} - {state}
-              {cep && `, ${cep}`}
+              {postal_code && `, ${postal_code}`}
             </Typography>
           </Box>
           
@@ -123,7 +126,7 @@ const AddressCard: React.FC<AddressCardProps> = ({
               mt: 0.5
             }}
           >
-            {!isPrincipal && onSetDefault && (
+            {!is_default && onSetDefault && (
               <Button 
                 variant="text" 
                 size="small"

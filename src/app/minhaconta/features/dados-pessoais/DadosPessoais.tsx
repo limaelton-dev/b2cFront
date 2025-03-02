@@ -8,6 +8,7 @@ import PhoneIcon from '@mui/icons-material/Phone';
 import BadgeIcon from '@mui/icons-material/Badge';
 import CakeIcon from '@mui/icons-material/Cake';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import WcIcon from '@mui/icons-material/Wc';
 import useUserPersonalData from '../../hooks/useUserPersonalData';
 import { DadosPessoaisType } from '../../types';
 
@@ -29,8 +30,21 @@ const DadosPessoais: React.FC = () => {
   };
 
   // Função para renderizar o valor do campo ou uma mensagem quando estiver vazio
-  const renderFieldValue = (value: string, field: string) => {
+  const renderFieldValue = (value: string | null, field: string) => {
     return value ? value : <EmptyFieldMessage field={field} />;
+  };
+
+  // Função para formatar o gênero
+  const formatGender = (gender: string | null) => {
+    if (!gender) return null;
+    
+    const genderMap: Record<string, string> = {
+      'M': 'Masculino',
+      'F': 'Feminino',
+      'O': 'Outro'
+    };
+    
+    return genderMap[gender] || gender;
   };
 
   return (
@@ -74,16 +88,16 @@ const DadosPessoais: React.FC = () => {
           <Box>
             <InfoCard 
               label="Nome completo" 
-              description={renderFieldValue(dadosPessoais.nome, 'Nome')} 
+              description={renderFieldValue(dadosPessoais.full_name, 'Nome')} 
               icon={<PersonIcon sx={{ color: '#102d57', fontSize: 20 }} />}
-              onAction={() => handleEdit('nome')}
+              onAction={() => handleEdit('full_name')}
             />
             
             <InfoCard 
               label="Data de Nascimento" 
-              description={renderFieldValue(dadosPessoais.dob, 'Data de Nascimento')} 
+              description={renderFieldValue(dadosPessoais.birth_date, 'Data de Nascimento')} 
               icon={<CakeIcon sx={{ color: '#102d57', fontSize: 20 }} />}
-              onAction={() => handleEdit('dob')}
+              onAction={() => handleEdit('birth_date')}
             />
             
             <InfoCard 
@@ -112,6 +126,13 @@ const DadosPessoais: React.FC = () => {
               description={renderFieldValue(dadosPessoais.phone, 'Telefone')} 
               icon={<PhoneIcon sx={{ color: '#102d57', fontSize: 20 }} />}
               onAction={() => handleEdit('phone')}
+            />
+            
+            <InfoCard 
+              label="Gênero" 
+              description={renderFieldValue(formatGender(dadosPessoais.gender), 'Gênero')} 
+              icon={<WcIcon sx={{ color: '#102d57', fontSize: 20 }} />}
+              onAction={() => handleEdit('gender')}
             />
           </Box>
         </Box>

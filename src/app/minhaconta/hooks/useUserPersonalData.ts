@@ -5,12 +5,14 @@ import { useNotificationContext } from '../context/NotificationContext';
 
 export const useUserPersonalData = () => {
   const [dadosPessoais, setDadosPessoais] = useState<DadosPessoaisType>({
-    nome: '',
+    full_name: '',
     cpf: '',
     email: '',
     username: '',
-    dob: '',
+    birth_date: '',
     phone: '',
+    gender: null,
+    profile_type: 'PF',
   });
   
   const [loading, setLoading] = useState<boolean>(true);
@@ -56,15 +58,17 @@ export const useUserPersonalData = () => {
 
   // Função auxiliar para obter o rótulo do campo
   const getFieldLabel = (field: keyof DadosPessoaisType): string => {
-    const labels: Record<keyof DadosPessoaisType, string> = {
-      nome: 'Nome',
+    const labels: Record<string, string> = {
+      full_name: 'Nome',
       cpf: 'CPF',
       email: 'E-mail',
       username: 'Nome de usuário',
-      dob: 'Data de nascimento',
-      phone: 'Telefone'
+      birth_date: 'Data de nascimento',
+      phone: 'Telefone',
+      gender: 'Gênero',
+      profile_type: 'Tipo de perfil'
     };
-    return labels[field];
+    return labels[field] || field;
   };
 
   useEffect(() => {

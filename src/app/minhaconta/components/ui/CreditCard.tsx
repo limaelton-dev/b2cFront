@@ -1,20 +1,48 @@
 import React, { useState } from 'react';
-import { Box, IconButton, Card, CardContent } from '@mui/material';
+import { Box, IconButton, Card, CardContent, Chip } from '@mui/material';
 import Cards from 'react-credit-cards-2';
 import 'react-credit-cards-2/dist/es/styles-compiled.css';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import EditIcon from '@mui/icons-material/Edit';
+import StarIcon from '@mui/icons-material/Star';
 import { CartaoType } from '../../types';
 
 interface CreditCardProps {
   cartao: CartaoType;
   onEdit?: () => void;
   onDelete?: () => void;
+  onSetDefault?: () => void;
 }
 
-const CreditCard: React.FC<CreditCardProps> = ({ cartao, onEdit, onDelete }) => {
-  const { nome, numero, validade, cvv } = cartao;
+const CreditCard: React.FC<CreditCardProps> = ({ 
+  cartao, 
+  onEdit, 
+  onDelete,
+  onSetDefault
+}) => {
+  const { card_number, holder_name, expiration_date, is_default, card_type } = cartao;
   const [isHovered, setIsHovered] = useState(false);
+  
+  // Função para obter o ícone da bandeira do cartão
+  const getCardBrand = (type: string) => {
+    const brands: Record<string, string> = {
+      'visa': 'visa',
+      'master': 'mastercard',
+      'amex': 'amex',
+      'discover': 'discover',
+      'diners': 'dinersclub',
+      'jcb': 'jcb',
+      'unionpay': 'unionpay',
+      'maestro': 'maestro',
+      'hipercard': 'hipercard',
+      'elo': 'elo'
+    };
+    
+    return brands[type.toLowerCase()] || '';
+  };
+  
+  // Formatar o número do cartão para exibição
+  const maskedNumber = `**** **** **** ${cartao.last_four_digits}`;
   
   return (
     <Box
@@ -25,6 +53,25 @@ const CreditCard: React.FC<CreditCardProps> = ({ cartao, onEdit, onDelete }) => 
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
+      {is_default && (
+        <Chip 
+          icon={<StarIcon sx={{ fontSize: '14px' }} />}
+          label="Principal" 
+          size="small"
+          color="primary"
+          sx={{ 
+            position: 'absolute', 
+            top: -8, 
+            left: 8, 
+            zIndex: 10,
+            backgroundColor: '#102d57',
+            fontWeight: 500,
+            fontSize: '0.65rem',
+            height: '20px'
+          }}
+        />
+      )}
+      
       {isHovered && (
         <Box 
           sx={{ 
@@ -39,6 +86,22 @@ const CreditCard: React.FC<CreditCardProps> = ({ cartao, onEdit, onDelete }) => 
             padding: '2px'
           }}
         >
+          {!is_default && onSetDefault && (
+            <IconButton 
+              size="small"
+              onClick={onSetDefault}
+              sx={{ 
+                color: '#ffc107',
+                padding: '3px',
+                '&:hover': {
+                  backgroundColor: 'rgba(255, 193, 7, 0.1)',
+                }
+              }}
+            >
+              <StarIcon sx={{ fontSize: '18px' }} />
+            </IconButton>
+          )}
+          
           {onEdit && (
             <IconButton 
               size="small"
@@ -69,11 +132,13 @@ const CreditCard: React.FC<CreditCardProps> = ({ cartao, onEdit, onDelete }) => 
       )}
       
       <Cards
-        number={numero}
-        name={nome}
-        expiry={validade.replace('/', '')}
-        cvc={cvv}
+        number={maskedNumber}
+        name={holder_name}
+        expiry={expiration_date.replace('/', '')}
+        cvc="***"
         focused=""
+        preview={true}
+        issuer={getCardBrand(card_type)}
       />
     </Box>
   );

@@ -1,31 +1,43 @@
 // Tipos para dados pessoais
 export interface DadosPessoaisType {
-  nome: string;
+  full_name: string;
   cpf: string;
   email: string;
   username: string;
-  dob: string;
+  birth_date: string;
   phone: string;
+  gender: string | null;
+  profile_type: string;
 }
 
 // Tipos para endereços
 export interface EnderecoType {
   id: number;
-  address: string;
-  bairro: string;
+  profile_id: number;
+  street: string;
+  number: string;
+  complement: string;
+  neighborhood: string;
   city: string;
   state: string;
-  cep: string;
-  isPrincipal?: boolean;
+  postal_code: string;
+  is_default: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 // Tipos para cartões
 export interface CartaoType {
   id: number;
-  nome: string;
-  numero: string;
-  validade: string;
-  cvv: string;
+  profile_id: number;
+  card_number: string;
+  holder_name: string;
+  expiration_date: string;
+  is_default: boolean;
+  card_type: string;
+  last_four_digits: string;
+  created_at: string;
+  updated_at: string;
 }
 
 // Tipos para compras
