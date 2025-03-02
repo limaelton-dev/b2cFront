@@ -12,15 +12,23 @@ import Cart from './components/cart';
 import { Carousel } from 'primereact/carousel';
 import { Typography } from '@mui/material';
 import { getProdsLimit } from './services/produto/page';
+import { useCart } from './context/cart';
+import { useToastSide } from './context/toastSide';
 
 const getProdutosPage = async (limit: number) => {
     try {
         const resp = await getProdsLimit(limit);
         const prodFormatted = resp.data.map((produto: any) => ({
             id: produto.id,
+            pro_codigo: produto.pro_codigo,
+            pro_descricao: produto.pro_descricao,
+            pro_desc_tecnica: produto.pro_desc_tecnica,
+            pro_precovenda: produto.pro_precovenda,
+            pro_valorultimacompra: produto.pro_valorultimacompra,
+            imagens: produto.imagens,
             name: produto.pro_desc_tecnica,
-            img: produto.imagens.length > 0 ? produto.imagens[0].url : "",
-            price: 'R$ 254,90',
+            img: produto.imagens && produto.imagens.length > 0 ? produto.imagens[0].url : "",
+            price: produto.pro_precovenda ? `R$ ${produto.pro_precovenda.toFixed(2).replace('.', ',')}` : 'Preço indisponível',
             sku: produto.pro_partnum_sku,
         }));
         return prodFormatted;
@@ -31,11 +39,14 @@ const getProdutosPage = async (limit: number) => {
 };
 
 export default function HomePage() {
+    const { addToCart } = useCart();
+    const { showToast } = useToastSide();
     const [openedCart, setOpenedCart] = useState(false);
     const [prodsNew, setProdsNew] = useState<object[]>([]);
     const [prodsMaisVend, setProdsMaisVend] = useState<object[]>([]);
     const [marcas, setMarcas] = useState<object[]>([]);
     const [prodsOfertas, setProdOfertas] = useState<object[]>([]);
+    const [loadingProduct, setLoadingProduct] = useState<number | null>(null);
     
 
     useEffect(() => {
@@ -69,6 +80,20 @@ export default function HomePage() {
     ];
 
     const productTemplate = (product) => {
+        const handleAddToCart = async () => {
+            setLoadingProduct(product.id);
+            if(!addToCart(product, null)) {
+                showToast('O produto já existe no carrinho!', 'error');
+                setLoadingProduct(null);
+            } else {
+                setTimeout(() => {
+                    setLoadingProduct(null);
+                    showToast('O produto foi adicionado ao carrinho!', 'success');
+                    setOpenedCart(true);
+                }, 500);
+            }
+        };
+
         return (
             <div className="product">
                 <div className="wishlist-button">
@@ -121,7 +146,14 @@ export default function HomePage() {
                     </div>
                 </div>
                 <div className='addToCartBox d-flex justify-content-center'>
-                    <button type='button' className='addToCartButton'>Adicionar ao carrinho</button>
+                    <button 
+                        type='button' 
+                        className='addToCartButton'
+                        onClick={handleAddToCart}
+                        disabled={loadingProduct === product.id}
+                    >
+                        {loadingProduct === product.id ? 'Adicionando...' : 'Adicionar ao carrinho'}
+                    </button>
                 </div>
             </div>
         )
