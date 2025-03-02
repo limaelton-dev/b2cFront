@@ -137,11 +137,12 @@ export const cartUpdate = async (data) => {
     // e retornamos um objeto simulando sucesso para que o frontend continue funcionando
     if (!isAuthenticated()) {
         console.log('Usuário não autenticado, não enviando atualização do carrinho para o servidor');
-        return { status: 200, data: { cart_data: data } };
+        return { status: 200, data: data };
     }
 
     try {
-        const response = await axios.patch(`${API_URL}/cart`, { cart_data: data }, {
+        console.log('\n\n\nEnviando dados para o servidor:', JSON.stringify(data));
+        const response = await axios.put(`${API_URL}/cart`, data, {
             headers: getAuthHeader()
         });
         return response;
@@ -151,7 +152,7 @@ export const cartUpdate = async (data) => {
         // Em caso de erro de autenticação (401) ou não encontrado (404), retornamos um objeto simulando sucesso
         if (err.response && (err.response.status === 401 || err.response.status === 404)) {
             console.log('Erro de autenticação ou carrinho não encontrado, simulando sucesso');
-            return { status: 200, data: { cart_data: data } };
+            return { status: 200, data: data };
         }
         return err;
     }

@@ -47,12 +47,12 @@ export const CartProvider = ({ children }) => {
         setCartData((prevItems) => {
             if (!Array.isArray(prevItems)) {
                 return [{
-                    produto_id: product.pro_codigo,
+                    produto_id: product.id,
                     quantity: 1,
                 }];
             }
             return [...prevItems, {
-                produto_id: product.pro_codigo,
+                produto_id: product.id,
                 quantity: 1,
                 idCart: prevItems.length + 1
             }];
@@ -139,11 +139,16 @@ export const CartProvider = ({ children }) => {
                             console.log('Produtos processados:', processedProducts.length);
                             
                             // Converter os itens do carrinho para o formato antigo para manter compatibilidade
-                            const convertedCartData = cartdata.cart_data.map(item => ({
-                                id: item.produto_id,
-                                qty: item.quantity,
-                                // Não usamos mais o preço do carrinho, apenas a quantidade
-                            }));
+                            const convertedCartData = cartdata.cart_data.map(item => {
+                                // Encontrar o produto correspondente
+                                const product = processedProducts.find(p => p.id == item.produto_id || p.pro_codigo == item.produto_id);
+                                
+                                return {
+                                    id: product ? product.id : item.produto_id, // Usar o ID do produto, não o pro_codigo
+                                    qty: item.quantity,
+                                    // Não usamos mais o preço do carrinho, apenas a quantidade
+                                };
+                            });
                             
                             console.log('Atualizando cartItems com:', processedProducts.length, 'produtos');
                             console.log('Atualizando cartData com:', convertedCartData.length, 'itens');
@@ -349,10 +354,14 @@ export const CartProvider = ({ children }) => {
             
             // Converte os dados para o novo formato antes de enviar para o backend
             const convertedCartData = validCartData.map(item => {
+                // Encontrar o produto correspondente
+                const itemId = item.id || item.produto_id;
+                const product = cartItems.find(p => p && (p.id == itemId || p.pro_codigo == itemId));
+                
                 // Se já estiver no novo formato
                 if (item.produto_id !== undefined) {
                     return {
-                        produto_id: item.produto_id,
+                        produto_id: product ? product.id : item.produto_id, // Usar o ID do produto, não o pro_codigo
                         quantity: item.quantity || 1,
                         // Encontrar o produto correspondente para obter o preço
                         price: getProductPrice(item)
@@ -360,7 +369,7 @@ export const CartProvider = ({ children }) => {
                 }
                 // Converte do formato antigo para o novo
                 return {
-                    produto_id: item.id,
+                    produto_id: product ? product.id : item.id, // Usar o ID do produto, não o pro_codigo
                     quantity: item.qty || 1,
                     // Encontrar o produto correspondente para obter o preço
                     price: getProductPrice(item)
