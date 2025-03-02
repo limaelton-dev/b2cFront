@@ -58,6 +58,38 @@ const CheckoutPage = () => {
         }
     }, [cartItems, cartData, router]);
 
+    // Função para obter o preço correto do produto
+    const getProductPrice = (product, item) => {
+        // Verificar se o item tem um preço definido
+        if (item.price && !isNaN(item.price)) {
+            return item.price * (item.qty || item.quantity);
+        }
+        
+        // Verificar se o produto tem preço de venda
+        if (product.pro_precovenda && !isNaN(product.pro_precovenda)) {
+            return product.pro_precovenda * (item.qty || item.quantity);
+        }
+        
+        // Verificar se o produto tem preço de última compra
+        if (product.pro_valorultimacompra && !isNaN(product.pro_valorultimacompra)) {
+            return product.pro_valorultimacompra * (item.qty || item.quantity);
+        }
+        
+        // Se nenhum preço válido for encontrado, retornar 0
+        return 0;
+    };
+
+    // Função para calcular o subtotal do carrinho
+    const calculateSubtotal = () => {
+        return cartData.reduce((total, item) => {
+            const product = cartItems.find(p => p && (p.pro_codigo == item.id || p.pro_codigo == item.produto_id));
+            if (product) {
+                return total + getProductPrice(product, item);
+            }
+            return total;
+        }, 0);
+    };
+
     // Função para caso tenha descontos diferentes
     const applyDiscounts = (val) => {
         let result = val; 
@@ -184,27 +216,32 @@ const CheckoutPage = () => {
                     <p>Produto</p>
                     <div className="d-flex justify-content-between">
                         <div className="prods">
-                            {cartData.map((item, index) => (
-                                <div className="prod">
+                            {cartData.map((item, index) => {
+                                const product = cartItems.find(p => p && (p.pro_codigo == item.id || p.pro_codigo == item.produto_id));
+                                if (!product) return null;
+                                
+                                return (
+                                <div className="prod" key={item.id || item.produto_id}>
                                     <Image
-                                        src={HeadphoneImg}
-                                        alt="Headphone"
+                                        src={product.pro_imagem ? product.pro_imagem : HeadphoneImg}
+                                        alt={product.pro_descricao || "Produto"}
                                         layout="responsive"
                                     />
                                     <div className="info-prod">
-                                        <span className='title-prod'>{cartItems ? cartItems.find(r => r.pro_codigo == item.id).pro_descricao : ''}</span>
+                                        <span className='title-prod'>{product.pro_descricao}</span>
                                         <div className="more-info">
-                                            <span className='sku'>PH-320BK</span>
+                                            <span className='sku'>{product.pro_referencia || 'Sem referência'}</span>
+                                            {product.tipo && (
                                             <div style={{display: 'flex'}}>
-                                                <span style={{marginRight: '8px'}}>Cor: </span>
-                                                <div className="colors">
-                                                    <div className="color" style={{backgroundColor: '#000000'}}></div>
-                                                </div>
+                                                <span style={{marginRight: '8px'}}>Tipo: </span>
+                                                <span>{product.tipo.tpo_descricao}</span>
                                             </div>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
-                            ))}
+                                );
+                            })}
                         </div>
                         <div className="total">
                             <table>
@@ -218,34 +255,22 @@ const CheckoutPage = () => {
                                     <tr>
                                         <td style={{textAlign: 'center'}}>{cartData.length}</td>
                                         <th>R$</th>
-                                        <th style={{textAlign: 'end'}}>{cartItems
-                                            .reduce((total, item) => total + (item.pro_valorultimacompra * cartData[cartItems.findIndex(i => i.pro_codigo == item.pro_codigo)].qty), 0)
-                                            .toFixed(2).replace('.',',')
-                                        }</th>
+                                        <th style={{textAlign: 'end'}}>{calculateSubtotal().toFixed(2).replace('.',',')}</th>
                                     </tr>
                                     <tr>
                                         <td>Subtotal</td>
                                         <td>R$</td>
-                                        <td>{cartItems
-                                            .reduce((total, item) => total + (item.pro_valorultimacompra * cartData[cartItems.findIndex(i => i.pro_codigo == item.pro_codigo)].qty), 0)
-                                            .toFixed(2).replace('.',',')
-                                        }</td>
+                                        <td>{calculateSubtotal().toFixed(2).replace('.',',')}</td>
                                     </tr>
                                     <tr>
                                         <td>Descontos</td>
                                         <td>R$</td>
-                                        <td>-{applyCouponDiscount(cartItems
-                                            .reduce((total, item) => total + (item.pro_valorultimacompra * cartData[cartItems.findIndex(i => i.pro_codigo == item.pro_codigo)].qty), 0))
-                                            .toFixed(2).replace('.',',')
-                                        }</td>
+                                        <td>-{applyCouponDiscount(calculateSubtotal()).toFixed(2).replace('.',',')}</td>
                                     </tr>
                                     <tr>
                                         <th>Total à vista</th>
                                         <td>R$</td>
-                                        <td>{applyDiscounts(cartItems
-                                                .reduce((total, item) => total + (item.pro_valorultimacompra * cartData[cartItems.findIndex(i => i.pro_codigo == item.pro_codigo)].qty), 0))
-                                                .toFixed(2).replace('.',',')
-                                            }</td>
+                                        <td>{applyDiscounts(calculateSubtotal()).toFixed(2).replace('.',',')}</td>
                                     </tr>
                                     <tr>
                                         <td>Entrega</td>
@@ -255,10 +280,7 @@ const CheckoutPage = () => {
                                     <tr>
                                         <th>Total</th>
                                         <td>R$</td>
-                                        <td>{(applyDiscounts(cartItems
-                                                .reduce((total, item) => total + (item.pro_valorultimacompra * cartData[cartItems.findIndex(i => i.pro_codigo == item.pro_codigo)].qty), 0))
-                                                
-                                         + 15.90).toFixed(2).replace('.',',')}</td>
+                                        <td>{(applyDiscounts(calculateSubtotal()) + 15.90).toFixed(2).replace('.',',')}</td>
                                     </tr>
                                 </tbody>
                             </table>

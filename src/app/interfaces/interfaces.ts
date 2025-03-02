@@ -22,7 +22,7 @@ export interface CartContextType {
     cartData: any[];
     changeQtyItem: (product: any, newV: number) => void;
     addToCart: (product: any, idCor: number) => boolean;
-    removeFromCart: (id: string, idCor: number) => boolean;
+    removeFromCart: (id: string, idCor?: number) => boolean;
 }
 
 export interface AlertDialogContextType {
@@ -61,4 +61,42 @@ export interface CouponShowAdm {
     exp_date: Date,
     created_by: User,
     uses: number,
+}
+
+// Novas interfaces para o carrinho
+export interface CartItemDto {
+  produto_id: number;
+  quantity: number;
+  price?: number;
+  colorId?: number; // Mantido para compatibilidade com o frontend atual
+  product?: {
+    pro_codigo: number;
+    pro_descricao: string;
+    pro_precovenda: number;
+    pro_ativo: boolean;
+    imagens?: Array<{
+      id: number;
+      pro_codigo: number;
+      url: string;
+    }>;
+    // Outros campos do produto que possam existir
+  };
+}
+
+export interface UpdateCartDto {
+  cart_data?: CartItemDto[];
+}
+
+export interface CartDataDto {
+  cart_data: CartItemDto[];
+}
+
+export interface CartTotalDto {
+  total: number;
+}
+
+export interface AddItemDto {
+  produto_id: number;
+  quantity: number;
+  price?: number;
 }

@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useState, useRef } from 'react';
-import { Box, Button, Divider, Drawer, IconButton, TextField } from '@mui/material';
+import { Box, Button, Divider, Drawer, IconButton, TextField, Tooltip, Typography } from '@mui/material';
 import Image from 'next/image';
 import HeadphoneImg from '../assets/img/headphone.png';
 import { Close } from '@mui/icons-material';
@@ -29,31 +29,38 @@ export default function Cart({ cartOpened, onCartToggle }) {
     }
 
     const handleInc = (i, id) => {
-        const d = cartData.find(i => i.id == id)
-        if(d.qty < max)
-            changeQtyItem(id, d.qty + 1)
+        const d = cartData.find(item => item.id == id || item.produto_id == id);
+        if (d) {
+            const currentQty = d.qty || d.quantity;
+            if (currentQty < max)
+                changeQtyItem(id, currentQty + 1);
+        }
     };
     
     const handleDec = (i, id) => {
-        const d = cartData.find(i => i.id == id)
-        if(d.qty > min)
-            changeQtyItem(id, d.qty - 1)
+        const d = cartData.find(item => item.id == id || item.produto_id == id);
+        if (d) {
+            const currentQty = d.qty || d.quantity;
+            if (currentQty > min)
+                changeQtyItem(id, currentQty - 1);
+        }
     };
 
-    const handleInputChange = (i, e) => {
-        const newV = Number(e.target.value)
+    const handleInputChange = (item, e) => {
+        const newV = Number(e.target.value);
+        const itemId = item.id || item.produto_id;
+        
         if(newV < min || newV > max) {
             if(newV < min) {
-                changeQtyItem(i.pro_codigo, min)
+                changeQtyItem(itemId, min);
             }
             if(newV > max) {
-                changeQtyItem(i.pro_codigo, max)
+                changeQtyItem(itemId, max);
             }
+        } else {
+            changeQtyItem(itemId, newV);
         }
-        else {
-            changeQtyItem(i.pro_codigo, newV)
-        }
-    };
+    }
 
     const handleCouponApply = () => {
         if(inpCoupon) {
@@ -76,10 +83,10 @@ export default function Cart({ cartOpened, onCartToggle }) {
         }
     }
 
-    const handleAlertRemoveItem = (id, colorId) => {
+    const handleAlertRemoveItem = (id) => {
         openDialog('Tem certeza que deseja remover este produto?', '', 'Não', 'Sim', (confirm) =>  {
             if(confirm) {
-                if(removeFromCart(id, colorId)) {
+                if(removeFromCart(id)) {
                     showToast('Item removido.','success')
                 }
             }
@@ -119,9 +126,10 @@ export default function Cart({ cartOpened, onCartToggle }) {
             return val - ((discountPix / 100) * val);
     }
 
-    // const limitaTexto = ({ text }) => {
-    //     return text.length > 36 ? text.substring(0, 36) + '...' : text;
-    // }
+    // Função para limitar o texto a um número específico de caracteres
+    const limitaTexto = (text, maxLength = 36) => {
+        return text && text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+    }
 
     useEffect(() => {
         console.log(cartItems)
@@ -129,13 +137,97 @@ export default function Cart({ cartOpened, onCartToggle }) {
 
     // Verifica se os dados do carrinho estão sincronizados
     const isCartDataValid = () => {
-        if (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0) return false;
-        if (!cartData || !Array.isArray(cartData) || cartData.length === 0) return false;
+        console.log('Verificando validade do carrinho');
+        console.log('cartItems:', cartItems);
+        console.log('cartData:', cartData);
+        
+        if (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0) {
+            console.log('cartItems inválido ou vazio');
+            return false;
+        }
+        if (!cartData || !Array.isArray(cartData) || cartData.length === 0) {
+            console.log('cartData inválido ou vazio');
+            return false;
+        }
         
         // Verifica se todos os itens no cartData têm um produto correspondente em cartItems
-        return cartData.every(item => 
-            cartItems.some(product => product && product.pro_codigo == item.id)
-        );
+        const allItemsValid = cartData.every(item => {
+            const itemId = item.id || item.produto_id;
+            console.log(`Verificando item com ID: ${itemId}`);
+            
+            const hasMatchingProduct = cartItems.some(product => {
+                if (!product) {
+                    console.log('Produto inválido encontrado em cartItems');
+                    return false;
+                }
+                
+                // Verificar correspondência pelo ID do produto ou pelo pro_codigo
+                const matchById = product.id == itemId;
+                const matchByProCodigo = product.pro_codigo == itemId;
+                const match = matchById || matchByProCodigo;
+                
+                console.log(`Produto ID: ${product.id}, pro_codigo: ${product.pro_codigo} corresponde ao item ${itemId}? ${match}`);
+                return match;
+            });
+            
+            if (!hasMatchingProduct) {
+                console.log(`Nenhum produto correspondente encontrado para o item ${itemId}`);
+            }
+            
+            return hasMatchingProduct;
+        });
+        
+        console.log('Todos os itens são válidos?', allItemsValid);
+        return allItemsValid;
+    };
+
+    // Função para obter o preço correto do produto
+    const getProductPrice = (product, item) => {
+        // Sempre usar o preço de venda do produto
+        if (product.pro_precovenda && !isNaN(product.pro_precovenda)) {
+            return product.pro_precovenda * (item.qty || item.quantity);
+        }
+        
+        // Se não tiver preço de venda, verificar se tem preço de última compra
+        if (product.pro_valorultimacompra && !isNaN(product.pro_valorultimacompra)) {
+            return product.pro_valorultimacompra * (item.qty || item.quantity);
+        }
+        
+        // Se nenhum preço válido for encontrado, retornar 0
+        return 0;
+    };
+
+    // Função para calcular o subtotal do carrinho
+    const calculateSubtotal = () => {
+        return cartData.reduce((total, item) => {
+            const itemId = item.id || item.produto_id;
+            const product = cartItems.find(p => p && (p.id == itemId || p.pro_codigo == itemId));
+            if (product) {
+                return total + getProductPrice(product, item);
+            }
+            return total;
+        }, 0);
+    };
+
+    // Função para obter a imagem do produto
+    const getProductImage = (product) => {
+        // Verificar se o produto tem imagens
+        if (product.imagens && product.imagens.length > 0) {
+            return product.imagens[0].url;
+        }
+        
+        // Se não tiver imagens, verificar se tem pro_imagem
+        if (product.pro_imagem) {
+            return product.pro_imagem;
+        }
+        
+        // Se não tiver nenhuma imagem, retornar a imagem padrão
+        return HeadphoneImg;
+    };
+
+    // Função para formatar o preço
+    const formatPrice = (price) => {
+        return price.toFixed(2).replace('.', ',');
     };
 
     return (
@@ -153,40 +245,49 @@ export default function Cart({ cartOpened, onCartToggle }) {
                 ) : (
                     <>
                         {cartData.map((item, index) => {
+                            const itemId = item.id || item.produto_id;
                             // Encontra o produto correspondente ao item do carrinho
-                            const product = cartItems.find(r => r && r.pro_codigo == item.id);
+                            const product = cartItems.find(r => r && (r.id == itemId || r.pro_codigo == itemId));
                             // Se não encontrar o produto, pula este item
-                            if (!product) return <React.Fragment key={item.id}></React.Fragment>;
+                            if (!product) return <React.Fragment key={itemId}></React.Fragment>;
                             
                             return (
-                                <div className="product" data-test={item.id} key={item.id}>
+                                <div className="product" data-test={itemId} key={itemId}>
                                     <div style={{ display: 'flex', justifyContent: 'flex-end'}}>
-                                        <IconButton style={{padding: '0px'}} aria-label="delete" onClick={() => handleAlertRemoveItem(item.id, item.colorId)}>
+                                        <IconButton style={{padding: '0px'}} aria-label="delete" onClick={() => handleAlertRemoveItem(itemId)}>
                                             <DeleteOutlineIcon />
                                         </IconButton>
                                     </div>
                                     <Image
-                                        src={HeadphoneImg}
-                                        alt="HeadphoneImg"
+                                        src={getProductImage(product)}
+                                        alt={product.pro_descricao || "Produto"}
                                         width={100}
+                                        height={100}
                                     />
                                     <div className="name-qty">
-                                        <span>{product.pro_descricao}</span>
+                                        <Tooltip title={product.pro_descricao}>
+                                            <span>{limitaTexto(product.pro_descricao, 36)}</span>
+                                        </Tooltip>
+                                        {product.tipo && (
+                                            <Typography variant="caption" color="text.secondary">
+                                                Categoria: {product.tipo.tpo_descricao}
+                                            </Typography>
+                                        )}
                                         <div className="quantity">
                                             <button 
                                                 type='button'
-                                                onClick={() => handleDec(index, item.id)}
+                                                onClick={() => handleDec(index, itemId)}
                                                 className="btn-qty decrement">-</button>
-                                            <input value={item.qty} min={min} max={max} onChange={(e) => handleInputChange(item, e)} type="number"/>
+                                            <input value={item.qty || item.quantity} min={min} max={max} onChange={(e) => handleInputChange(item, e)} type="number"/>
                                             <button 
                                                 type='button'
-                                                onClick={() => handleInc(index, item.id)}
+                                                onClick={() => handleInc(index, itemId)}
                                                 className="btn-qty increment">+</button>
                                         </div>
                                     </div>
                                     <div className="product-price">
                                         <span className="price">
-                                            <b>R$ {(product.pro_valorultimacompra * item.qty).toFixed(2).toString().replace('.',',')}</b>
+                                            <b>R$ {formatPrice(getProductPrice(product, item))}</b>
                                         </span>
                                     </div>
                                 </div>
@@ -245,7 +346,6 @@ export default function Cart({ cartOpened, onCartToggle }) {
                                 borderBottomLeftRadius: '0px',
                                 borderTopLeftRadius: '0px',
                             }}
-                     
                         >
                             Aplicar
                         </Button>
@@ -267,17 +367,7 @@ export default function Cart({ cartOpened, onCartToggle }) {
                     <div className="totals">
                         <span>Subtotal: </span>
                         <span className='price-totals'>
-                            <b>R$ {cartData.reduce((total, item) => {
-                                        const cartItem = cartItems.find(i => i.pro_codigo === item.id);
-                                        if (cartItem) {
-                                            return total + (cartItem.pro_valorultimacompra * item.qty);
-                                        }
-                                        return total;
-                                    }, 0)
-                                    .toFixed(2)
-                                    .replace('.', ',')
-                                }
-                            </b>
+                            <b>R$ {formatPrice(calculateSubtotal())}</b>
                         </span>
                     </div>
                     <div className="totals discount">
@@ -287,11 +377,7 @@ export default function Cart({ cartOpened, onCartToggle }) {
                             )}
                         </span>
                         <span className='price-totals'>
-                            <b>R$ {applyCouponDiscount(cartItems
-                                    .reduce((total, item) => total + (item.pro_valorultimacompra * cartData[cartItems.findIndex(i => i.pro_codigo == item.pro_codigo)].qty), 0))
-                                    .toFixed(2).replace('.',',')
-                                }
-                            </b>
+                            <b>R$ {formatPrice(applyCouponDiscount(calculateSubtotal()))}</b>
                         </span>
                     </div>
                     <div className="totals discount">
@@ -299,21 +385,13 @@ export default function Cart({ cartOpened, onCartToggle }) {
                             <span className='mini'>({discountPix}% de desconto)</span>
                         </span>
                         <span className='price-totals c-red'>
-                            <b>R$ {applyPixDiscount(cartItems
-                                    .reduce((total, item) => total + (item.pro_valorultimacompra * cartData[cartItems.findIndex(i => i.pro_codigo == item.pro_codigo)].qty), 0))
-                                    .toFixed(2).replace('.',',')
-                                }
-                            </b>
+                            <b>R$ {formatPrice(applyPixDiscount(calculateSubtotal()))}</b>
                         </span>
                     </div>
                     <div className="totals discount">
                         <span><b>Total à vista: </b></span>
                         <span className='price-totals'>
-                            <b>R$ {applyDiscounts(cartItems
-                                    .reduce((total, item) => total + (item.pro_valorultimacompra * cartData[cartItems.findIndex(i => i.pro_codigo == item.pro_codigo)].qty), 0))
-                                    .toFixed(2).replace('.',',')
-                                }
-                            </b>
+                            <b>R$ {formatPrice(applyDiscounts(calculateSubtotal()))}</b>
                         </span>
                     </div>
                     <a href="/checkout" className="link-to-buy">Finalizar Pedido</a>
