@@ -69,7 +69,7 @@ const CheckoutPage = () => {
     const [openedCart, setOpenedCart] = useState(false);
     const [dateBirth, setDateBirth] = useState("dd/mm/aaaa");
     const [cpf, setCpf] = useState('');
-    const { cartItems, cartData } = useCart();
+    const { cartItems, cartData, removeItems } = useCart();
     const [discountPix, setDiscountPix] = useState(5);
     const { user } = useAuth();
     const [nameUser, setNameUser] = useState('');
@@ -132,13 +132,9 @@ const CheckoutPage = () => {
 
     // Função para calcular o subtotal do carrinho
     const calculateSubtotal = () => {
-        return cartData.reduce((total, item) => {
-            const product = cartItems.find(p => p && (p.pro_codigo == item.id || p.pro_codigo == item.produto_id));
-            if (product) {
-                return total + getProductPrice(product, item);
-            }
-            return total;
-        }, 0);
+        return (Number((applyDiscounts(cartItems
+            .reduce((total, item) => total + (item.pro_precovenda * cartData[cartItems.findIndex(i => i.pro_codigo == item.pro_codigo)].qty), 0))
+            .toFixed(2))) + (shippingCost)).toFixed(0)
     };
 
     // Função para caso tenha descontos diferentes
@@ -259,7 +255,7 @@ const CheckoutPage = () => {
             
             // Passo 2: Buscar o perfil do usuário para obter os dados necessários
             const profileResponse = await getProfileUser(user.id);
-            
+            console.log(profileResponse)
             if (!profileResponse) {
                 showToast('Erro ao obter dados do perfil', 'error');
                 setLoadBtn(false);
@@ -267,11 +263,12 @@ const CheckoutPage = () => {
             }
             
             // Passo 3: Preparar os dados do cartão
-            const cardData = prepareCardData(profileResponse, CVV);
+            const cardData = prepareCardData(profileResponse, CVVFinal);
             
             // Passo 4: Gerar o token do cartão no Mercado Pago
             const cardTokenResponse = await generateCardToken(cardData);
             
+            console.log(cardTokenResponse)
             if (!cardTokenResponse || !cardTokenResponse.id) {
                 showToast('Erro ao gerar token do cartão', 'error');
                 setLoadBtn(false);
@@ -287,12 +284,13 @@ const CheckoutPage = () => {
             );
             
             // Passo 6: Processar o pagamento no backend
-            const paymentResponse = await processPayment(paymentData, getToken());
+            const paymentResponse = await processPayment(paymentData, cardTokenResponse.public_key);
             
-            if (paymentResponse && paymentResponse.status === 'approved') {
+            if (paymentResponse && paymentResponse.success == true) {
                 showToast('Pagamento aprovado com sucesso!', 'success');
                 // Redirecionar para página de sucesso ou pedidos
-                router.push('/minhaconta/meus-pedidos');
+                router.push('/minhaconta');
+                removeItems();
             } else {
                 showToast(`Erro no pagamento: ${paymentResponse.status_detail || 'Verifique os dados do cartão'}`, 'error');
             }
@@ -685,7 +683,7 @@ const CheckoutPage = () => {
                                 </div>
                             </div>
                         }
-                        <div className="btn-pay">
+                        <div className="btn-pay mt-3">
                             <Button 
                                 variant="contained" 
                                 color="primary" 

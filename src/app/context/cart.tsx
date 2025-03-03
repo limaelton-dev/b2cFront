@@ -11,6 +11,7 @@ const CartContext = createContext<CartContextType>({
     changeQtyItem: () => {},
     addToCart: () => false,
     removeFromCart: () => false,
+    removeItems: (): void => {}
 });
 
 function debounce(func: (...args: any[]) => void, wait: number) {
@@ -79,6 +80,11 @@ export const CartProvider = ({ children }) => {
     
         return true;
     };
+
+    const removeItems = () => {
+        setCartItems([]);
+        setCartData([]);
+    }
 
     const changeQtyItem = (id, newQty) => {
         const updatedItems = cartData.map((item) => {
@@ -446,7 +452,7 @@ export const CartProvider = ({ children }) => {
     }, []);
 
     return (
-        <CartContext.Provider value={{ cartItems, cartData, changeQtyItem, addToCart, removeFromCart }}>
+        <CartContext.Provider value={{ cartItems, cartData, changeQtyItem, addToCart, removeFromCart, removeItems }}>
         {children}
         </CartContext.Provider>
     );

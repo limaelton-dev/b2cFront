@@ -21,11 +21,10 @@ export const validatePayment = async (dados) => {
 };
 
 // Função para processar o pagamento no backend
-export const processPayment = async (dados, token = null) => {
+export const processPayment = async (dados, publicKey) => {
     const headerProcess = {
-        Authorization: `Bearer ${token || getToken()}`
-    };
-    
+        Authorization: `Bearer ${publicKey}`,
+    }
     try {
         const response = await axios.post(`${API_URL}/mercado-pago/process-payment`, dados, {headers: headerProcess});
         console.log('Resposta do processamento de pagamento:', response);
