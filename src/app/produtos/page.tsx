@@ -27,10 +27,19 @@ const getProdutos = async (limit: number, category) => {
         const resp = await getProdsLimit(limit, category);
         const prodFormatted = resp.data.map((produto: any) => ({
             id: produto.id,
+            pro_codigo: produto.id,
             name: produto.pro_desc_tecnica,
+            pro_desc_tecnica: produto.pro_desc_tecnica,
+            pro_descricao: produto.pro_descricao || produto.pro_desc_tecnica,
             img: produto.imagens.length > 0 ? produto.imagens[0].url : NoImage,
+            imagens: produto.imagens,
+            pro_imagem: produto.imagens.length > 0 ? produto.imagens[0].url : NoImage,
             price: 'R$ '+produto.pro_precovenda.toFixed(2).replace('.', ','),
+            pro_precovenda: produto.pro_precovenda,
+            pro_valorultimacompra: produto.pro_valorultimacompra || produto.pro_precovenda,
             sku: produto.pro_partnum_sku,
+            pro_partnum_sku: produto.pro_partnum_sku,
+            cores: produto.cores || []
         }));
         return prodFormatted;
     } catch (error) {
@@ -57,6 +66,7 @@ const getProdutoCategory = async (limit: number) => {
 const ProductsPage = () => {
     const [openedCart, setOpenedCart] = useState(false);
     const [loadBtn, setLoadBtn] = useState(false);
+    const [loadingProducts, setLoadingProducts] = useState({});
     const { showToast } = useToastSide();
     const { addToCart, cartItems } = useCart();
     const [products, setProducts] = useState<{id: number, name: string; img: string; price: string; sku: string }[]>([]);
@@ -108,18 +118,19 @@ const ProductsPage = () => {
     
     
     
-    const handleAddToCart = async () => {
-        setLoadBtn(true);
-        if(!addToCart(product, isActiveColorId)) {
-            showToast('O produto já existe no carrinho!','error')
-            setLoadBtn(false);
+    const handleAddToCart = async (produto) => {
+        setLoadingProducts(prev => ({ ...prev, [produto.id]: true }));
+        
+        if(!addToCart(produto, null)) {
+            showToast('O produto já existe no carrinho!','error');
+            setLoadingProducts(prev => ({ ...prev, [produto.id]: false }));
         }
         else {
             setTimeout(() => {
-                setLoadBtn(false)
-                showToast('O produto foi adicionado ao carrinho!','success')
+                setLoadingProducts(prev => ({ ...prev, [produto.id]: false }));
+                showToast('O produto foi adicionado ao carrinho!','success');
                 setOpenedCart(true);
-            }, 500)
+            }, 500);
         }
     }
 
@@ -242,7 +253,18 @@ const ProductsPage = () => {
                                 </div>
                             </div>
                             <div className='addToCartBox d-flex justify-content-center'>
-                                <button type='button' className='addToCartButton'>Adicionar ao carrinho</button>
+                                <button 
+                                    type='button' 
+                                    className='addToCartButton'
+                                    onClick={() => handleAddToCart(produto)}
+                                    disabled={loadingProducts[produto.id]}
+                                >
+                                    {loadingProducts[produto.id] ? (
+                                        <CircularProgress size={20} color="inherit" />
+                                    ) : (
+                                        'Adicionar ao carrinho'
+                                    )}
+                                </button>
                             </div>
                         </div>
                     ))}

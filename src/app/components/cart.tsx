@@ -199,16 +199,23 @@ export default function Cart({ cartOpened, onCartToggle }) {
     // Função para calcular o subtotal do carrinho
     const calculateSubtotal = () => {
         if (!cartData || !cartItems || cartData.length === 0 || cartItems.length === 0) {
+            console.log('Carrinho vazio ou dados inválidos');
             return 0;
         }
+        
+        console.log('Calculando subtotal para', cartData.length, 'itens');
         
         return cartData.reduce((total, item) => {
             const itemId = item.id || item.produto_id;
             const product = cartItems.find(p => p && (p.id == itemId || p.pro_codigo == itemId));
+            
             if (product) {
                 const price = getProductPrice(product, item);
+                console.log('Produto:', product.pro_descricao || product.name, 'Preço:', price);
                 return total + (isNaN(price) ? 0 : price);
             }
+            
+            console.log('Produto não encontrado para o item:', itemId);
             return total;
         }, 0);
     };

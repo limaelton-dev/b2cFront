@@ -40,9 +40,13 @@ export const CartProvider = ({ children }) => {
 
     const addToCart = (product, idCor) => {
         // Verificar se o produto já existe no carrinho
-        const itemExists = cartItems.some(item => item.pro_codigo === product.pro_codigo);
+        const itemExists = cartItems.some(item => 
+            item.pro_codigo === product.pro_codigo || 
+            item.id === product.id
+        );
 
         if(itemExists) {
+            console.log('Produto já existe no carrinho:', product);
             return false;
         }
 
@@ -53,6 +57,14 @@ export const CartProvider = ({ children }) => {
             console.error('Produto sem ID válido:', product);
             return false;
         }
+
+        // Verificar se o produto tem preço válido
+        if (!product.pro_precovenda && !product.pro_valorultimacompra) {
+            console.error('Produto sem preço válido:', product);
+            return false;
+        }
+
+        console.log('Adicionando produto ao carrinho:', product);
 
         // Adicionar o produto ao carrinho
         setCartData((prevItems) => {
