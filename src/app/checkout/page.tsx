@@ -22,6 +22,9 @@ import { PaymentIcon } from 'react-svg-credit-card-payment-icons';
 import { useToastSide } from '../context/toastSide';
 import { getProfileUser } from '../services/profile';
 import { processPayment, validatePayment } from '../services/payment';
+// import { initMercadoPago } from '@mercadopago/sdk-react'
+
+
 
 async function buscaTipoPessoa(id: number) {
     try {
@@ -48,8 +51,6 @@ async function buscaTipoPessoa(id: number) {
         return { id: 0, profile_type: '', bith_date: '', cpf: '', trading_name: '', cnpj: '', state_registration: '', addresses: [], cards: []};
     }
 }
-
-// const mp = window.MercadoPago(process.env.NEXT_PUBLIC_MERCADOPAGO_TOKEN);
 
 const CheckoutPage = () => {
     const router = useRouter();
@@ -94,10 +95,10 @@ const CheckoutPage = () => {
 
     // Verificar se o usuário está logado
     useEffect(() => {
-        if (!user || !user.id) {
-            showToast('Você precisa estar logado para finalizar a compra', 'error');
-            router.push('/login?redirect=checkout');
-        }
+        // if (!user || !user.id) {
+        //     showToast('Você precisa estar logado para finalizar a compra', 'error');
+        //     router.push('/login?redirect=checkout');
+        // }
     }, [user]);
 
 
@@ -243,68 +244,66 @@ const CheckoutPage = () => {
 
     const handlePayButton = () => {
         // setLoadBtn(true);
-        // async function realizaCompra() {
-        //     const script = document.createElement('script');
-        //     script.src = "https://sdk.mercadopago.com/js/v2";
-        //     setTimeout(async () =>{
-        //         // Inicializar o MercadoPago quando o script for carregado
-        //         const mp = new window.MercadoPago(process.env.NEXT_PUBLIC_MERCADOPAGO_TOKEN); // Substitua com sua chave pública do Mercado Pago
+        async function realizaCompra() {
+                // Inicializar o MercadoPago quando o script for carregado
+
+                const mp = new window.MercadoPago(process.env.NEXT_PUBLIC_MERCADOPAGO_TOKEN);
+                console.log(mp, 'teeste')
     
-        //         // Associar os campos do cartão
-        //         mp.fields({
-        //             cardNumber: "5031433215406351",
-        //             cardExpirationMonth: "11",
-        //             cardExpirationYear: "30",
-        //             securityCode: "123",
-        //             cardholderName: "APRO",
-        //             identificationType: "CPF",
-        //             identificationNumber: "12345678909"
-        //         });
-        //         const validate = await validatePayment(
-        //             {
-        //                 "address_id": 1,
-        //                 "payment_method": "card",
-        //                 "card_id": 1
-        //             }
-        //         );
-        //         try {
+                // // Associar os campos do cartão
+                // mp.fields({
+                //     cardNumber: "5031433215406351",
+                //     cardExpirationMonth: "11",
+                //     cardExpirationYear: "30",
+                //     securityCode: "123",
+                //     cardholderName: "APRO",
+                //     identificationType: "CPF",
+                //     identificationNumber: "12345678909"
+                // });
+                // const validate = await validatePayment(
+                //     {
+                //         "address_id": 1,
+                //         "payment_method": "card",
+                //         "card_id": 1
+                //     }
+                // );
+                // try {
                     
-        //             const cardToken = await mp.createCardToken({
-        //                 cardNumber: "5031433215406351",
-        //                 cardholderName: "APRO",
-        //                 cardExpirationMonth: "11",
-        //                 cardExpirationYear: "30",
-        //                 securityCode: "123",
-        //                 identificationType: "CPF",
-        //                 identificationNumber: "12345678909"
-        //             });
+                //     const cardToken = await mp.createCardToken({
+                //         cardNumber: "5031433215406351",
+                //         cardholderName: "APRO",
+                //         cardExpirationMonth: "11",
+                //         cardExpirationYear: "30",
+                //         securityCode: "123",
+                //         identificationType: "CPF",
+                //         identificationNumber: "12345678909"
+                //     });
             
-        //             console.log("Token do cartão:", cardToken);
-        //         } catch (error) {
-        //             console.error("Erro ao gerar token do cartão:", error);
-        //         }
-        //         if(validate.status == 200) {
-        //             processPayment({
-        //                 "transaction_amount": 100,
-        //                 "description": "Compra de produtos",
-        //                 "payment_method_id": "master",
-        //                 "token": "f379f4eecb7f20118e882fa3a6a5baf0",
-        //                 "installments": 1,
-        //                 "external_reference": "123",
-        //                 "payer": {
-        //                     "email": "test_user_123@testuser.com",
-        //                     "identification": {
-        //                     "type": "CPF",
-        //                     "number": "12345678909"
-        //                     },
-        //                     "first_name": "APRO",
-        //                     "last_name": "User"
-        //                 }
-        //             })
-        //         }
-        //     },2000)
-        // }
-        // realizaCompra();
+                //     console.log("Token do cartão:", cardToken);
+                // } catch (error) {
+                //     console.error("Erro ao gerar token do cartão:", error);
+                // }
+                // if(validate.status == 200) {
+                //     processPayment({
+                //         "transaction_amount": 100,
+                //         "description": "Compra de produtos",
+                //         "payment_method_id": "master",
+                //         "token": "f379f4eecb7f20118e882fa3a6a5baf0",
+                //         "installments": 1,
+                //         "external_reference": "123",
+                //         "payer": {
+                //             "email": "test_user_123@testuser.com",
+                //             "identification": {
+                //             "type": "CPF",
+                //             "number": "12345678909"
+                //             },
+                //             "first_name": "APRO",
+                //             "last_name": "User"
+                //         }
+                //     })
+                // }
+        }
+        realizaCompra();
     }
 
     const changeRazaoSocial = (e) => {
@@ -482,7 +481,7 @@ const CheckoutPage = () => {
                                             <td>R$</td>
                                             <td>{(Number((applyDiscounts(cartItems
                                             .reduce((total, item) => total + (item.pro_precovenda * cartData[cartItems.findIndex(i => i.pro_codigo == item.pro_codigo)].qty), 0))
-                                            .toFixed(2))) + (shippingCost)).toString().replace('.',',')
+                                            .toFixed(2))) + (shippingCost)).toFixed(2).toString().replace('.',',')
                                         }</td>
                                         </tr>
                                     </>

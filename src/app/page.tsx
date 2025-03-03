@@ -3,7 +3,7 @@ import React from 'react';
 import Image from 'next/image';
 import './assets/css/home.css';
 import LogoColetek from './assets/img/logo_coletek.png';
-import Banner from './assets/img/banner.png';
+import Banner1 from './assets/img/132.jpg';
 import HeadphoneImg from './assets/img/headphone.png';
 import { useEffect, useState, useRef } from 'react';
 import Header from './header';
@@ -179,7 +179,7 @@ export default function HomePage() {
             <main>
                 <section id="banner">
                     <Image
-                        src={Banner}
+                        src={Banner1}
                         alt="Banner"
                     />
                 </section>
@@ -242,7 +242,7 @@ export default function HomePage() {
                         </div>
                     </div>
                 </section>
-                <section id="promo">
+                {/* <section id="promo">
                     <div className="container">
                         <div className="cards">
                             <div className="card">
@@ -267,7 +267,7 @@ export default function HomePage() {
                             </div>
                         </div>
                     </div>
-                </section>
+                </section> */}
                 <section id="prod-newest">
                     <div className="container">
                         <div className="title-section">

@@ -35,7 +35,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                                   {children}
                               </CartProvider>
                           </AlertDialogProvider>
-                      </CouponProvider>
+                    </CouponProvider>
                   </AuthProvider>
               </ToastSideProvider>
           </body>

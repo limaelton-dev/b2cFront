@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import LogoColetek from './assets/img/logo_coletek.png';
 import Headphone from './assets/img/headphone.png';
+import Banner1 from './assets/img/132.jpg';
 import UserImg from './assets/img/user.jpg';
 import { useEffect, useState } from 'react';
 import { search } from './services/search';
@@ -14,6 +15,7 @@ import { useRouter } from 'next/navigation';
 import { AuthContextType, User } from './interfaces/interfaces';
 import { Link } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
+import { logout } from './services/auth';
 
 const URL = process.env.NEXT_PUBLIC_URL || '';
 export default function Header({ cartOpened, onCartToggle }) {
@@ -158,6 +160,7 @@ export default function Header({ cartOpened, onCartToggle }) {
                                 <div className="content-text">
                                     {user.name ? <p className='nome'>{user.name}</p> :  <div className='entre-cad'><a href="/login">Entre</a> ou<br/><a href="/register">Cadastre-se</a></div>}
                                     <p className="email">{user.email || ''}</p>
+                                    {user.name ? <button className='logout-button' onClick={() => {logout();router.push('/login');}}>Sair</button> : <></>}
                                 </div>
                             </div>  
                             <div className="cart content-preference" onClick={changeOpenedCart}>
@@ -181,28 +184,33 @@ export default function Header({ cartOpened, onCartToggle }) {
                             </div>
                             <ul>
                                 <li>
-                                    <Link underline="hover" color="inherit" href="/produtos?categoria=acessorio">
+                                    <Link underline="hover" color="inherit" href="/produtos?categoria=1">
+                                        Gabinete
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link underline="hover" color="inherit" href="/produtos?categoria=2">
+                                        Mouse
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link underline="hover" color="inherit" href="/produtos?categoria=7">
+                                        Teclado
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link underline="hover" color="inherit" href="/produtos?categoria=6">
                                         Acessórios
                                     </Link>
                                 </li>
                                 <li>
-                                    <Link underline="hover" color="inherit" href="/produtos?categoria=audio">
-                                        Audio
+                                    <Link underline="hover" color="inherit" href="/produtos?categoria=5">
+                                        Fonte de Alimentação
                                     </Link>
                                 </li>
                                 <li>
-                                    <Link underline="hover" color="inherit" href="/produtos?categoria=energia">
-                                        Energia
-                                    </Link>
-                                </li>
-                                <li>
-                                    <Link underline="hover" color="inherit" href="/produtos?categoria=gabinete">
-                                        Gabinete de refrigeração
-                                    </Link>
-                                </li>
-                                <li>
-                                    <Link className='btn-buy-primary ofertas-link' underline="hover" color="inherit" href="/produtos?offer=sim">
-                                        Super Ofertas
+                                    <Link className='btn-buy-primary ofertas-link' underline="hover" color="inherit" href="/produtos">
+                                        Todos os produtos
                                     </Link>
                                 </li>
                             </ul>

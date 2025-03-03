@@ -110,3 +110,12 @@ html {
 #prod-categorias .p-carousel.p-component {
     width: 100%;
 }
+.logout-button {
+    border: none;
+    font-size: 12px;
+    font-weight: bold;
+    color: cornflowerblue;
+}
+.logout-button:hover {
+    text-decoration: underline;
+}
