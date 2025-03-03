@@ -1,7 +1,8 @@
 "use client"
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { AuthContextType, User } from '../interfaces/interfaces';
-import { checkAuth } from '../services/auth';
+import { checkAuth, logout as logoutService } from '../services/auth';
+import { removeToken } from '../utils/auth';
 
 const AuthContext = createContext<AuthContextType>({
     user: {
@@ -10,32 +11,33 @@ const AuthContext = createContext<AuthContextType>({
         email: ''
     },
     setUserFn: () => {},
+    logout: () => {},
 });
 
 export const AuthProvider = ({ children }) => {
-    const [auth, setAuth] = useState(false);
-    const [user, setUser] = useState<User>({
-        id: 0,
-        name: '',
-        email: ''
+    const [auth, setAuth] = useState<boolean | null>(null);
+    const [user, setUser] = useState<User>(() => {
+        const storedUser = localStorage.getItem('user');
+        return storedUser ? JSON.parse(storedUser) : { id: 0, name: '', email: '' };
     });
 
     useEffect(() => {
         const validateAuth = async () => {
             try {
                 const isAuthenticated = await checkAuth();
-                setAuth(isAuthenticated);
+                if(isAuthenticated) setAuth(isAuthenticated);
             } catch (error) {
                 console.error('Erro ao verificar autenticação:', error);
                 setAuth(false);
             }
         };
-
+        
         validateAuth();
     }, []);
     
     useEffect(() => {
         if(localStorage.getItem('user') != null && auth) {
+            console.log('AQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQUI', localStorage.getItem('user'))
             setUser(JSON.parse(localStorage.getItem('user')))
         }
     }, [auth]);
@@ -45,7 +47,21 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem('user', JSON.stringify(user));
     }
 
-    return <AuthContext.Provider value={{ user, setUserFn }}>{children}</AuthContext.Provider>;
+    const logout = () => {
+        // Remove o token JWT
+        logoutService();
+        // Limpa os dados do usuário
+        localStorage.removeItem('user');
+        removeToken();
+        setUser({
+            id: 0,
+            name: '',
+            email: ''
+        });
+        setAuth(false);
+    }
+
+    return <AuthContext.Provider value={{ user, setUserFn, logout }}>{children}</AuthContext.Provider>;
 };
 
 

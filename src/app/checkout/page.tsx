@@ -1,6 +1,6 @@
 "use client"
 import React from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import '../assets/css/checkout.css';
 import Image from 'next/image';
 import LogoColetek from '../assets/img/logo_coletek.png';
@@ -19,9 +19,36 @@ import { useAuth } from '../context/auth';
 import ReactInputMask from 'react-input-mask';
 import axios from 'axios';
 import { PaymentIcon } from 'react-svg-credit-card-payment-icons';
+import { useToastSide } from '../context/toastSide';
+import { getProfileUser } from '../services/profile';
 
+async function buscaTipoPessoa(id: number) {
+    try {
+        const resp = await getProfileUser(id);
+        
+        if (resp) {
+            return {
+                id: resp.id || 0,
+                profile_type: resp.profile_type || '',
+                bith_date: resp.birth_date || '',
+                cpf: resp.cpf || '',
+                trading_name: resp.trading_name || '',
+                cnpj: resp.cpnj || '',
+                state_registration: resp || '',
+            };
+        }
+
+        return { id: 0, profile_type: '', bith_date: '', cpf: '', trading_name: '', cnpj: '', state_registration: ''};
+
+    } catch (error) {
+        console.error('Erro: ', error);
+        return { id: 0, profile_type: '', bith_date: '', cpf: '', trading_name: '', cnpj: '', state_registration: ''};
+    }
+}
 
 const CheckoutPage = () => {
+    const router = useRouter();
+    const { showToast } = useToastSide();
     const { statusMessage, activeCoupon, coupon, setCouponFn } = useCoupon();
     const [tipoPessoa, setTipoPessoa] = useState('1');
     const [tipoCompra, setTipoCompra] = useState('1');
@@ -35,9 +62,68 @@ const CheckoutPage = () => {
     const [loadBtn, setLoadBtn] = useState(false);
     const [loadingCep, setLoadingCep] = useState(false);
     const [openedCart, setOpenedCart] = useState(false);
+    const [dateBirth, setDateBirth] = useState("dd/mm/aaaa");
+    const [cpf, setCpf] = useState('');
     const { cartItems, cartData } = useCart();
     const [discountPix, setDiscountPix] = useState(5);
     const { user } = useAuth();
+    const [nameUser, setNameUser] = useState('');
+    const [emailUser, setEmailUser] = useState('');
+    const [disabledUser, setDisabledUser] = useState(false);
+    const [disabledUserPF, setDisabledUserPF] = useState(false);
+    const [disabledUserPJ, setDisabledUserPJ] = useState(false);
+    const [cnpj, setCnpj] = useState('');
+    const [razaoSocial, setRazaoSocial] = useState('');
+    const [inscEstadual, setInscEstadual] = useState('');
+
+    // Verificar se o usuário está logado
+    useEffect(() => {
+        console.log('AQUIIEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE TESTEEEEEEEEEEEEEEE', user, !user, !user.id)
+        if (!user || !user.id) {
+            showToast('Você precisa estar logado para finalizar a compra', 'error');
+            router.push('/login?redirect=checkout');
+        }
+    }, [user]);
+
+    // Verificar se há itens no carrinho
+    // useEffect(() => {
+    //     if (cartItems.length === 0 || cartData.length === 0) {
+    //         showToast('Seu carrinho está vazio', 'error');
+    //         router.push('/');
+    //     }
+    // }, [cartItems, cartData, router]);
+
+    // Função para obter o preço correto do produto
+    const getProductPrice = (product, item) => {
+        // Verificar se o item tem um preço definido
+        if (item.price && !isNaN(item.price)) {
+            return item.price * (item.qty || item.quantity);
+        }
+        
+        // Verificar se o produto tem preço de venda
+        if (product.pro_precovenda && !isNaN(product.pro_precovenda)) {
+            return product.pro_precovenda * (item.qty || item.quantity);
+        }
+        
+        // Verificar se o produto tem preço de última compra
+        if (product.pro_valorultimacompra && !isNaN(product.pro_valorultimacompra)) {
+            return product.pro_valorultimacompra * (item.qty || item.quantity);
+        }
+        
+        // Se nenhum preço válido for encontrado, retornar 0
+        return 0;
+    };
+
+    // Função para calcular o subtotal do carrinho
+    const calculateSubtotal = () => {
+        return cartData.reduce((total, item) => {
+            const product = cartItems.find(p => p && (p.pro_codigo == item.id || p.pro_codigo == item.produto_id));
+            if (product) {
+                return total + getProductPrice(product, item);
+            }
+            return total;
+        }, 0);
+    };
 
     // Função para caso tenha descontos diferentes
     const applyDiscounts = (val) => {
@@ -63,6 +149,36 @@ const CheckoutPage = () => {
         else
             return val - ((discountPix / 100) * val);
     }
+
+    useEffect(() => {
+        async function fetchTipoPessoa() {
+            if (user.name) {
+                setNameUser(user.name);
+                setEmailUser(user.email);
+                setDisabledUser(true);
+    
+                try {
+                    const resultPessoa = await buscaTipoPessoa(user.id);
+    
+                    if (resultPessoa.profile_type === 'PF') {
+                        setCpf(resultPessoa.cpf);
+                        setDateBirth(resultPessoa.bith_date);
+                        setDisabledUserPF(true);
+                    } 
+                    if (resultPessoa.profile_type === 'PJ') {
+                        setCnpj(resultPessoa.cnpj);
+                        setRazaoSocial(resultPessoa.trading_name);
+                        setInscEstadual(resultPessoa.state_registration);
+                        setDisabledUserPJ(true);
+                    }
+                } catch (error) {
+                    console.error("Erro ao buscar tipo de pessoa:", error);
+                }
+            }
+        }
+    
+        fetchTipoPessoa();
+    }, [user])
     
     const changeRadioTipoPessoa = (e) => {
         setTipoPessoa(e.target.value)
@@ -81,6 +197,18 @@ const CheckoutPage = () => {
         setLoadBtn(true);
     }
 
+    const changeRazaoSocial = (e) => {
+        setRazaoSocial(e.target.value);
+    }
+
+    const changeInscricaoEstadual = (e) => {
+        setInscEstadual(e.target.value);
+    }
+
+    const changeCnpj = (e) => {
+        setCnpj(e.target.value);
+    }
+
     const buscarEndereco = async (cep: string) => {
         if (cep.length === 9) {
             setLoadingCep(true);
@@ -90,6 +218,7 @@ const CheckoutPage = () => {
                 setTimeout(async () => {
                     if (data.erro) {
                         alert('CEP não encontrado!');
+                        setLoadingCep(false);
                     } else {
                         setEndereco(data.logradouro || '');
                         setBairro(data.bairro || '');
@@ -112,6 +241,10 @@ const CheckoutPage = () => {
             buscarEndereco(cepValue);
     };
 
+    const handleChangeCPF = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setCpf(event.target.value);
+    };
+
     const detectCardFlag = (number: string) => {
         const firstDigit = number.charAt(0);
         const first6Digits = number.slice(0, 6);
@@ -129,6 +262,10 @@ const CheckoutPage = () => {
         } else {
             return <></>;
         }
+    };
+
+    const changeDateBirth = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setDateBirth(event.target.value);
     };
       
 
@@ -162,71 +299,54 @@ const CheckoutPage = () => {
                     <ArrowBackIosIcon style={{fontSize: '13px'}}/> Voltar
                 </Link>
                 <div className="prod-total">
-                    <p>Produto</p>
                     <div className="d-flex justify-content-between">
                         <div className="prods">
-                            {cartData.map((item, index) => (
-                                <div className="prod">
+                            {cartData.map((item, index) => {
+                                const itemId = item.id || item.produto_id;
+                                // Encontra o produto correspondente ao item do carrinho
+                                const product = cartItems.find(r => r && (r.id == itemId || r.pro_codigo == itemId));
+                                return (
+                                <div className="prod" key={item.id || item.produto_id}>
                                     <Image
-                                        src={HeadphoneImg}
-                                        alt="Headphone"
+                                        src={product.imagens[0] ? product.imagens[0].url : HeadphoneImg}
+                                        alt={product.pro_descricao || "Produto"}
                                         layout="responsive"
+                                        width={200}
+                                        height={200}
                                     />
                                     <div className="info-prod">
-                                        <span className='title-prod'>{cartItems ? cartItems.find(r => r.pro_codigo == item.id).pro_descricao : ''}</span>
+                                        <span className='title-prod'>{product.pro_descricao}</span>
                                         <div className="more-info">
-                                            <span className='sku'>PH-320BK</span>
+                                            <span className='sku'>{product.pro_referencia || 'Sem referência'}</span>
+                                            {product.tipo && (
                                             <div style={{display: 'flex'}}>
-                                                <span style={{marginRight: '8px'}}>Cor: </span>
-                                                <div className="colors">
-                                                    <div className="color" style={{backgroundColor: '#000000'}}></div>
-                                                </div>
+                                                <span style={{marginRight: '8px'}}>Categoria: </span>
+                                                <span>{product.tipo.tpo_descricao}</span>
                                             </div>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
-                            ))}
+                                );
+                            })}
                         </div>
                         <div className="total">
                             <table>
-                                <thead>
-                                    <tr>
-                                        <th style={{textAlign: 'center', color: '#2a3b7b', fontSize: '20px'}}>Quantidade</th>
-                                        <th colSpan={2} style={{textAlign: 'center', color: '#2a3b7b', fontSize: '20px'}}>Total</th>
-                                    </tr>
-                                </thead>
                                 <tbody>
-                                    <tr>
-                                        <td style={{textAlign: 'center'}}>{cartData.length}</td>
-                                        <th>R$</th>
-                                        <th style={{textAlign: 'end'}}>{cartItems
-                                            .reduce((total, item) => total + (item.pro_valorultimacompra * cartData[cartItems.findIndex(i => i.pro_codigo == item.pro_codigo)].qty), 0)
-                                            .toFixed(2).replace('.',',')
-                                        }</th>
-                                    </tr>
                                     <tr>
                                         <td>Subtotal</td>
                                         <td>R$</td>
-                                        <td>{cartItems
-                                            .reduce((total, item) => total + (item.pro_valorultimacompra * cartData[cartItems.findIndex(i => i.pro_codigo == item.pro_codigo)].qty), 0)
-                                            .toFixed(2).replace('.',',')
-                                        }</td>
+                                        <td>{calculateSubtotal().toFixed(2).replace('.',',')}</td>
                                     </tr>
                                     <tr>
                                         <td>Descontos</td>
                                         <td>R$</td>
-                                        <td>-{applyCouponDiscount(cartItems
-                                            .reduce((total, item) => total + (item.pro_valorultimacompra * cartData[cartItems.findIndex(i => i.pro_codigo == item.pro_codigo)].qty), 0))
-                                            .toFixed(2).replace('.',',')
-                                        }</td>
+                                        <td>-{applyCouponDiscount(calculateSubtotal()).toFixed(2).replace('.',',')}</td>
                                     </tr>
                                     <tr>
                                         <th>Total à vista</th>
                                         <td>R$</td>
-                                        <td>{applyDiscounts(cartItems
-                                                .reduce((total, item) => total + (item.pro_valorultimacompra * cartData[cartItems.findIndex(i => i.pro_codigo == item.pro_codigo)].qty), 0))
-                                                .toFixed(2).replace('.',',')
-                                            }</td>
+                                        <td>{applyDiscounts(calculateSubtotal()).toFixed(2).replace('.',',')}</td>
                                     </tr>
                                     <tr>
                                         <td>Entrega</td>
@@ -236,10 +356,7 @@ const CheckoutPage = () => {
                                     <tr>
                                         <th>Total</th>
                                         <td>R$</td>
-                                        <td>{(applyDiscounts(cartItems
-                                                .reduce((total, item) => total + (item.pro_valorultimacompra * cartData[cartItems.findIndex(i => i.pro_codigo == item.pro_codigo)].qty), 0))
-                                                
-                                         + 15.90).toFixed(2).replace('.',',')}</td>
+                                        <td>{(applyDiscounts(calculateSubtotal()) + 15.90).toFixed(2).replace('.',',')}</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -274,16 +391,50 @@ const CheckoutPage = () => {
                                 <FormControlLabel value="1" sx={{margin: '0px'}} control={<Radio />} onClick={changeRadioTipoPessoa} label="Pessoa Física" />
                                 <FormControlLabel value="2" sx={{margin: '0px'}} control={<Radio />} onClick={changeRadioTipoPessoa} label="Pessoa Jurídica" />
                             </RadioGroup>
+                            <TextField sx={{width: '100%',  marginBottom: '12px'}} value={nameUser} disabled={disabledUser} label="Nome Completo*" variant="standard" />
+                            <TextField sx={{width: '100%',  marginBottom: '12px'}} value={emailUser} disabled={disabledUser} label="Email*" variant="standard" />
                             {tipoPessoa == '2' && 
                                 <>
-                                    <TextField sx={{width: '45%',  marginBottom: '12px'}} label="CNPJ*" variant="standard" />
-                                    <TextField sx={{width: '45%',  marginBottom: '12px'}} label="Inscrição Estadual*" variant="standard" />
-                                    <TextField sx={{width: '100%',  marginBottom: '12px'}} label="Razão Social*" variant="standard" />
+                                    <TextField sx={{width: '45%',  marginBottom: '12px'}} value={cnpj} onChange={changeCnpj} disabled={disabledUserPJ} label="CNPJ*" variant="standard" />
+                                    <TextField sx={{width: '45%',  marginBottom: '12px'}} value={inscEstadual} onChange={changeInscricaoEstadual} disabled={disabledUserPJ} label="Inscrição Estadual*" variant="standard" />
+                                    <TextField sx={{width: '100%',  marginBottom: '12px'}} value={razaoSocial} onChange={changeRazaoSocial} disabled={disabledUserPJ} label="Razão Social*" variant="standard" />
                                 </>
                             }
-                            <TextField sx={{width: '100%',  marginBottom: '12px'}} label="Nome Completo*" variant="standard" />
-                            <TextField sx={{width: '45%',  marginBottom: '12px'}} label="Telefone*" variant="standard" />
-                            <TextField sx={{width: '45%',  marginBottom: '12px'}} label="Celular*" variant="standard" />
+                            {tipoPessoa == '1' && 
+                                <>
+                                    <TextField
+                                        label="Data de Nascimento"
+                                        type="date"
+                                        variant="standard"
+                                        value={dateBirth}
+                                        onChange={changeDateBirth}
+                                        disabled={disabledUserPF}
+                                        fullWidth
+                                    />
+                                    <ReactInputMask
+                                        mask="999.999.999-99"
+                                        value={cpf}
+                                        onChange={handleChangeCPF}
+                                        disabled={disabledUserPF}
+                                        maskChar=""
+                                    >
+                                        {(inputProps) => (
+                                            <TextField
+                                            {...inputProps}
+                                            label="CPF*"
+                                            variant="standard"
+                                            sx={{
+                                                '& .MuiInputBase-input::placeholder': {
+                                                    fontSize: '23px', 
+                                                    fontWeight: 'bold',
+                                                },width: '100%',  marginBottom: '8px'
+                                            }}
+                                            />
+                                        )}
+                                    </ReactInputMask>
+                                </>
+                            }
+                            
                         </form>
                     </div>
                     <div className="shipping content-ship-pay px-3">

@@ -1,9 +1,9 @@
 import React from 'react';
-import { Typography, Box, Button, SxProps, Theme, Divider } from '@mui/material';
+import { Typography, Box, Button, SxProps, Theme } from '@mui/material';
 
 interface InfoCardProps {
   label: string;
-  description: string;
+  description: React.ReactNode;
   icon?: React.ReactNode;
   actionLabel?: string;
   onAction?: () => void;
@@ -50,7 +50,7 @@ const InfoCard: React.FC<InfoCardProps> = ({
           >
             {label}
           </Typography>
-          <Typography
+          <Box
             sx={{ 
               fontSize: '15px',
               fontWeight: 500,
@@ -58,7 +58,7 @@ const InfoCard: React.FC<InfoCardProps> = ({
             }}
           >
             {description}
-          </Typography>
+          </Box>
         </Box>
       </Box>
       {onAction && (
