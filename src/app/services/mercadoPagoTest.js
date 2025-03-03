@@ -46,7 +46,7 @@ export const testGenerateToken = async () => {
                 email: "test_user_123@testuser.com",
                 identification: {
                     type: "CPF",
-                    number: "12345678909"
+                    number: "5031433215406351"
                 },
                 first_name: "APRO",
                 last_name: "User"

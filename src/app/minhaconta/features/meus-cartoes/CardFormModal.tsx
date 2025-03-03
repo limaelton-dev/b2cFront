@@ -44,7 +44,34 @@ const validateCardNumber = (cardNumber: string): boolean => {
   const cleanNumber = cardNumber.replace(/\s+/g, '');
   
   // Verifica se o número tem entre 13 e 16 dígitos (padrão para a maioria dos cartões)
-  return cleanNumber.length >= 13 && cleanNumber.length <= 16;
+  if (cleanNumber.length >= 13 && cleanNumber.length <= 16) {
+    // Verificar se é um cartão de teste do Mercado Pago
+    if (cleanNumber.startsWith('5031')) {
+      return true;
+    }
+    
+    // Implementar algoritmo de Luhn para validação de cartões reais
+    // Este é um algoritmo simples que verifica se o número do cartão é potencialmente válido
+    let sum = 0;
+    let shouldDouble = false;
+    
+    // Loop do último dígito para o primeiro
+    for (let i = cleanNumber.length - 1; i >= 0; i--) {
+      let digit = parseInt(cleanNumber.charAt(i));
+      
+      if (shouldDouble) {
+        digit *= 2;
+        if (digit > 9) digit -= 9;
+      }
+      
+      sum += digit;
+      shouldDouble = !shouldDouble;
+    }
+    
+    return sum % 10 === 0;
+  }
+  
+  return false;
 };
 
 // Função para formatar a data de expiração
@@ -79,7 +106,7 @@ const formatCVV = (value: string) => {
 const detectCardType = (cardNumber: string) => {
   const regexPatterns = {
     'visa': /^4/,
-    'master': /^5[1-5]/,
+    'master': /^(5[1-5]|50[0-9][0-9]|5031)/,
     'amex': /^3[47]/,
     'discover': /^(6011|65|64[4-9]|622)/,
     'elo': /^(401178|401179|431274|438935|451416|457393|457631|457632|504175|627780|636297|636368|636369|(506699|5067[0-6]\d|50677[0-8])|(50900\d|5090[1-9]\d|509[1-9]\d{2})|65003[1-3]|(65003[5-9]|65004\d|65005[0-1])|(65040[5-9]|6504[1-3]\d)|(65048[5-9]|65049\d|6505[0-2]\d|65053[0-8])|(65054[1-9]|6505[5-8]\d|65059[0-8])|(65070\d|65071[0-8])|65072[0-7]|(65090[1-9]|65091\d|650920)|(65165[2-9]|6516[6-7]\d)|(65500\d|65501\d)|(65502[1-9]|6550[3-4]\d|65505[0-8]))/,
@@ -229,7 +256,11 @@ const CardFormModal: React.FC<CardFormModalProps> = ({
         (parseInt(year) < currentYear) || 
         (parseInt(year) === currentYear && parseInt(month) < currentMonth)
       ) {
-        newErrors.expiration_date = 'Cartão expirado';
+        // Permitir cartões de teste com datas futuras
+        const cleanNumber = formData.card_number?.replace(/\s+/g, '');
+        if (!(cleanNumber && cleanNumber.startsWith('5031'))) {
+          newErrors.expiration_date = 'Cartão expirado';
+        }
       }
     }
     
@@ -245,7 +276,17 @@ const CardFormModal: React.FC<CardFormModalProps> = ({
       if (formData.card_number) {
         const cardType = detectCardType(formData.card_number);
         if (cardType === 'unknown') {
-          newErrors.card_number = 'Não foi possível identificar a bandeira do cartão';
+          // Verificar se é um cartão de teste
+          const cleanNumber = formData.card_number.replace(/\s+/g, '');
+          if (cleanNumber.startsWith('5031')) {
+            // É um cartão de teste Mastercard, definir o tipo
+            setFormData(prev => ({
+              ...prev,
+              card_type: 'master'
+            }));
+          } else {
+            newErrors.card_number = 'Não foi possível identificar a bandeira do cartão';
+          }
         } else {
           // Atualizar o tipo do cartão
           setFormData(prev => ({

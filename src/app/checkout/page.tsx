@@ -67,7 +67,7 @@ const CheckoutPage = () => {
     const [loadBtn, setLoadBtn] = useState(false);
     const [loadingCep, setLoadingCep] = useState(false);
     const [openedCart, setOpenedCart] = useState(false);
-    const [dateBirth, setDateBirth] = useState("dd/mm/aaaa");
+    const [dateBirth, setDateBirth] = useState("");
     const [cpf, setCpf] = useState('');
     const { cartItems, cartData, removeItems } = useCart();
     const [discountPix, setDiscountPix] = useState(5);
@@ -85,7 +85,7 @@ const CheckoutPage = () => {
     const [complemento, setComplemento] = useState('');
     const [CVV, setCVV] = useState('');
     const [expireCC, setExpireCC] = useState('');
-    const [isMaskedCC, setIsMaskedCC] = useState(true);
+    const [isMaskedCC, setIsMaskedCC] = useState(false);
     const [numberCCFinal, setNumberCCFinal] = useState('');
     const [CVVFinal, setCVVFinal] = useState('');
     const [expireCCFinal, setExpireCCFinal] = useState('');
@@ -183,7 +183,7 @@ const CheckoutPage = () => {
                     if (resultPessoa.profile_type === 'PF') {
                         setCpf(resultPessoa.cpf);
                         setDateBirth(resultPessoa.bith_date);
-                        setDisabledUserPF(true);
+                        setDisabledUserPF(false);
                     } 
                     if (resultPessoa.profile_type === 'PJ') {
                         setCnpj(resultPessoa.cnpj);
@@ -208,7 +208,7 @@ const CheckoutPage = () => {
 
                     setCVV('XXX');
                     setExpireCC('XX/XX');
-                    setIsMaskedCC(true);
+                    setIsMaskedCC(false);
                 } catch (error) {
                     console.error("Erro ao buscar tipo de pessoa:", error);
                 }
@@ -314,6 +314,30 @@ const CheckoutPage = () => {
         setCnpj(e.target.value);
     }
 
+    const changeNumero = (e) => {
+        setNumero(e.target.value);
+    }
+
+    const changeComplemento = (e) => {
+        setComplemento(e.target.value);
+    }
+
+    const changeEndereco = (e) => {
+        setEndereco(e.target.value);
+    }
+
+    const changeCidade = (e) => {
+        setCidade(e.target.value);
+    }
+
+    const changeBairro = (e) => {
+        setBairro(e.target.value);
+    }
+
+    const changeEstado = (e) => {
+        setEstado(e.target.value);
+    }
+
     const buscarEndereco = async (cep: string) => {
         if (cep.length === 9) {
             setLoadingCep(true);
@@ -328,12 +352,13 @@ const CheckoutPage = () => {
                         setEndereco(data.logradouro || '');
                         setBairro(data.bairro || '');
                         setCidade(data.localidade || '');
-                        setEstado(data.estado || '');
+                        setEstado(data.uf || '');
                     }
                     setLoadingCep(false);
                 },800)
             } catch (error) {
                 alert('Erro ao buscar o endereço.');
+                setLoadingCep(false);
             }
         }
     };
@@ -534,7 +559,11 @@ const CheckoutPage = () => {
                                         value={dateBirth}
                                         onChange={changeDateBirth}
                                         disabled={disabledUserPF}
+                                        InputLabelProps={{
+                                            shrink: true,
+                                        }}
                                         fullWidth
+                                        sx={{ marginBottom: '12px' }}
                                     />
                                     <ReactInputMask
                                         mask="999.999.999-99"
@@ -604,12 +633,12 @@ const CheckoutPage = () => {
                                     </Box>
                                 ) : ''}
                                 <Box className='d-flex justify-content-between flex-wrap' sx={{filter: loadingCep ? 'blur(2px)' : 'blur:(0px)'}}>
-                                    <TextField sx={{width: '100%',  marginBottom: '8px', marginTop: '0px'}} disabled={disabledAddress} value={endereco} label="Endereço de Entrega*" variant="standard" />
-                                    <TextField sx={{width: '19%',  marginBottom: '8px'}} value={numero} label="Número*" variant="standard" />
-                                    <TextField sx={{width: '45%',  marginBottom: '8px'}} value={complemento} label="Complemento" variant="standard" />
-                                    <TextField sx={{width: '31%',  marginBottom: '8px'}} disabled={disabledAddress} value={estado} label="Estado*" variant="standard" />
-                                    <TextField sx={{width: '42%',  marginBottom: '8px'}} disabled={disabledAddress} value={cidade} label="Cidade*" variant="standard" />
-                                    <TextField sx={{width: '42%',  marginBottom: '8px'}} disabled={disabledAddress} value={bairro} label="Bairro*" variant="standard" />
+                                    <TextField sx={{width: '100%',  marginBottom: '8px', marginTop: '0px'}} value={endereco} onChange={changeEndereco} label="Endereço de Entrega*" variant="standard" />
+                                    <TextField sx={{width: '19%',  marginBottom: '8px'}} value={numero} onChange={changeNumero} label="Número*" variant="standard" />
+                                    <TextField sx={{width: '45%',  marginBottom: '8px'}} value={complemento} onChange={changeComplemento} label="Complemento" variant="standard" />
+                                    <TextField sx={{width: '31%',  marginBottom: '8px'}} value={estado} onChange={changeEstado} label="Estado*" variant="standard" />
+                                    <TextField sx={{width: '42%',  marginBottom: '8px'}} value={cidade} onChange={changeCidade} label="Cidade*" variant="standard" />
+                                    <TextField sx={{width: '42%',  marginBottom: '8px'}} value={bairro} onChange={changeBairro} label="Bairro*" variant="standard" />
                                 </Box>
                                 <div style={{width: '100%', marginTop: '20px'}}>
                                     <Checkbox sx={{'& .MuiCheckbox-label': {zIndex: '55'}}} label={<>Aceito a <Link sx={{color: 'blue'}} underline="hover" color="inherit" href="/">Política de Privacidade</Link></>} defaultChecked/>
