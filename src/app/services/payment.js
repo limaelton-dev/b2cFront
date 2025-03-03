@@ -4,16 +4,12 @@ import { getToken } from '../utils/auth';
 const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 const MERCADO_PAGO = process.env.NEXT_PUBLIC_MERCADOPAGO_TOKEN;
 
-const headerValidate = {
-    Authorization: `Bearer ${getToken()}`,
-};
-
-const headerProcess = {
-    Authorization: `Bearer ${getToken()}`,
-};
-
+// Função para validar o pagamento no backend
 export const validatePayment = async (dados) => {
-    console.log(headerValidate)
+    const headerValidate = {
+        Authorization: `Bearer ${getToken()}`
+    };
+    
     try {
         const response = await axios.post(`${API_URL}/checkout/validate`, dados, {headers: headerValidate});
         return response;
@@ -24,17 +20,19 @@ export const validatePayment = async (dados) => {
     }
 };
 
-export const processPayment = async (dados, token) => {
-    const header = {
-        Authorization: `Bearer ${token}`
-    }
+// Função para processar o pagamento no backend
+export const processPayment = async (dados, token = null) => {
+    const headerProcess = {
+        Authorization: `Bearer ${token || getToken()}`
+    };
+    
     try {
-        const response = await axios.post(`${API_URL}/mercado-pago/process-payment`, dados, {headers: header});
-        console.log(response)
+        const response = await axios.post(`${API_URL}/mercado-pago/process-payment`, dados, {headers: headerProcess});
+        console.log('Resposta do processamento de pagamento:', response);
         return response.data;
     }
     catch (err) {
-        console.error('Erro:', err);
+        console.error('Erro ao processar pagamento:', err);
         return err;
     }
 };

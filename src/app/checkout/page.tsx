@@ -22,6 +22,8 @@ import { PaymentIcon } from 'react-svg-credit-card-payment-icons';
 import { useToastSide } from '../context/toastSide';
 import { getProfileUser } from '../services/profile';
 import { processPayment, validatePayment } from '../services/payment';
+import { generateCardToken, prepareCardData, preparePaymentData } from '../services/mercadoPago';
+import { getToken } from '../utils/auth';
 
 async function buscaTipoPessoa(id: number) {
     try {
@@ -34,7 +36,7 @@ async function buscaTipoPessoa(id: number) {
                 bith_date: resp.birth_date || '',
                 cpf: resp.cpf || '',
                 trading_name: resp.trading_name || '',
-                cnpj: resp.cpnj || '',
+                cnpj: resp.cnpj || '',
                 state_registration: resp || '',
                 addresses: resp.addresses || [],
                 cards: resp.cards || []
@@ -48,8 +50,6 @@ async function buscaTipoPessoa(id: number) {
         return { id: 0, profile_type: '', bith_date: '', cpf: '', trading_name: '', cnpj: '', state_registration: '', addresses: [], cards: []};
     }
 }
-
-// const mp = window.MercadoPago(process.env.NEXT_PUBLIC_MERCADOPAGO_TOKEN);
 
 const CheckoutPage = () => {
     const router = useRouter();
@@ -241,70 +241,67 @@ const CheckoutPage = () => {
         setFlagCard(detectCardFlag(cardNumber));
     };
 
-    const handlePayButton = () => {
-        // setLoadBtn(true);
-        // async function realizaCompra() {
-        //     const script = document.createElement('script');
-        //     script.src = "https://sdk.mercadopago.com/js/v2";
-        //     setTimeout(async () =>{
-        //         // Inicializar o MercadoPago quando o script for carregado
-        //         const mp = new window.MercadoPago(process.env.NEXT_PUBLIC_MERCADOPAGO_TOKEN); // Substitua com sua chave pública do Mercado Pago
-    
-        //         // Associar os campos do cartão
-        //         mp.fields({
-        //             cardNumber: "5031433215406351",
-        //             cardExpirationMonth: "11",
-        //             cardExpirationYear: "30",
-        //             securityCode: "123",
-        //             cardholderName: "APRO",
-        //             identificationType: "CPF",
-        //             identificationNumber: "12345678909"
-        //         });
-        //         const validate = await validatePayment(
-        //             {
-        //                 "address_id": 1,
-        //                 "payment_method": "card",
-        //                 "card_id": 1
-        //             }
-        //         );
-        //         try {
-                    
-        //             const cardToken = await mp.createCardToken({
-        //                 cardNumber: "5031433215406351",
-        //                 cardholderName: "APRO",
-        //                 cardExpirationMonth: "11",
-        //                 cardExpirationYear: "30",
-        //                 securityCode: "123",
-        //                 identificationType: "CPF",
-        //                 identificationNumber: "12345678909"
-        //             });
+    const handlePayButton = async () => {
+        setLoadBtn(true);
+        try {
+            // Passo 1: Validar o pagamento no backend
+            const validateResponse = await validatePayment({
+                "address_id": 1, // Usar o endereço padrão ou selecionado
+                "payment_method": "card",
+                "card_id": 1 // Usar o cartão padrão ou selecionado
+            });
             
-        //             console.log("Token do cartão:", cardToken);
-        //         } catch (error) {
-        //             console.error("Erro ao gerar token do cartão:", error);
-        //         }
-        //         if(validate.status == 200) {
-        //             processPayment({
-        //                 "transaction_amount": 100,
-        //                 "description": "Compra de produtos",
-        //                 "payment_method_id": "master",
-        //                 "token": "f379f4eecb7f20118e882fa3a6a5baf0",
-        //                 "installments": 1,
-        //                 "external_reference": "123",
-        //                 "payer": {
-        //                     "email": "test_user_123@testuser.com",
-        //                     "identification": {
-        //                     "type": "CPF",
-        //                     "number": "12345678909"
-        //                     },
-        //                     "first_name": "APRO",
-        //                     "last_name": "User"
-        //                 }
-        //             })
-        //         }
-        //     },2000)
-        // }
-        // realizaCompra();
+            if (validateResponse.status !== 200) {
+                showToast('Erro ao validar o pagamento', 'error');
+                setLoadBtn(false);
+                return;
+            }
+            
+            // Passo 2: Buscar o perfil do usuário para obter os dados necessários
+            const profileResponse = await getProfileUser(user.id);
+            
+            if (!profileResponse) {
+                showToast('Erro ao obter dados do perfil', 'error');
+                setLoadBtn(false);
+                return;
+            }
+            
+            // Passo 3: Preparar os dados do cartão
+            const cardData = prepareCardData(profileResponse, CVV);
+            
+            // Passo 4: Gerar o token do cartão no Mercado Pago
+            const cardTokenResponse = await generateCardToken(cardData);
+            
+            if (!cardTokenResponse || !cardTokenResponse.id) {
+                showToast('Erro ao gerar token do cartão', 'error');
+                setLoadBtn(false);
+                return;
+            }
+            
+            // Passo 5: Preparar os dados do pagamento
+            const paymentData = preparePaymentData(
+                profileResponse, 
+                cardTokenResponse.id, 
+                calculateSubtotal(), 
+                1 // Número de parcelas
+            );
+            
+            // Passo 6: Processar o pagamento no backend
+            const paymentResponse = await processPayment(paymentData, getToken());
+            
+            if (paymentResponse && paymentResponse.status === 'approved') {
+                showToast('Pagamento aprovado com sucesso!', 'success');
+                // Redirecionar para página de sucesso ou pedidos
+                router.push('/minhaconta/meus-pedidos');
+            } else {
+                showToast(`Erro no pagamento: ${paymentResponse.status_detail || 'Verifique os dados do cartão'}`, 'error');
+            }
+        } catch (error) {
+            console.error('Erro ao processar pagamento:', error);
+            showToast('Erro ao processar pagamento', 'error');
+        } finally {
+            setLoadBtn(false);
+        }
     }
 
     const changeRazaoSocial = (e) => {
@@ -688,17 +685,20 @@ const CheckoutPage = () => {
                                 </div>
                             </div>
                         }
-                        <div className='d-flex justify-content-center'>
-                            <button type='button'
+                        <div className="btn-pay">
+                            <Button 
+                                variant="contained" 
+                                color="primary" 
+                                fullWidth 
                                 onClick={handlePayButton}
-                                className='btn-buy-primary mt-3'
+                                disabled={loadBtn}
                             >
-                                {loadBtn ? 
-                                    <CircularProgress color="inherit" />
-                                    :
-                                    'Comprar'
-                                }
-                            </button>
+                                {loadBtn ? (
+                                    <CircularProgress size={24} color="inherit" />
+                                ) : (
+                                    'Finalizar Compra'
+                                )}
+                            </Button>
                         </div>
                     </div>
                 </div>
