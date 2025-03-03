@@ -8,19 +8,19 @@ import StarIcon from '@mui/icons-material/Star';
 import { CartaoType } from '../../types';
 
 interface CreditCardProps {
-  cartao: CartaoType;
+  card: CartaoType;
   onEdit?: () => void;
   onDelete?: () => void;
   onSetDefault?: () => void;
 }
 
 const CreditCard: React.FC<CreditCardProps> = ({ 
-  cartao, 
+  card, 
   onEdit, 
   onDelete,
   onSetDefault
 }) => {
-  const { card_number, holder_name, expiration_date, is_default, card_type } = cartao;
+  const { card_number, holder_name, expiration_date, is_default, card_type } = card;
   const [isHovered, setIsHovered] = useState(false);
   
   // Função para obter o ícone da bandeira do cartão
@@ -42,7 +42,7 @@ const CreditCard: React.FC<CreditCardProps> = ({
   };
   
   // Formatar o número do cartão para exibição
-  const maskedNumber = `**** **** **** ${cartao.last_four_digits}`;
+  const maskedNumber = `**** **** **** ${card.last_four_digits}`;
   
   return (
     <Box

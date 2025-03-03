@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Box, Typography, Button, Tooltip } from '@mui/material';
 import InfoCard from '../../components/ui/InfoCard';
 import LoadingState from '../../components/ui/LoadingState';
@@ -11,6 +11,7 @@ import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import WcIcon from '@mui/icons-material/Wc';
 import useUserPersonalData from '../../hooks/useUserPersonalData';
 import { DadosPessoaisType } from '../../types';
+import EditProfileModal from './EditProfileModal';
 
 // Componente para exibir mensagem quando um campo está vazio
 const EmptyFieldMessage = ({ field }: { field: string }) => (
@@ -22,11 +23,27 @@ const EmptyFieldMessage = ({ field }: { field: string }) => (
 );
 
 const DadosPessoais: React.FC = () => {
-  const { dadosPessoais, loading, updating, error, refreshData } = useUserPersonalData();
+  const { dadosPessoais, loading, updating, error, refreshData, updateData } = useUserPersonalData();
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingField, setEditingField] = useState<keyof DadosPessoaisType | null>(null);
 
   const handleEdit = (field: keyof DadosPessoaisType) => {
-    console.log(`Editar campo: ${field}`);
-    // Aqui será implementada a lógica para editar o campo
+    setEditingField(field);
+    setIsEditModalOpen(true);
+  };
+
+  const handleOpenEditModal = () => {
+    setEditingField(null); // Edição completa do perfil
+    setIsEditModalOpen(true);
+  };
+
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false);
+    setEditingField(null);
+  };
+
+  const handleSaveData = async (data: Partial<DadosPessoaisType>, type: 'profile' | 'user') => {
+    await updateData(data, type);
   };
 
   // Função para renderizar o valor do campo ou uma mensagem quando estiver vazio
@@ -65,6 +82,7 @@ const DadosPessoais: React.FC = () => {
           <Button 
             variant="contained"
             disabled={updating}
+            onClick={handleOpenEditModal}
             sx={{ 
               backgroundColor: '#102d57',
               fontSize: '0.8rem',
@@ -137,6 +155,15 @@ const DadosPessoais: React.FC = () => {
           </Box>
         </Box>
       </Box>
+      
+      {/* Modal de edição de perfil */}
+      <EditProfileModal 
+        open={isEditModalOpen}
+        onClose={handleCloseEditModal}
+        userData={dadosPessoais}
+        onSave={handleSaveData}
+        loading={updating}
+      />
     </LoadingState>
   );
 };

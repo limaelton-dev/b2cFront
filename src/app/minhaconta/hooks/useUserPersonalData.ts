@@ -1,5 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getUserPersonalData, updateUserPersonalData } from '../services/userAccount';
+import { 
+  getUserPersonalData, 
+  updateUserPersonalData, 
+  updateProfile, 
+  updateUser 
+} from '../services/userAccount';
 import { DadosPessoaisType } from '../types';
 import { useNotificationContext } from '../context/NotificationContext';
 
@@ -56,6 +61,40 @@ export const useUserPersonalData = () => {
     }
   };
 
+  /**
+   * Atualiza múltiplos campos do perfil ou do usuário
+   * @param data Dados a serem atualizados
+   * @param type Tipo de atualização ('profile' ou 'user')
+   */
+  const updateData = async (data: Partial<DadosPessoaisType>, type: 'profile' | 'user') => {
+    try {
+      setUpdating(true);
+      
+      if (type === 'profile') {
+        await updateProfile(data);
+        showSuccess('Dados pessoais atualizados com sucesso!');
+      } else {
+        await updateUser(data);
+        showSuccess('Dados de usuário atualizados com sucesso!');
+      }
+      
+      // Atualizar o estado local com os novos valores
+      setDadosPessoais(prev => ({
+        ...prev,
+        ...data
+      }));
+      
+      // Recarregar os dados para garantir consistência
+      await fetchUserData();
+      
+    } catch (err) {
+      console.error(`Erro ao atualizar dados de ${type}:`, err);
+      showError(`Não foi possível atualizar seus dados. Tente novamente mais tarde.`);
+    } finally {
+      setUpdating(false);
+    }
+  };
+
   // Função auxiliar para obter o rótulo do campo
   const getFieldLabel = (field: keyof DadosPessoaisType): string => {
     const labels: Record<string, string> = {
@@ -81,7 +120,8 @@ export const useUserPersonalData = () => {
     updating,
     error,
     refreshData: fetchUserData,
-    updateField
+    updateField,
+    updateData
   };
 };
 

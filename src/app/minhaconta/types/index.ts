@@ -38,6 +38,7 @@ export interface CartaoType {
   last_four_digits: string;
   created_at: string;
   updated_at: string;
+  cvv?: string;
 }
 
 // Tipos para compras
