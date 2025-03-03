@@ -39,27 +39,41 @@ export const CartProvider = ({ children }) => {
     const isLoggedIn = !!user && !!user.id;
 
     const addToCart = (product, idCor) => {
+        // Verificar se o produto já existe no carrinho
         const itemExists = cartItems.some(item => item.pro_codigo === product.pro_codigo);
 
         if(itemExists) {
             return false;
         }
 
+        // Garantir que o produto tenha um ID válido
+        const productId = product.id || product.pro_codigo;
+        
+        if (!productId) {
+            console.error('Produto sem ID válido:', product);
+            return false;
+        }
+
+        // Adicionar o produto ao carrinho
         setCartData((prevItems) => {
             if (!Array.isArray(prevItems)) {
                 return [{
-                    produto_id: product.id,
+                    produto_id: productId,
                     quantity: 1,
                 }];
             }
             return [...prevItems, {
-                produto_id: product.id,
+                produto_id: productId,
                 quantity: 1,
                 idCart: prevItems.length + 1
             }];
         });
+        
         setCartItems((prevItems) => [...prevItems, product]);
+        
+        // Enviar o carrinho para o servidor
         debouncedSendCartToServer();
+        
         return true;
     };
 
