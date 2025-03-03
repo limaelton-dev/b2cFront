@@ -21,6 +21,7 @@ import axios from 'axios';
 import { PaymentIcon } from 'react-svg-credit-card-payment-icons';
 import { useToastSide } from '../context/toastSide';
 import { getProfileUser } from '../services/profile';
+import { processPayment, validatePayment } from '../services/payment';
 
 async function buscaTipoPessoa(id: number) {
     try {
@@ -35,16 +36,20 @@ async function buscaTipoPessoa(id: number) {
                 trading_name: resp.trading_name || '',
                 cnpj: resp.cpnj || '',
                 state_registration: resp || '',
+                addresses: resp.addresses || [],
+                cards: resp.cards || []
             };
         }
 
-        return { id: 0, profile_type: '', bith_date: '', cpf: '', trading_name: '', cnpj: '', state_registration: ''};
+        return { id: 0, profile_type: '', bith_date: '', cpf: '', trading_name: '', cnpj: '', state_registration: '', addresses: [], cards: []};
 
     } catch (error) {
         console.error('Erro: ', error);
-        return { id: 0, profile_type: '', bith_date: '', cpf: '', trading_name: '', cnpj: '', state_registration: ''};
+        return { id: 0, profile_type: '', bith_date: '', cpf: '', trading_name: '', cnpj: '', state_registration: '', addresses: [], cards: []};
     }
 }
+
+// const mp = window.MercadoPago(process.env.NEXT_PUBLIC_MERCADOPAGO_TOKEN);
 
 const CheckoutPage = () => {
     const router = useRouter();
@@ -72,18 +77,29 @@ const CheckoutPage = () => {
     const [disabledUser, setDisabledUser] = useState(false);
     const [disabledUserPF, setDisabledUserPF] = useState(false);
     const [disabledUserPJ, setDisabledUserPJ] = useState(false);
+    const [disabledAddress, setDisabledAddress] = useState(false);
     const [cnpj, setCnpj] = useState('');
     const [razaoSocial, setRazaoSocial] = useState('');
     const [inscEstadual, setInscEstadual] = useState('');
+    const [numero, setNumero] = useState('');
+    const [complemento, setComplemento] = useState('');
+    const [CVV, setCVV] = useState('');
+    const [expireCC, setExpireCC] = useState('');
+    const [isMaskedCC, setIsMaskedCC] = useState(true);
+    const [numberCCFinal, setNumberCCFinal] = useState('');
+    const [CVVFinal, setCVVFinal] = useState('');
+    const [expireCCFinal, setExpireCCFinal] = useState('');
+    const [shippingCost, setShippingCost] = useState(25.90);
+    
 
     // Verificar se o usuário está logado
     useEffect(() => {
-        console.log('AQUIIEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE TESTEEEEEEEEEEEEEEE', user, !user, !user.id)
         if (!user || !user.id) {
             showToast('Você precisa estar logado para finalizar a compra', 'error');
             router.push('/login?redirect=checkout');
         }
     }, [user]);
+
 
     // Verificar se há itens no carrinho
     // useEffect(() => {
@@ -150,6 +166,14 @@ const CheckoutPage = () => {
             return val - ((discountPix / 100) * val);
     }
 
+    const changeExpireCC = (e) => {
+        setExpireCC(e.target.value);
+    }
+
+    const changeCCV = (e) => {
+        setCVV(e.target.value);
+    }
+
     useEffect(() => {
         async function fetchTipoPessoa() {
             if (user.name) {
@@ -171,6 +195,24 @@ const CheckoutPage = () => {
                         setInscEstadual(resultPessoa.state_registration);
                         setDisabledUserPJ(true);
                     }
+
+                    setBairro(resultPessoa.addresses[0].neighborhood);
+                    setCepNumber(resultPessoa.addresses[0].postal_code);
+                    setNumero(resultPessoa.addresses[0].number);
+                    setComplemento(resultPessoa.addresses[0].complement);
+                    setEndereco(resultPessoa.addresses[0].street);
+                    setCidade(resultPessoa.addresses[0].city);
+                    setDisabledAddress(true);
+
+                    setCVVFinal(resultPessoa.cards[0].last_four_digits);
+                    setNumberCCFinal(resultPessoa.cards[0].card_number);
+                    setFlagCard(detectCardFlag(resultPessoa.cards[0].card_number));
+                    setExpireCCFinal(resultPessoa.cards[0].expiration_date);
+                    setCardNumber(`XXXX XXXX XXXX ${getLastFourDigits(resultPessoa.cards[0].card_number)}`)
+
+                    setCVV('XXX');
+                    setExpireCC('XX/XX');
+                    setIsMaskedCC(true);
                 } catch (error) {
                     console.error("Erro ao buscar tipo de pessoa:", error);
                 }
@@ -179,6 +221,12 @@ const CheckoutPage = () => {
     
         fetchTipoPessoa();
     }, [user])
+
+    const getLastFourDigits = (cardNumber) => {
+        if (!cardNumber) return '';
+        const strCard = cardNumber.toString();
+        return strCard.slice(-4);
+    }
     
     const changeRadioTipoPessoa = (e) => {
         setTipoPessoa(e.target.value)
@@ -194,7 +242,69 @@ const CheckoutPage = () => {
     };
 
     const handlePayButton = () => {
-        setLoadBtn(true);
+        // setLoadBtn(true);
+        // async function realizaCompra() {
+        //     const script = document.createElement('script');
+        //     script.src = "https://sdk.mercadopago.com/js/v2";
+        //     setTimeout(async () =>{
+        //         // Inicializar o MercadoPago quando o script for carregado
+        //         const mp = new window.MercadoPago(process.env.NEXT_PUBLIC_MERCADOPAGO_TOKEN); // Substitua com sua chave pública do Mercado Pago
+    
+        //         // Associar os campos do cartão
+        //         mp.fields({
+        //             cardNumber: "5031433215406351",
+        //             cardExpirationMonth: "11",
+        //             cardExpirationYear: "30",
+        //             securityCode: "123",
+        //             cardholderName: "APRO",
+        //             identificationType: "CPF",
+        //             identificationNumber: "12345678909"
+        //         });
+        //         const validate = await validatePayment(
+        //             {
+        //                 "address_id": 1,
+        //                 "payment_method": "card",
+        //                 "card_id": 1
+        //             }
+        //         );
+        //         try {
+                    
+        //             const cardToken = await mp.createCardToken({
+        //                 cardNumber: "5031433215406351",
+        //                 cardholderName: "APRO",
+        //                 cardExpirationMonth: "11",
+        //                 cardExpirationYear: "30",
+        //                 securityCode: "123",
+        //                 identificationType: "CPF",
+        //                 identificationNumber: "12345678909"
+        //             });
+            
+        //             console.log("Token do cartão:", cardToken);
+        //         } catch (error) {
+        //             console.error("Erro ao gerar token do cartão:", error);
+        //         }
+        //         if(validate.status == 200) {
+        //             processPayment({
+        //                 "transaction_amount": 100,
+        //                 "description": "Compra de produtos",
+        //                 "payment_method_id": "master",
+        //                 "token": "f379f4eecb7f20118e882fa3a6a5baf0",
+        //                 "installments": 1,
+        //                 "external_reference": "123",
+        //                 "payer": {
+        //                     "email": "test_user_123@testuser.com",
+        //                     "identification": {
+        //                     "type": "CPF",
+        //                     "number": "12345678909"
+        //                     },
+        //                     "first_name": "APRO",
+        //                     "last_name": "User"
+        //                 }
+        //             })
+        //         }
+        //     },2000)
+        // }
+        // realizaCompra();
     }
 
     const changeRazaoSocial = (e) => {
@@ -333,31 +443,51 @@ const CheckoutPage = () => {
                         <div className="total">
                             <table>
                                 <tbody>
-                                    <tr>
-                                        <td>Subtotal</td>
-                                        <td>R$</td>
-                                        <td>{calculateSubtotal().toFixed(2).replace('.',',')}</td>
-                                    </tr>
-                                    <tr>
-                                        <td>Descontos</td>
-                                        <td>R$</td>
-                                        <td>-{applyCouponDiscount(calculateSubtotal()).toFixed(2).replace('.',',')}</td>
-                                    </tr>
-                                    <tr>
-                                        <th>Total à vista</th>
-                                        <td>R$</td>
-                                        <td>{applyDiscounts(calculateSubtotal()).toFixed(2).replace('.',',')}</td>
-                                    </tr>
-                                    <tr>
-                                        <td>Entrega</td>
-                                        <td>R$</td>
-                                        <td>15,90</td>
-                                    </tr>
-                                    <tr>
-                                        <th>Total</th>
-                                        <td>R$</td>
-                                        <td>{(applyDiscounts(calculateSubtotal()) + 15.90).toFixed(2).replace('.',',')}</td>
-                                    </tr>
+                                {
+                                    cartItems.length != 0 ?
+                                    <>
+                                        <tr>
+                                            <td>Subtotal</td>
+                                            <td>R$</td>
+                                            <td>{cartItems
+                                            .reduce((total, item) => total + (item.pro_precovenda * cartData[cartItems.findIndex(i => i.pro_codigo == item.pro_codigo)].qty), 0)
+                                            .toFixed(2).replace('.',',')
+                                        }</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Descontos</td>
+                                            <td>R$</td>
+                                            <td>- {((cartItems
+                                            .reduce((total, item) => total + (item.pro_precovenda * cartData[cartItems.findIndex(i => i.pro_codigo == item.pro_codigo)].qty), 0)
+                                            .toFixed(2)) - (applyCouponDiscount(cartItems
+                                            .reduce((total, item) => total + (item.pro_precovenda * cartData[cartItems.findIndex(i => i.pro_codigo == item.pro_codigo)].qty), 0))
+                                            .toFixed(2))).toString().replace('.',',')
+                                        }</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Total à vista</th>
+                                            <td>R$</td>
+                                            <td>{applyPixDiscount(cartItems
+                                            .reduce((total, item) => total + (item.pro_precovenda * cartData[cartItems.findIndex(i => i.pro_codigo == item.pro_codigo)].qty), 0))
+                                            .toFixed(2).replace('.',',')
+                                        }</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Entrega</td>
+                                            <td>R$</td>
+                                            <td>{shippingCost.toFixed(2).toString().replace('.',',')}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Total</th>
+                                            <td>R$</td>
+                                            <td>{(Number((applyDiscounts(cartItems
+                                            .reduce((total, item) => total + (item.pro_precovenda * cartData[cartItems.findIndex(i => i.pro_codigo == item.pro_codigo)].qty), 0))
+                                            .toFixed(2))) + (shippingCost)).toString().replace('.',',')
+                                        }</td>
+                                        </tr>
+                                    </>
+                                    : <></>
+                                }
                                 </tbody>
                             </table>
                         </div>
@@ -479,12 +609,12 @@ const CheckoutPage = () => {
                                     </Box>
                                 ) : ''}
                                 <Box className='d-flex justify-content-between flex-wrap' sx={{filter: loadingCep ? 'blur(2px)' : 'blur:(0px)'}}>
-                                    <TextField sx={{width: '100%',  marginBottom: '8px', marginTop: '0px'}} value={endereco} label="Endereço de Entrega*" variant="standard" />
-                                    <TextField sx={{width: '19%',  marginBottom: '8px'}} label="Número*" variant="standard" />
-                                    <TextField sx={{width: '45%',  marginBottom: '8px'}} label="Complemento" variant="standard" />
-                                    <TextField sx={{width: '31%',  marginBottom: '8px'}} value={estado} label="Estado*" variant="standard" />
-                                    <TextField sx={{width: '42%',  marginBottom: '8px'}} value={cidade} label="Cidade*" variant="standard" />
-                                    <TextField sx={{width: '42%',  marginBottom: '8px'}} value={bairro} label="Bairro*" variant="standard" />
+                                    <TextField sx={{width: '100%',  marginBottom: '8px', marginTop: '0px'}} disabled={disabledAddress} value={endereco} label="Endereço de Entrega*" variant="standard" />
+                                    <TextField sx={{width: '19%',  marginBottom: '8px'}} value={numero} label="Número*" variant="standard" />
+                                    <TextField sx={{width: '45%',  marginBottom: '8px'}} value={complemento} label="Complemento" variant="standard" />
+                                    <TextField sx={{width: '31%',  marginBottom: '8px'}} disabled={disabledAddress} value={estado} label="Estado*" variant="standard" />
+                                    <TextField sx={{width: '42%',  marginBottom: '8px'}} disabled={disabledAddress} value={cidade} label="Cidade*" variant="standard" />
+                                    <TextField sx={{width: '42%',  marginBottom: '8px'}} disabled={disabledAddress} value={bairro} label="Bairro*" variant="standard" />
                                 </Box>
                                 <div style={{width: '100%', marginTop: '20px'}}>
                                     <Checkbox sx={{'& .MuiCheckbox-label': {zIndex: '55'}}} label={<>Aceito a <Link sx={{color: 'blue'}} underline="hover" color="inherit" href="/">Política de Privacidade</Link></>} defaultChecked/>
@@ -503,22 +633,18 @@ const CheckoutPage = () => {
                             name="row-radio-buttons-group"
                             sx={{justifyContent: 'space-between', width: '100%', marginTop: '15px'}}
                         >
-                            <FormControlLabel value="1" sx={{margin: '0px'}} control={<Radio />} onClick={changeRadioTipoCompra} label="Pix" />
-                            <FormControlLabel value="2" sx={{margin: '0px'}} control={<Radio />} onClick={changeRadioTipoCompra} label="Cartão de Crédito" />
+                            <FormControlLabel value="1" sx={{margin: '0px'}} control={<Radio />} onClick={changeRadioTipoCompra} label="Cartão de Crédito" />
+                            <FormControlLabel value="2" sx={{margin: '0px'}} control={<Radio />} onClick={changeRadioTipoCompra} label="Pix" />
                         </RadioGroup>
                         {tipoCompra == '1' &&    
-                            <div className='d-flex justify-content-center align-items-center' style={{height: '158px'}}>
-                                <span>A chave pix será liberada após a confirmação</span>
-                            </div>
-                        }
-                        {tipoCompra == '2' &&    
                             <div className='d-flex justify-content-between flex-wrap' style={{height: '158px'}}>
                                 <ReactInputMask
                                     mask="9999 9999 9999 9999"
                                     value={cardNumber}
                                     onChange={handleChangeCardNumber}
-                                    maskChar=""
-                                >
+                                    disabled={isMaskedCC}
+                                    maskChar="X"
+                                    >
                                     {(inputProps) => (
                                         <TextField
                                         {...inputProps}
@@ -543,11 +669,16 @@ const CheckoutPage = () => {
                                         />
                                     )}
                                 </ReactInputMask>
-                                <TextField sx={{width: '25%',  marginBottom: '7px'}} label="CVV*" variant="standard" />
-                                <TextField sx={{width: '45%',  marginBottom: '7px'}} label="Validade*" placeholder='mm/aa' variant="standard" />
+                                <TextField sx={{width: '25%',  marginBottom: '7px'}} disabled={isMaskedCC} onChange={changeCCV} value={CVV} label="CVV*" variant="standard" />
+                                <TextField sx={{width: '45%',  marginBottom: '7px'}} disabled={isMaskedCC} onChange={changeExpireCC} value={expireCC} label="Validade*" placeholder='mm/aa' variant="standard" />
                                 <div style={{width: '100%', marginTop: '25px'}}>
                                     <Checkbox label="Guardar para compras futuras" defaultChecked/>
                                 </div>
+                            </div>
+                        }
+                        {tipoCompra == '2' &&    
+                            <div className='d-flex justify-content-center align-items-center' style={{height: '158px'}}>
+                                <span>A chave pix será liberada após a confirmação</span>
                             </div>
                         }
                         {tipoPessoa == '2' && 

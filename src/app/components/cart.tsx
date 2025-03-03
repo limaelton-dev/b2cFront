@@ -405,7 +405,7 @@ export default function Cart({ cartOpened, onCartToggle }) {
                                 </span>
                             </div>
                             <div className="totals discount">
-                                <span><b>Total à vista: </b></span>
+                                <span><b>Total: </b></span>
                                 <span className='price-totals'>
                                     <b>R$ {applyDiscounts(cartItems
                                             .reduce((total, item) => total + (item.pro_precovenda * cartData[cartItems.findIndex(i => i.pro_codigo == item.pro_codigo)].qty), 0))

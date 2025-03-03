@@ -51,8 +51,8 @@ export async function checkAuth() {
         return true;
     } catch (error) {
         console.error('Erro ao verificar autenticação:', error);
-        // Se o token for inválido, remove-o
         removeToken();
+        localStorage.removeItem('user');
         return false;
     }
 }

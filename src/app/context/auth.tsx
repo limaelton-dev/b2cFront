@@ -25,7 +25,10 @@ export const AuthProvider = ({ children }) => {
         const validateAuth = async () => {
             try {
                 const isAuthenticated = await checkAuth();
-                if(isAuthenticated) setAuth(isAuthenticated);
+                if(isAuthenticated){
+                    localStorage.removeItem('user');
+                    removeToken();
+                }
             } catch (error) {
                 console.error('Erro ao verificar autenticação:', error);
                 setAuth(false);
@@ -37,7 +40,6 @@ export const AuthProvider = ({ children }) => {
     
     useEffect(() => {
         if(localStorage.getItem('user') != null && auth) {
-            console.log('AQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQUI', localStorage.getItem('user'))
             setUser(JSON.parse(localStorage.getItem('user')))
         }
     }, [auth]);

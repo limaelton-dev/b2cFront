@@ -24,6 +24,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <meta name="msapplication-navbutton-color" content="#fff" />
               <meta name="apple-mobile-web-app-capable" content="yes" />
               <meta name="apple-mobile-web-app-status-bar-style" content="#fff" />
+              <script src="https://sdk.mercadopago.com/js/v2"></script>
           </head>
           <body id="myBody">
               <ToastSideProvider>
