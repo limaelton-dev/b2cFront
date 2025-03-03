@@ -1,133 +1,213 @@
-import React from 'react';
-import { Box, Typography, Grid, Button } from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
+import React, { useState } from 'react';
+import { 
+  Box, 
+  Typography, 
+  Button, 
+  Grid, 
+  CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  Alert
+} from '@mui/material';
+import { Add as AddIcon } from '@mui/icons-material';
 import CreditCard from '../../components/ui/CreditCard';
-import LoadingState from '../../components/ui/LoadingState';
 import useUserCards from '../../hooks/useUserCards';
+import CardFormModal from './CardFormModal';
+import { CartaoType } from '../../types';
 
 const MeusCartoes: React.FC = () => {
   const { 
     cartoes, 
     loading, 
-    updating, 
-    error, 
-    refreshCards, 
-    setDefaultCard, 
-    deleteCard 
+    updating,
+    error,
+    refreshCards,
+    setDefaultCard,
+    deleteCard: removeCard,
+    addCard,
+    updateCard
   } = useUserCards();
 
-  const handleEdit = (id: number) => {
-    console.log(`Editar cartão: ${id}`);
-    // Aqui será implementada a lógica para editar o cartão
+  const [openAddModal, setOpenAddModal] = useState(false);
+  const [openEditModal, setOpenEditModal] = useState(false);
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  const [selectedCard, setSelectedCard] = useState<CartaoType | null>(null);
+
+  // Manipuladores para o modal de adicionar cartão
+  const handleOpenAddModal = () => {
+    setOpenAddModal(true);
   };
 
-  const handleDelete = async (id: number) => {
-    if (window.confirm('Tem certeza que deseja excluir este cartão?')) {
-      await deleteCard(id);
+  const handleCloseAddModal = () => {
+    setOpenAddModal(false);
+  };
+
+  // Manipuladores para o modal de editar cartão
+  const handleOpenEditModal = (card: CartaoType) => {
+    setSelectedCard(card);
+    setOpenEditModal(true);
+  };
+
+  const handleCloseEditModal = () => {
+    setOpenEditModal(false);
+    setSelectedCard(null);
+  };
+
+  // Manipuladores para o diálogo de confirmação de exclusão
+  const handleOpenDeleteDialog = (card: CartaoType) => {
+    setSelectedCard(card);
+    setOpenDeleteDialog(true);
+  };
+
+  const handleCloseDeleteDialog = () => {
+    setOpenDeleteDialog(false);
+    setSelectedCard(null);
+  };
+
+  // Funções para manipular cartões
+  const handleAddCard = async (cardData: Partial<CartaoType>) => {
+    await addCard(cardData);
+  };
+
+  const handleUpdateCard = async (cardData: Partial<CartaoType>) => {
+    if (selectedCard) {
+      await updateCard(selectedCard.id, cardData);
     }
   };
 
-  const handleSetDefault = async (id: number) => {
-    await setDefaultCard(id);
+  const handleDeleteCard = async () => {
+    if (selectedCard) {
+      await removeCard(selectedCard.id);
+      handleCloseDeleteDialog();
+    }
   };
 
-  const handleAddNew = () => {
-    console.log('Adicionar novo cartão');
-    // Aqui será implementada a lógica para adicionar um novo cartão
+  const handleSetDefaultCard = async (cardId: number) => {
+    await setDefaultCard(cardId);
   };
+
+  if (loading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
-    <LoadingState loading={loading} error={error} onRetry={refreshCards}>
-      <Box sx={{ mb: 2.5 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2.5 }}>
-          <Typography 
-            variant="h5" 
-            sx={{ 
-              color: '#102d57',
-              fontWeight: 500,
-              fontSize: '1.15rem'
-            }}
-          >
-            Meus Cartões
+    <Box>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+        <Typography variant="h5" component="h1">
+          Meus Cartões
+        </Typography>
+        <Button
+          variant="contained"
+          color="primary"
+          startIcon={<AddIcon />}
+          onClick={handleOpenAddModal}
+          disabled={updating}
+        >
+          Adicionar Cartão
+        </Button>
+      </Box>
+
+      {error && (
+        <Alert severity="error" sx={{ mb: 3 }}>
+          {error}
+        </Alert>
+      )}
+
+      {cartoes.length === 0 ? (
+        <Box 
+          display="flex" 
+          flexDirection="column" 
+          alignItems="center" 
+          justifyContent="center" 
+          minHeight="200px"
+          border="1px dashed #ccc"
+          borderRadius={2}
+          p={3}
+        >
+          <Typography variant="body1" color="textSecondary" mb={2}>
+            Você ainda não possui cartões cadastrados.
           </Typography>
-          
-          <Button 
-            variant="contained"
+          <Button
+            variant="outlined"
+            color="primary"
             startIcon={<AddIcon />}
-            onClick={handleAddNew}
-            disabled={updating}
-            sx={{ 
-              backgroundColor: '#102d57',
-              fontSize: '0.8rem',
-              padding: '6px 12px',
-              '&:hover': {
-                backgroundColor: '#0a1e3a',
-              }
-            }}
+            onClick={handleOpenAddModal}
           >
-            Novo Cartão
+            Adicionar Cartão
           </Button>
         </Box>
-        
-        <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2.5 }} />
-        
-        <Box sx={{ 
-          p: 0.5
-        }}>
-          <Grid container spacing={2.5}>
-            {cartoes.map((cartao) => (
-              <Grid item xs={12} sm={6} md={4} key={cartao.id}>
-                <CreditCard 
-                  cartao={cartao}
-                  onEdit={() => handleEdit(cartao.id)}
-                  onDelete={() => handleDelete(cartao.id)}
-                  onSetDefault={!cartao.is_default ? () => handleSetDefault(cartao.id) : undefined}
-                />
-              </Grid>
-            ))}
-          </Grid>
-          
-          {cartoes.length === 0 && (
-            <Box 
-              sx={{ 
-                textAlign: 'center', 
-                py: 5,
-                backgroundColor: 'rgba(0, 0, 0, 0.02)',
-                borderRadius: '6px',
-                mt: 2
-              }}
-            >
-              <Typography 
-                variant="body1"
-                sx={{ 
-                  color: '#666',
-                  fontSize: '0.85rem',
-                  mb: 2
-                }}
-              >
-                Você ainda não possui cartões cadastrados.
-              </Typography>
-              <Button 
-                variant="contained"
-                startIcon={<AddIcon />}
-                onClick={handleAddNew}
-                disabled={updating}
-                sx={{ 
-                  backgroundColor: '#102d57',
-                  fontSize: '0.8rem',
-                  padding: '6px 12px',
-                  '&:hover': {
-                    backgroundColor: '#0a1e3a',
-                  }
-                }}
-              >
-                Adicionar Cartão
-              </Button>
-            </Box>
-          )}
-        </Box>
-      </Box>
-    </LoadingState>
+      ) : (
+        <Grid container spacing={3}>
+          {cartoes.map((cartao) => (
+            <Grid item xs={12} sm={6} md={4} key={cartao.id}>
+              <CreditCard
+                card={cartao}
+                onEdit={() => handleOpenEditModal(cartao)}
+                onDelete={() => handleOpenDeleteDialog(cartao)}
+                onSetDefault={() => handleSetDefaultCard(cartao.id)}
+              />
+            </Grid>
+          ))}
+        </Grid>
+      )}
+
+      {/* Modal para adicionar cartão */}
+      <CardFormModal
+        open={openAddModal}
+        onClose={handleCloseAddModal}
+        onSubmit={handleAddCard}
+        isLoading={updating}
+        title="Adicionar Cartão"
+      />
+
+      {/* Modal para editar cartão */}
+      <CardFormModal
+        open={openEditModal}
+        onClose={handleCloseEditModal}
+        onSubmit={handleUpdateCard}
+        initialData={selectedCard || undefined}
+        isLoading={updating}
+        title="Editar Cartão"
+      />
+
+      {/* Diálogo de confirmação para excluir cartão */}
+      <Dialog
+        open={openDeleteDialog}
+        onClose={handleCloseDeleteDialog}
+      >
+        <DialogTitle>Confirmar Exclusão</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Tem certeza que deseja excluir este cartão?
+            {selectedCard?.is_default && (
+              <Box component="span" fontWeight="bold" display="block" mt={1}>
+                Este é seu cartão principal. Ao excluí-lo, você precisará definir outro cartão como principal.
+              </Box>
+            )}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDeleteDialog} disabled={updating}>
+            Cancelar
+          </Button>
+          <Button 
+            onClick={handleDeleteCard} 
+            color="error" 
+            variant="contained"
+            disabled={updating}
+          >
+            {updating ? <CircularProgress size={24} /> : 'Excluir'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
   );
 };
 

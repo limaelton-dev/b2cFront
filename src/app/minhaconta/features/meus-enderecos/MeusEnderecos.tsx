@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Box, Typography, Grid, Button } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import AddressCard from '../../components/ui/AddressCard';
 import LoadingState from '../../components/ui/LoadingState';
 import useUserAddresses from '../../hooks/useUserAddresses';
+import AddressFormModal from './AddressFormModal';
+import { EnderecoType } from '../../types';
 
 const MeusEnderecos: React.FC = () => {
   const { 
@@ -11,17 +13,31 @@ const MeusEnderecos: React.FC = () => {
     loading, 
     updating, 
     error, 
+    linkedAddresses,
     refreshAddresses, 
     setDefaultAddress, 
-    deleteAddress 
+    deleteAddress,
+    addAddress,
+    updateAddress
   } = useUserAddresses();
 
+  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+  const [selectedAddress, setSelectedAddress] = useState<EnderecoType | null>(null);
+
   const handleEdit = (id: number) => {
-    console.log(`Editar endereço: ${id}`);
-    // Aqui será implementada a lógica para editar o endereço
+    const addressToEdit = enderecos.find(endereco => endereco.id === id);
+    if (addressToEdit) {
+      setSelectedAddress(addressToEdit);
+      setIsFormModalOpen(true);
+    }
   };
 
   const handleDelete = async (id: number) => {
+    if (linkedAddresses.includes(id)) {
+      // Se o endereço estiver vinculado a pedidos, mostrar mensagem e não permitir exclusão
+      return;
+    }
+    
     if (window.confirm('Tem certeza que deseja excluir este endereço?')) {
       await deleteAddress(id);
     }
@@ -32,8 +48,31 @@ const MeusEnderecos: React.FC = () => {
   };
 
   const handleAddNew = () => {
-    console.log('Adicionar novo endereço');
-    // Aqui será implementada a lógica para adicionar um novo endereço
+    setSelectedAddress(null);
+    setIsFormModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    // Verificar se há alterações não salvas
+    if (updating) {
+      if (window.confirm('Há alterações não salvas. Deseja realmente fechar o formulário?')) {
+        setIsFormModalOpen(false);
+        setSelectedAddress(null);
+      }
+    } else {
+      setIsFormModalOpen(false);
+      setSelectedAddress(null);
+    }
+  };
+
+  const handleSaveAddress = async (addressData: Partial<EnderecoType>) => {
+    if (selectedAddress) {
+      // Editar endereço existente
+      await updateAddress(selectedAddress.id, addressData);
+    } else {
+      // Adicionar novo endereço
+      await addAddress(addressData);
+    }
   };
 
   return (
@@ -84,6 +123,7 @@ const MeusEnderecos: React.FC = () => {
                   onEdit={() => handleEdit(endereco.id)}
                   onDelete={() => handleDelete(endereco.id)}
                   onSetDefault={!endereco.is_default ? () => handleSetDefault(endereco.id) : undefined}
+                  linkedToOrders={linkedAddresses.includes(endereco.id)}
                 />
               </Grid>
             ))}
@@ -129,6 +169,15 @@ const MeusEnderecos: React.FC = () => {
           )}
         </Box>
       </Box>
+      
+      {/* Modal de formulário de endereço */}
+      <AddressFormModal 
+        open={isFormModalOpen}
+        onClose={handleCloseModal}
+        address={selectedAddress}
+        onSave={handleSaveAddress}
+        loading={updating}
+      />
     </LoadingState>
   );
 };

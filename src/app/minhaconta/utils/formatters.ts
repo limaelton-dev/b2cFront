@@ -21,40 +21,85 @@ export const formatCurrency = (value: number): string => {
 };
 
 /**
- * Formata um CPF para exibição
- * @param cpf CPF sem formatação
- * @returns CPF formatado
+ * Funções utilitárias para formatação de dados
+ */
+
+/**
+ * Formata um CPF adicionando pontos e traço
+ * @param cpf CPF a ser formatado
+ * @returns CPF formatado (ex: 123.456.789-00)
  */
 export const formatCPF = (cpf: string): string => {
-  if (!cpf) return '';
-  
   // Remove caracteres não numéricos
-  const cleanCPF = cpf.replace(/\D/g, '');
+  const cpfDigits = cpf.replace(/\D/g, '');
+  
+  // Limita a 11 dígitos
+  const limitedCpf = cpfDigits.slice(0, 11);
   
   // Aplica a máscara
-  return cleanCPF.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+  if (limitedCpf.length <= 3) {
+    return limitedCpf;
+  } else if (limitedCpf.length <= 6) {
+    return `${limitedCpf.slice(0, 3)}.${limitedCpf.slice(3)}`;
+  } else if (limitedCpf.length <= 9) {
+    return `${limitedCpf.slice(0, 3)}.${limitedCpf.slice(3, 6)}.${limitedCpf.slice(6)}`;
+  } else {
+    return `${limitedCpf.slice(0, 3)}.${limitedCpf.slice(3, 6)}.${limitedCpf.slice(6, 9)}-${limitedCpf.slice(9)}`;
+  }
 };
 
 /**
- * Formata um número de telefone para exibição
- * @param phone Número de telefone
- * @returns Telefone formatado
+ * Formata uma data no formato brasileiro (DD/MM/YYYY) para o formato de input HTML (YYYY-MM-DD)
+ * @param date Data no formato brasileiro
+ * @returns Data no formato YYYY-MM-DD
+ */
+export const formatDateForInput = (date: string): string => {
+  if (!date) return '';
+  
+  // Verifica se a data já está no formato YYYY-MM-DD
+  if (/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    return date;
+  }
+  
+  // Converte de DD/MM/YYYY para YYYY-MM-DD
+  const parts = date.split('/');
+  if (parts.length === 3) {
+    return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+  }
+  
+  return '';
+};
+
+/**
+ * Formata uma data no formato de input HTML (YYYY-MM-DD) para o formato da API (YYYY-MM-DD)
+ * @param date Data no formato YYYY-MM-DD
+ * @returns Data no formato YYYY-MM-DD para a API
+ */
+export const formatDateForAPI = (date: string): string => {
+  if (!date) return '';
+  
+  // A data já está no formato correto para a API
+  return date;
+};
+
+/**
+ * Formata um número de telefone adicionando parênteses e hífen
+ * @param phone Número de telefone a ser formatado
+ * @returns Telefone formatado (ex: (11) 98765-4321)
  */
 export const formatPhone = (phone: string): string => {
-  if (!phone) return '';
-  
   // Remove caracteres não numéricos
-  const cleanPhone = phone.replace(/\D/g, '');
+  const phoneDigits = phone.replace(/\D/g, '');
   
-  // Verifica se é um número com DDD e 9 dígitos
-  if (cleanPhone.length === 11) {
-    return cleanPhone.replace(/(\d{2})(\d{1})(\d{4})(\d{4})/, '+55 ($1) $2$3-$4');
+  // Limita a 11 dígitos
+  const limitedPhone = phoneDigits.slice(0, 11);
+  
+  // Aplica a máscara
+  if (limitedPhone.length <= 2) {
+    return limitedPhone;
+  } else if (limitedPhone.length <= 6) {
+    return `(${limitedPhone.slice(0, 2)}) ${limitedPhone.slice(2)}`;
+  } else {
+    return `(${limitedPhone.slice(0, 2)}) ${limitedPhone.slice(2, 7)}-${limitedPhone.slice(7)}`;
   }
-  
-  // Verifica se é um número com DDD e 8 dígitos
-  if (cleanPhone.length === 10) {
-    return cleanPhone.replace(/(\d{2})(\d{4})(\d{4})/, '+55 ($1) $2-$3');
-  }
-  
-  return phone;
 }; 
