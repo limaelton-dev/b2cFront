@@ -94,10 +94,10 @@ const CheckoutPage = () => {
 
     // Verificar se o usuário está logado
     useEffect(() => {
-        if (!user || !user.id) {
-            showToast('Você precisa estar logado para finalizar a compra', 'error');
-            router.push('/login?redirect=checkout');
-        }
+        // if (!user || !user.id) {
+        //     showToast('Você precisa estar logado para finalizar a compra', 'error');
+        //     router.push('/login?redirect=checkout');
+        // }
     }, [user]);
 
 
@@ -479,7 +479,7 @@ const CheckoutPage = () => {
                                             <td>R$</td>
                                             <td>{(Number((applyDiscounts(cartItems
                                             .reduce((total, item) => total + (item.pro_precovenda * cartData[cartItems.findIndex(i => i.pro_codigo == item.pro_codigo)].qty), 0))
-                                            .toFixed(2))) + (shippingCost)).toString().replace('.',',')
+                                            .toFixed(2))) + (shippingCost)).toFixed(2).toString().replace('.',',')
                                         }</td>
                                         </tr>
                                     </>

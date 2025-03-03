@@ -220,6 +220,8 @@ header .ofertas-link {
     color: #1976d2; 
     text-decoration: none !important;
     transition: all ease 0.3s;
+    width: 180px;
+    max-width: 200px;
 }
 header .ofertas-link:hover {
     background-color: #1976d2;

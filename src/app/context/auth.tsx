@@ -25,7 +25,7 @@ export const AuthProvider = ({ children }) => {
         const validateAuth = async () => {
             try {
                 const isAuthenticated = await checkAuth();
-                if(isAuthenticated){
+                if(!isAuthenticated){
                     localStorage.removeItem('user');
                     removeToken();
                 }
