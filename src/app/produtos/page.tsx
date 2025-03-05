@@ -172,9 +172,9 @@ const ProductsPage = () => {
                                     </AccordionSummary>
                                     <AccordionDetails>
                                         <FormGroup>
-                                            <FormControlLabel control={<Checkbox size='small' />} label="G3tech" />
-                                            <FormControlLabel control={<Checkbox size='small' />} label="Acer" />
-                                            <FormControlLabel control={<Checkbox size='small' />} label="Dell" />
+                                            <FormControlLabel control={<Checkbox size='small' />} label="C3tech" />
+                                            <FormControlLabel control={<Checkbox size='small' />} label="Logitech" />
+                                            <FormControlLabel control={<Checkbox size='small' />} label="HP" />
                                         </FormGroup>
                                     </AccordionDetails>
                                 </Accordion>
