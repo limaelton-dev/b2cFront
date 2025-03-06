@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, CardContent, Typography, Box, Button, Chip } from '@mui/material';
+import { Card, CardContent, Typography, Box, Button, Chip, Tooltip } from '@mui/material';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import LocationCityIcon from '@mui/icons-material/LocationCity';
 import EditIcon from '@mui/icons-material/Edit';
@@ -11,13 +11,15 @@ interface AddressCardProps {
   onEdit?: () => void;
   onDelete?: () => void;
   onSetDefault?: () => void;
+  linkedToOrders?: boolean;
 }
 
 const AddressCard: React.FC<AddressCardProps> = ({ 
   endereco, 
   onEdit, 
   onDelete,
-  onSetDefault
+  onSetDefault,
+  linkedToOrders = false
 }) => {
   const { street, number, complement, neighborhood, city, state, postal_code, is_default } = endereco;
   
@@ -48,6 +50,23 @@ const AddressCard: React.FC<AddressCardProps> = ({
             top: '-8px', 
             right: '12px',
             backgroundColor: '#102d57',
+            fontWeight: 500,
+            fontSize: '0.65rem',
+            height: '20px'
+          }}
+        />
+      )}
+      
+      {linkedToOrders && (
+        <Chip 
+          label="Usado em pedidos" 
+          size="small"
+          color="secondary"
+          sx={{ 
+            position: 'absolute', 
+            top: is_default ? '16px' : '-8px', 
+            right: '12px',
+            backgroundColor: '#f57c00',
             fontWeight: 500,
             fontSize: '0.65rem',
             height: '20px'
@@ -160,7 +179,7 @@ const AddressCard: React.FC<AddressCardProps> = ({
               </Button>
             )}
             
-            {onDelete && (
+            {onDelete && !linkedToOrders && (
               <Button 
                 variant="text" 
                 size="small"
@@ -174,6 +193,26 @@ const AddressCard: React.FC<AddressCardProps> = ({
               >
                 Excluir
               </Button>
+            )}
+            
+            {linkedToOrders && (
+              <Tooltip title="Este endereço não pode ser excluído porque está sendo usado em pedidos">
+                <span>
+                  <Button 
+                    variant="text" 
+                    size="small"
+                    color="error"
+                    startIcon={<DeleteOutlineIcon fontSize="small" />}
+                    disabled
+                    sx={{
+                      fontSize: '11px',
+                      padding: '2px 8px'
+                    }}
+                  >
+                    Excluir
+                  </Button>
+                </span>
+              </Tooltip>
             )}
           </Box>
         </Box>

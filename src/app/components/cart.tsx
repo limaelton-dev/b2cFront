@@ -176,14 +176,20 @@ export default function Cart({ cartOpened, onCartToggle }) {
 
     // Função para obter o preço correto do produto
     const getProductPrice = (product, item) => {
+        if (!product || !item) {
+            return 0;
+        }
+        
+        const quantity = item.qty || item.quantity || 1;
+        
         // Sempre usar o preço de venda do produto
         if (product.pro_precovenda && !isNaN(product.pro_precovenda)) {
-            return product.pro_precovenda * (item.qty || item.quantity);
+            return product.pro_precovenda * quantity;
         }
         
         // Se não tiver preço de venda, verificar se tem preço de última compra
-        if (product.pro_precovenda && !isNaN(product.pro_precovenda)) {
-            return product.pro_precovenda * (item.qty || item.quantity);
+        if (product.pro_valorultimacompra && !isNaN(product.pro_valorultimacompra)) {
+            return product.pro_valorultimacompra * quantity;
         }
         
         // Se nenhum preço válido for encontrado, retornar 0
@@ -192,12 +198,24 @@ export default function Cart({ cartOpened, onCartToggle }) {
 
     // Função para calcular o subtotal do carrinho
     const calculateSubtotal = () => {
+        if (!cartData || !cartItems || cartData.length === 0 || cartItems.length === 0) {
+            console.log('Carrinho vazio ou dados inválidos');
+            return 0;
+        }
+        
+        console.log('Calculando subtotal para', cartData.length, 'itens');
+        
         return cartData.reduce((total, item) => {
             const itemId = item.id || item.produto_id;
             const product = cartItems.find(p => p && (p.id == itemId || p.pro_codigo == itemId));
+            
             if (product) {
-                return total + getProductPrice(product, item);
+                const price = getProductPrice(product, item);
+                console.log('Produto:', product.pro_descricao || product.name, 'Preço:', price);
+                return total + (isNaN(price) ? 0 : price);
             }
+            
+            console.log('Produto não encontrado para o item:', itemId);
             return total;
         }, 0);
     };
@@ -220,6 +238,9 @@ export default function Cart({ cartOpened, onCartToggle }) {
 
     // Função para formatar o preço
     const formatPrice = (price) => {
+        if (isNaN(price) || price === null || price === undefined) {
+            return '0,00';
+        }
         return price.toFixed(2).replace('.', ',');
     };
 
@@ -371,11 +392,7 @@ export default function Cart({ cartOpened, onCartToggle }) {
                             <div className="totals">
                                 <span>Subtotal: </span>
                                 <span className='price-totals'>
-                                    <b>R$ {cartItems
-                                            .reduce((total, item) => total + (item.pro_precovenda * cartData[cartItems.findIndex(i => i.pro_codigo == item.pro_codigo)].qty), 0)
-                                            .toFixed(2).replace('.',',')
-                                        }
-                                    </b>
+                                    <b>R$ {formatPrice(calculateSubtotal())}</b>
                                 </span>
                             </div>
                             <div className="totals discount">
@@ -385,11 +402,7 @@ export default function Cart({ cartOpened, onCartToggle }) {
                                     )}
                                 </span>
                                 <span className='price-totals'>
-                                    <b>R$ {applyCouponDiscount(cartItems
-                                            .reduce((total, item) => total + (item.pro_precovenda * cartData[cartItems.findIndex(i => i.pro_codigo == item.pro_codigo)].qty), 0))
-                                            .toFixed(2).replace('.',',')
-                                        }
-                                    </b>
+                                    <b>R$ {formatPrice(applyCouponDiscount(calculateSubtotal()))}</b>
                                 </span>
                             </div>
                             <div className="totals discount">
@@ -397,21 +410,13 @@ export default function Cart({ cartOpened, onCartToggle }) {
                                     <span className='mini'>({discountPix}% de desconto)</span>
                                 </span>
                                 <span className='price-totals c-red'>
-                                    <b>R$ {applyPixDiscount(cartItems
-                                            .reduce((total, item) => total + (item.pro_precovenda * cartData[cartItems.findIndex(i => i.pro_codigo == item.pro_codigo)].qty), 0))
-                                            .toFixed(2).replace('.',',')
-                                        }
-                                    </b>
+                                    <b>R$ {formatPrice(applyPixDiscount(calculateSubtotal()))}</b>
                                 </span>
                             </div>
                             <div className="totals discount">
                                 <span><b>Total: </b></span>
                                 <span className='price-totals'>
-                                    <b>R$ {applyDiscounts(cartItems
-                                            .reduce((total, item) => total + (item.pro_precovenda * cartData[cartItems.findIndex(i => i.pro_codigo == item.pro_codigo)].qty), 0))
-                                            .toFixed(2).replace('.',',')
-                                        }
-                                    </b>
+                                    <b>R$ {formatPrice(applyDiscounts(calculateSubtotal()))}</b>
                                 </span>
                             </div>
                             <a href="/checkout" className="link-to-buy">Finalizar Pedido</a>

@@ -3,6 +3,7 @@ import LogoColetek from './assets/img/logo_coletek.png';
 import Headphone from './assets/img/headphone.png';
 import Banner1 from './assets/img/132.jpg';
 import UserImg from './assets/img/user.jpg';
+import NoImage from './assets/img/noimage.png';
 import { useEffect, useState } from 'react';
 import { search } from './services/search';
 import Collapse from '@mui/material/Collapse';
@@ -57,6 +58,7 @@ export default function Header({ cartOpened, onCartToggle }) {
     const submitSearch = async () => {
         const response = await search(searchTerm);
         if (response.status == 200) {
+            // Os resultados já estão processados pelo serviço de busca
             setResults(response.data);
         }
     };
@@ -126,15 +128,24 @@ export default function Header({ cartOpened, onCartToggle }) {
                                 {results.length > 0  && 
                                     <div className="result-search">
                                         <ul>
-                                            {results.map((result) => (
-                                                <li key={result.pro_codigo} style={{display: 'flex', alignItems: 'center'}}>
-                                                    <Image
-                                                        src={Headphone}
-                                                        alt="Logo Coletek"
-                                                    />
-                                                    <a target="_blank" className='search-product-link' style={{textDecoration: 'none', color: 'black', display: 'flex',flexGrow: '1', justifyContent: 'space-between', height: '50px', alignItems: 'center'}} href={URL+'/produto/'+result.id}>{result.pro_desc_tecnica}<LaunchIcon sx={{width: '18px'}} /></a>
-                                                </li>
-                                            ))}
+                                            {results.map((result) => {
+                                                const imageUrl = result.img || (result.imagens && result.imagens.length > 0 ? result.imagens[0].url : NoImage);
+                                                
+                                                return (
+                                                    <li key={result.pro_codigo} style={{display: 'flex', alignItems: 'center'}}>
+                                                        <div style={{width: '50px', height: '50px', marginRight: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+                                                            <Image
+                                                                src={imageUrl || NoImage}
+                                                                alt={result.pro_desc_tecnica}
+                                                                width={50}
+                                                                height={50}
+                                                                style={{objectFit: 'contain'}}
+                                                            />
+                                                        </div>
+                                                        <a target="_blank" className='search-product-link' style={{textDecoration: 'none', color: 'black', display: 'flex',flexGrow: '1', justifyContent: 'space-between', height: '50px', alignItems: 'center'}} href={URL+'/produto/'+result.id}>{result.pro_desc_tecnica}<LaunchIcon sx={{width: '18px'}} /></a>
+                                                    </li>
+                                                );
+                                            })}
                                             {results.length > 5 && 
                                                 <li><a href="">Veja mais resultados</a></li> 
                                             }
@@ -145,7 +156,7 @@ export default function Header({ cartOpened, onCartToggle }) {
                         </div>
                         <div className="user-preference">
                             <div className="user">
-                                <div className="content-img">
+                                <div className="content-img" onClick={() => user.name ? router.push('/minhaconta') : router.push('/login')} style={{cursor: 'pointer'}}>
                                     {user.name ? 
                                         <Image
                                             src={UserImg}
@@ -158,7 +169,7 @@ export default function Header({ cartOpened, onCartToggle }) {
                                     }
                                 </div>
                                 <div className="content-text">
-                                    {user.name ? <p className='nome'>{user.name}</p> :  <div className='entre-cad'><a href="/login">Entre</a> ou<br/><a href="/register">Cadastre-se</a></div>}
+                                    {user.name ? <p className='nome' onClick={() => router.push('/minhaconta')} style={{cursor: 'pointer'}}>{user.name}</p> :  <div className='entre-cad'><a href="/login">Entre</a> ou<br/><a href="/register">Cadastre-se</a></div>}
                                     <p className="email">{user.email || ''}</p>
                                     {user.name ? <button className='logout-button' onClick={() => {logout();router.push('/login');}}>Sair</button> : <></>}
                                 </div>

@@ -11,6 +11,7 @@ const CartContext = createContext<CartContextType>({
     changeQtyItem: () => {},
     addToCart: () => false,
     removeFromCart: () => false,
+    removeItems: (): void => {}
 });
 
 function debounce(func: (...args: any[]) => void, wait: number) {
@@ -38,27 +39,53 @@ export const CartProvider = ({ children }) => {
     const isLoggedIn = !!user && !!user.id;
 
     const addToCart = (product, idCor) => {
-        const itemExists = cartItems.some(item => item.pro_codigo === product.pro_codigo);
+        // Verificar se o produto já existe no carrinho
+        const itemExists = cartItems.some(item => 
+            item.pro_codigo === product.pro_codigo || 
+            item.id === product.id
+        );
 
         if(itemExists) {
+            console.log('Produto já existe no carrinho:', product);
             return false;
         }
 
+        // Garantir que o produto tenha um ID válido
+        const productId = product.id || product.pro_codigo;
+        
+        if (!productId) {
+            console.error('Produto sem ID válido:', product);
+            return false;
+        }
+
+        // Verificar se o produto tem preço válido
+        if (!product.pro_precovenda && !product.pro_valorultimacompra) {
+            console.error('Produto sem preço válido:', product);
+            return false;
+        }
+
+        console.log('Adicionando produto ao carrinho:', product);
+
+        // Adicionar o produto ao carrinho
         setCartData((prevItems) => {
             if (!Array.isArray(prevItems)) {
                 return [{
-                    produto_id: product.id,
+                    produto_id: productId,
                     quantity: 1,
                 }];
             }
             return [...prevItems, {
-                produto_id: product.id,
+                produto_id: productId,
                 quantity: 1,
                 idCart: prevItems.length + 1
             }];
         });
+        
         setCartItems((prevItems) => [...prevItems, product]);
+        
+        // Enviar o carrinho para o servidor
         debouncedSendCartToServer();
+        
         return true;
     };
 
@@ -79,6 +106,11 @@ export const CartProvider = ({ children }) => {
     
         return true;
     };
+
+    const removeItems = () => {
+        setCartItems([]);
+        setCartData([]);
+    }
 
     const changeQtyItem = (id, newQty) => {
         const updatedItems = cartData.map((item) => {
@@ -446,7 +478,7 @@ export const CartProvider = ({ children }) => {
     }, []);
 
     return (
-        <CartContext.Provider value={{ cartItems, cartData, changeQtyItem, addToCart, removeFromCart }}>
+        <CartContext.Provider value={{ cartItems, cartData, changeQtyItem, addToCart, removeFromCart, removeItems }}>
         {children}
         </CartContext.Provider>
     );

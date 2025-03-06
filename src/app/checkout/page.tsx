@@ -22,9 +22,8 @@ import { PaymentIcon } from 'react-svg-credit-card-payment-icons';
 import { useToastSide } from '../context/toastSide';
 import { getProfileUser } from '../services/profile';
 import { processPayment, validatePayment } from '../services/payment';
-// import { initMercadoPago } from '@mercadopago/sdk-react'
-
-
+import { generateCardToken, prepareCardData, preparePaymentData } from '../services/mercadoPago';
+import { getToken } from '../utils/auth';
 
 async function buscaTipoPessoa(id: number) {
     try {
@@ -37,7 +36,7 @@ async function buscaTipoPessoa(id: number) {
                 bith_date: resp.birth_date || '',
                 cpf: resp.cpf || '',
                 trading_name: resp.trading_name || '',
-                cnpj: resp.cpnj || '',
+                cnpj: resp.cnpj || '',
                 state_registration: resp || '',
                 addresses: resp.addresses || [],
                 cards: resp.cards || []
@@ -68,9 +67,9 @@ const CheckoutPage = () => {
     const [loadBtn, setLoadBtn] = useState(false);
     const [loadingCep, setLoadingCep] = useState(false);
     const [openedCart, setOpenedCart] = useState(false);
-    const [dateBirth, setDateBirth] = useState("dd/mm/aaaa");
+    const [dateBirth, setDateBirth] = useState("");
     const [cpf, setCpf] = useState('');
-    const { cartItems, cartData } = useCart();
+    const { cartItems, cartData, removeItems } = useCart();
     const [discountPix, setDiscountPix] = useState(5);
     const { user } = useAuth();
     const [nameUser, setNameUser] = useState('');
@@ -86,7 +85,7 @@ const CheckoutPage = () => {
     const [complemento, setComplemento] = useState('');
     const [CVV, setCVV] = useState('');
     const [expireCC, setExpireCC] = useState('');
-    const [isMaskedCC, setIsMaskedCC] = useState(true);
+    const [isMaskedCC, setIsMaskedCC] = useState(false);
     const [numberCCFinal, setNumberCCFinal] = useState('');
     const [CVVFinal, setCVVFinal] = useState('');
     const [expireCCFinal, setExpireCCFinal] = useState('');
@@ -133,13 +132,9 @@ const CheckoutPage = () => {
 
     // Função para calcular o subtotal do carrinho
     const calculateSubtotal = () => {
-        return cartData.reduce((total, item) => {
-            const product = cartItems.find(p => p && (p.pro_codigo == item.id || p.pro_codigo == item.produto_id));
-            if (product) {
-                return total + getProductPrice(product, item);
-            }
-            return total;
-        }, 0);
+        return (Number((applyDiscounts(cartItems
+            .reduce((total, item) => total + (item.pro_precovenda * cartData[cartItems.findIndex(i => i.pro_codigo == item.pro_codigo)].qty), 0))
+            .toFixed(2))) + (shippingCost)).toFixed(0)
     };
 
     // Função para caso tenha descontos diferentes
@@ -188,7 +183,7 @@ const CheckoutPage = () => {
                     if (resultPessoa.profile_type === 'PF') {
                         setCpf(resultPessoa.cpf);
                         setDateBirth(resultPessoa.bith_date);
-                        setDisabledUserPF(true);
+                        setDisabledUserPF(false);
                     } 
                     if (resultPessoa.profile_type === 'PJ') {
                         setCnpj(resultPessoa.cnpj);
@@ -213,7 +208,7 @@ const CheckoutPage = () => {
 
                     setCVV('XXX');
                     setExpireCC('XX/XX');
-                    setIsMaskedCC(true);
+                    setIsMaskedCC(false);
                 } catch (error) {
                     console.error("Erro ao buscar tipo de pessoa:", error);
                 }
@@ -242,68 +237,69 @@ const CheckoutPage = () => {
         setFlagCard(detectCardFlag(cardNumber));
     };
 
-    const handlePayButton = () => {
-        // setLoadBtn(true);
-        async function realizaCompra() {
-                // Inicializar o MercadoPago quando o script for carregado
-
-                const mp = new window.MercadoPago(process.env.NEXT_PUBLIC_MERCADOPAGO_TOKEN);
-                console.log(mp, 'teeste')
-    
-                // // Associar os campos do cartão
-                // mp.fields({
-                //     cardNumber: "5031433215406351",
-                //     cardExpirationMonth: "11",
-                //     cardExpirationYear: "30",
-                //     securityCode: "123",
-                //     cardholderName: "APRO",
-                //     identificationType: "CPF",
-                //     identificationNumber: "12345678909"
-                // });
-                // const validate = await validatePayment(
-                //     {
-                //         "address_id": 1,
-                //         "payment_method": "card",
-                //         "card_id": 1
-                //     }
-                // );
-                // try {
-                    
-                //     const cardToken = await mp.createCardToken({
-                //         cardNumber: "5031433215406351",
-                //         cardholderName: "APRO",
-                //         cardExpirationMonth: "11",
-                //         cardExpirationYear: "30",
-                //         securityCode: "123",
-                //         identificationType: "CPF",
-                //         identificationNumber: "12345678909"
-                //     });
+    const handlePayButton = async () => {
+        setLoadBtn(true);
+        try {
+            // Passo 1: Validar o pagamento no backend
+            const validateResponse = await validatePayment({
+                "address_id": 1, // Usar o endereço padrão ou selecionado
+                "payment_method": "card",
+                "card_id": 1 // Usar o cartão padrão ou selecionado
+            });
             
-                //     console.log("Token do cartão:", cardToken);
-                // } catch (error) {
-                //     console.error("Erro ao gerar token do cartão:", error);
-                // }
-                // if(validate.status == 200) {
-                //     processPayment({
-                //         "transaction_amount": 100,
-                //         "description": "Compra de produtos",
-                //         "payment_method_id": "master",
-                //         "token": "f379f4eecb7f20118e882fa3a6a5baf0",
-                //         "installments": 1,
-                //         "external_reference": "123",
-                //         "payer": {
-                //             "email": "test_user_123@testuser.com",
-                //             "identification": {
-                //             "type": "CPF",
-                //             "number": "12345678909"
-                //             },
-                //             "first_name": "APRO",
-                //             "last_name": "User"
-                //         }
-                //     })
-                // }
+            if (validateResponse.status !== 200) {
+                showToast('Erro ao validar o pagamento', 'error');
+                setLoadBtn(false);
+                return;
+            }
+            
+            // Passo 2: Buscar o perfil do usuário para obter os dados necessários
+            const profileResponse = await getProfileUser(user.id);
+            console.log(profileResponse)
+            if (!profileResponse) {
+                showToast('Erro ao obter dados do perfil', 'error');
+                setLoadBtn(false);
+                return;
+            }
+            
+            // Passo 3: Preparar os dados do cartão
+            const cardData = prepareCardData(profileResponse, CVVFinal);
+            
+            // Passo 4: Gerar o token do cartão no Mercado Pago
+            const cardTokenResponse = await generateCardToken(cardData);
+            
+            console.log(cardTokenResponse)
+            if (!cardTokenResponse || !cardTokenResponse.id) {
+                showToast('Erro ao gerar token do cartão', 'error');
+                setLoadBtn(false);
+                return;
+            }
+            
+            // Passo 5: Preparar os dados do pagamento
+            const paymentData = preparePaymentData(
+                profileResponse, 
+                cardTokenResponse.id, 
+                calculateSubtotal(), 
+                1 // Número de parcelas
+            );
+            
+            // Passo 6: Processar o pagamento no backend
+            const paymentResponse = await processPayment(paymentData, cardTokenResponse.public_key);
+            
+            if (paymentResponse && paymentResponse.success == true) {
+                showToast('Pagamento aprovado com sucesso!', 'success');
+                // Redirecionar para página de sucesso ou pedidos
+                router.push('/minhaconta');
+                removeItems();
+            } else {
+                showToast(`Erro no pagamento: ${paymentResponse.status_detail || 'Verifique os dados do cartão'}`, 'error');
+            }
+        } catch (error) {
+            console.error('Erro ao processar pagamento:', error);
+            showToast('Erro ao processar pagamento', 'error');
+        } finally {
+            setLoadBtn(false);
         }
-        realizaCompra();
     }
 
     const changeRazaoSocial = (e) => {
@@ -316,6 +312,30 @@ const CheckoutPage = () => {
 
     const changeCnpj = (e) => {
         setCnpj(e.target.value);
+    }
+
+    const changeNumero = (e) => {
+        setNumero(e.target.value);
+    }
+
+    const changeComplemento = (e) => {
+        setComplemento(e.target.value);
+    }
+
+    const changeEndereco = (e) => {
+        setEndereco(e.target.value);
+    }
+
+    const changeCidade = (e) => {
+        setCidade(e.target.value);
+    }
+
+    const changeBairro = (e) => {
+        setBairro(e.target.value);
+    }
+
+    const changeEstado = (e) => {
+        setEstado(e.target.value);
     }
 
     const buscarEndereco = async (cep: string) => {
@@ -332,12 +352,13 @@ const CheckoutPage = () => {
                         setEndereco(data.logradouro || '');
                         setBairro(data.bairro || '');
                         setCidade(data.localidade || '');
-                        setEstado(data.estado || '');
+                        setEstado(data.uf || '');
                     }
                     setLoadingCep(false);
                 },800)
             } catch (error) {
                 alert('Erro ao buscar o endereço.');
+                setLoadingCep(false);
             }
         }
     };
@@ -538,7 +559,11 @@ const CheckoutPage = () => {
                                         value={dateBirth}
                                         onChange={changeDateBirth}
                                         disabled={disabledUserPF}
+                                        InputLabelProps={{
+                                            shrink: true,
+                                        }}
                                         fullWidth
+                                        sx={{ marginBottom: '12px' }}
                                     />
                                     <ReactInputMask
                                         mask="999.999.999-99"
@@ -608,12 +633,12 @@ const CheckoutPage = () => {
                                     </Box>
                                 ) : ''}
                                 <Box className='d-flex justify-content-between flex-wrap' sx={{filter: loadingCep ? 'blur(2px)' : 'blur:(0px)'}}>
-                                    <TextField sx={{width: '100%',  marginBottom: '8px', marginTop: '0px'}} disabled={disabledAddress} value={endereco} label="Endereço de Entrega*" variant="standard" />
-                                    <TextField sx={{width: '19%',  marginBottom: '8px'}} value={numero} label="Número*" variant="standard" />
-                                    <TextField sx={{width: '45%',  marginBottom: '8px'}} value={complemento} label="Complemento" variant="standard" />
-                                    <TextField sx={{width: '31%',  marginBottom: '8px'}} disabled={disabledAddress} value={estado} label="Estado*" variant="standard" />
-                                    <TextField sx={{width: '42%',  marginBottom: '8px'}} disabled={disabledAddress} value={cidade} label="Cidade*" variant="standard" />
-                                    <TextField sx={{width: '42%',  marginBottom: '8px'}} disabled={disabledAddress} value={bairro} label="Bairro*" variant="standard" />
+                                    <TextField sx={{width: '100%',  marginBottom: '8px', marginTop: '0px'}} value={endereco} onChange={changeEndereco} label="Endereço de Entrega*" variant="standard" />
+                                    <TextField sx={{width: '19%',  marginBottom: '8px'}} value={numero} onChange={changeNumero} label="Número*" variant="standard" />
+                                    <TextField sx={{width: '45%',  marginBottom: '8px'}} value={complemento} onChange={changeComplemento} label="Complemento" variant="standard" />
+                                    <TextField sx={{width: '31%',  marginBottom: '8px'}} value={estado} onChange={changeEstado} label="Estado*" variant="standard" />
+                                    <TextField sx={{width: '42%',  marginBottom: '8px'}} value={cidade} onChange={changeCidade} label="Cidade*" variant="standard" />
+                                    <TextField sx={{width: '42%',  marginBottom: '8px'}} value={bairro} onChange={changeBairro} label="Bairro*" variant="standard" />
                                 </Box>
                                 <div style={{width: '100%', marginTop: '20px'}}>
                                     <Checkbox sx={{'& .MuiCheckbox-label': {zIndex: '55'}}} label={<>Aceito a <Link sx={{color: 'blue'}} underline="hover" color="inherit" href="/">Política de Privacidade</Link></>} defaultChecked/>
@@ -687,17 +712,20 @@ const CheckoutPage = () => {
                                 </div>
                             </div>
                         }
-                        <div className='d-flex justify-content-center'>
-                            <button type='button'
+                        <div className="btn-pay mt-3">
+                            <Button 
+                                variant="contained" 
+                                color="primary" 
+                                fullWidth 
                                 onClick={handlePayButton}
-                                className='btn-buy-primary mt-3'
+                                disabled={loadBtn}
                             >
-                                {loadBtn ? 
-                                    <CircularProgress color="inherit" />
-                                    :
-                                    'Comprar'
-                                }
-                            </button>
+                                {loadBtn ? (
+                                    <CircularProgress size={24} color="inherit" />
+                                ) : (
+                                    'Finalizar Compra'
+                                )}
+                            </Button>
                         </div>
                     </div>
                 </div>

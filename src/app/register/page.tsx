@@ -16,6 +16,7 @@ import KeyIcon from '@mui/icons-material/Key';
 import PersonIcon from '@mui/icons-material/Person';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import AccountBoxIcon from '@mui/icons-material/AccountBox';
+import { useToastSide } from '../context/toastSide';
 
 export default function LoginPage() {
     const router = useRouter();
@@ -23,6 +24,7 @@ export default function LoginPage() {
     const [cookies, setCookie] = useCookies(['jwt','user']);
     const [isLoading, setIsLoading] = useState(false);
     const [textError, setTextError] = useState('');
+    const { showToast } = useToastSide();
 
     const [formData, setFormData] = useState({
         name: '',
@@ -80,6 +82,7 @@ export default function LoginPage() {
                 setUserFn(response.user);
                 setCookie('jwt', response.token);
                 router.push('/');
+                showToast('Você se cadastrou com sucesso!', 'success');
             }
             else {
                 setIsLoading(false);
@@ -181,7 +184,7 @@ export default function LoginPage() {
                                             {isLoading ? 
                                                 <div className="spinner-border text-light" style={{fontSize: '8px',width: '24px',height: '24px'}} role="status"><span className="visually-hidden"></span></div>
                                                 :
-                                                <p style={{marginBottom: '0px', padding: '0px 0px'}}>Entrar</p>
+                                                <p style={{marginBottom: '0px', padding: '0px 0px'}}>Cadastrar</p>
                                             }
                                         </button>
                                         <a href="" id="change-login">Já tem uma conta? Logue aqui</a>
