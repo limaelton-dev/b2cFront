@@ -171,7 +171,10 @@ export default function Header({ cartOpened, onCartToggle }) {
                                 <div className="content-text">
                                     {user.name ? <p className='nome' onClick={() => router.push('/minhaconta')} style={{cursor: 'pointer'}}>{user.name}</p> :  <div className='entre-cad'><a href="/login">Entre</a> ou<br/><a href="/register">Cadastre-se</a></div>}
                                     <p className="email">{user.email || ''}</p>
-                                    {user.name ? <button className='logout-button' onClick={() => {logout();router.push('/login');}}>Sair</button> : <></>}
+                                    <div className="d-flex">
+                                        {user.name ? <button className='logout-button' onClick={() => {router.push('/minhaconta');}}>Minha Conta</button> : <></>}
+                                        {user.name ? <button className='logout-button' onClick={() => {logout();router.push('/login');}}>Sair</button> : <></>}
+                                    </div>
                                 </div>
                             </div>  
                             <div className="cart content-preference" onClick={changeOpenedCart}>
