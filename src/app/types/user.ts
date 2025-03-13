@@ -1,20 +1,27 @@
+import { Address } from "./address";
+import { Card } from "./card";
+import { Phone } from "./phones";
+
 export type ProfileTypeEnum = 'PF' | 'PJ';
 
-export interface UserType {
+export interface User {
     id: number;
     email: string;
     password: string;
     profile_type?: ProfileTypeEnum;
-    profile?: ProfilePFType | ProfilePJType;
+    profile?: ProfilePF | ProfilePJ;
+    address?: Address[];
+    phone?: Phone[];
+    card?: Card[];
 }
 
-export interface ProfilesType {
+export interface Profiles {
     id: number;
     user_id: number;
     profile_type: ProfileTypeEnum;
 }
 
-export interface ProfilePFType {
+export interface ProfilePF {
     profile_id: number;
     full_name: string;
     cpf: string;
@@ -22,7 +29,7 @@ export interface ProfilePFType {
     gender: string | null;
 }
 
-export interface ProfilePJType {
+export interface ProfilePJ {
     profile_id: number;
     company_name: string;
     cnpj: string;
