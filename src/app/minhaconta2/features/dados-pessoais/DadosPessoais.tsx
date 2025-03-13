@@ -10,7 +10,7 @@ import CakeIcon from '@mui/icons-material/Cake';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import WcIcon from '@mui/icons-material/Wc';
 import { ProfilePF, ProfilePJ, User } from '../../../types/user';
-import EditProfileModal from './EditProfileModal';
+// import EditProfileModal from './EditProfileModal';
 import { useUser } from '../../../hooks/useUser';
 
 // Componente para exibir mensagem quando um campo está vazio
@@ -57,7 +57,7 @@ const DadosPessoais: React.FC = () => {
   let gender: string | null = null;
   let fieldLabelCpfCnpj = 'CPF';
 
-  if(user.profile) {
+  if(user?.profile) {
     if(user.profile_type === 'PF') {
       const profilePF = user.profile as ProfilePF;
       fullName = profilePF.full_name;

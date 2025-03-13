@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
-import { Box, IconButton, Card, CardContent, Chip } from '@mui/material';
+import { Box, IconButton, Chip } from '@mui/material';
 import Cards from 'react-credit-cards-2';
 import 'react-credit-cards-2/dist/es/styles-compiled.css';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import EditIcon from '@mui/icons-material/Edit';
 import StarIcon from '@mui/icons-material/Star';
-import { CartaoType } from '../../types';
+import { Card as CardType } from '../../../types/card';
 
 interface CreditCardProps {
-  card: CartaoType;
+  card: CardType;
   onEdit?: () => void;
   onDelete?: () => void;
   onSetDefault?: () => void;
@@ -20,30 +20,33 @@ const CreditCard: React.FC<CreditCardProps> = ({
   onDelete,
   onSetDefault
 }) => {
-  const { card_number, holder_name, expiration_date, is_default, card_type } = card;
+  const { card_number, holder_name, expiration_date, is_default, brand } = card;
   const [isHovered, setIsHovered] = useState(false);
-  
-  // Função para obter o ícone da bandeira do cartão
-  const getCardBrand = (type: string) => {
-    const brands: Record<string, string> = {
-      'visa': 'visa',
-      'master': 'mastercard',
-      'amex': 'amex',
-      'discover': 'discover',
-      'diners': 'dinersclub',
-      'jcb': 'jcb',
-      'unionpay': 'unionpay',
-      'maestro': 'maestro',
-      'hipercard': 'hipercard',
-      'elo': 'elo'
-    };
-    
-    return brands[type.toLowerCase()] || '';
+
+  // Extrai os 4 últimos dígitos do número do cartão
+  const lastFourDigits = card_number.slice(-4);
+  // Monta a string mascarada para exibição
+  const maskedNumber = `**** **** **** ${lastFourDigits}`;
+
+  // Caso a marca salva no banco não seja exatamente o que o `react-credit-cards-2` espera,
+  // podemos mapear aqui. Exemplo simplificado:
+  const brandMap: Record<string, string> = {
+    visa: 'visa',
+    master: 'mastercard',
+    mastercard: 'mastercard',
+    amex: 'amex',
+    discover: 'discover',
+    diners: 'dinersclub',
+    jcb: 'jcb',
+    unionpay: 'unionpay',
+    maestro: 'maestro',
+    hipercard: 'hipercard',
+    elo: 'elo'
   };
-  
-  // Formatar o número do cartão para exibição
-  const maskedNumber = `**** **** **** ${card.last_four_digits}`;
-  
+
+  // Converte para minúsculo e tenta encontrar no dicionário
+  const issuer = brandMap[brand.toLowerCase()] || '';
+
   return (
     <Box
       sx={{
@@ -138,10 +141,10 @@ const CreditCard: React.FC<CreditCardProps> = ({
         cvc="***"
         focused=""
         preview={true}
-        issuer={getCardBrand(card_type)}
+        issuer={issuer} 
       />
     </Box>
   );
 };
 
-export default CreditCard; 
+export default CreditCard;

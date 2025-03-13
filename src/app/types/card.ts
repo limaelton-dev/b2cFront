@@ -5,5 +5,6 @@ export interface Card {
     expiration_date: string;
     is_default: boolean;
     cvv: string;
+    brand: string;
 }
 
