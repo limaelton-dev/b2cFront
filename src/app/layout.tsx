@@ -1,3 +1,4 @@
+'use client'
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import Head from 'next/head';
@@ -8,6 +9,8 @@ import { AlertDialogProvider } from "./context/dialog";
 import { AuthProvider } from "./context/auth";
 import { CouponProvider } from "./context/coupon";
 import { ToastSideProvider } from "./context/toastSide";
+import { GoogleOAuthProvider } from '@react-oauth/google';
+import { CookiesProvider } from 'react-cookie';
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -27,15 +30,19 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </head>
           <body id="myBody">
               <ToastSideProvider>
-                  <AuthProvider>
-                      <CouponProvider>
-                          <AlertDialogProvider>
-                              <CartProvider>
-                                  {children}
-                              </CartProvider>
-                          </AlertDialogProvider>
-                    </CouponProvider>
-                  </AuthProvider>
+                  <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ''}>
+                      <CookiesProvider>
+                          <AuthProvider>
+                              <CouponProvider>
+                                  <AlertDialogProvider>
+                                      <CartProvider>
+                                          {children}
+                                      </CartProvider>
+                                  </AlertDialogProvider>
+                              </CouponProvider>
+                          </AuthProvider>
+                      </CookiesProvider>
+                  </GoogleOAuthProvider>
               </ToastSideProvider>
           </body>
       </html>

@@ -1,14 +1,14 @@
-import Cookies from 'js-cookie';
+import { getCookie, setCookie, deleteCookie } from 'cookies-next';
 
 // Função auxiliar para obter o token JWT
 export const getAuthHeader = () => {
-    const token = Cookies.get('jwt');
+    const token = getCookie('jwt');
     return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
 // Função auxiliar para verificar se o usuário está autenticado
 export const isAuthenticated = () => {
-    const token = Cookies.get('jwt');
+    const token = getCookie('jwt');
     if (!token) return false;
     
     try {
@@ -24,15 +24,15 @@ export const isAuthenticated = () => {
 
 // Função para obter o token JWT
 export const getToken = () => {
-    return Cookies.get('jwt');
+    return getCookie('jwt');
 };
 
 // Função para salvar o token JWT
 export const saveToken = (token) => {
-    Cookies.set('jwt', token, { expires: 7 }); // Token expira em 7 dias
+    setCookie('jwt', token, { maxAge: 60 * 60 * 24 * 7 }); // Token expira em 7 dias (em segundos)
 };
 
 // Função para remover o token JWT
 export const removeToken = () => {
-    Cookies.remove('jwt');
+    deleteCookie('jwt');
 }; 
