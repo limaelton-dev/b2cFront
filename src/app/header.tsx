@@ -172,7 +172,7 @@ export default function Header({ cartOpened, onCartToggle }) {
                                     {user.name ? <p className='nome' onClick={() => router.push('/minhaconta')} style={{cursor: 'pointer'}}>{user.name}</p> :  <div className='entre-cad'><a href="/login">Entre</a> ou<br/><a href="/register">Cadastre-se</a></div>}
                                     <p className="email">{user.email || ''}</p>
                                     <div className="d-flex">
-                                        {user.name ? <button className='logout-button' onClick={() => {router.push('/minhaconta');}}>Minha Conta</button> : <></>}
+                                        {user.name ? <button className='acc-button' onClick={() => {router.push('/minhaconta');}}>Minha Conta</button> : <></>}
                                         {user.name ? <button className='logout-button' onClick={() => {logout();router.push('/login');}}>Sair</button> : <></>}
                                     </div>
                                 </div>
