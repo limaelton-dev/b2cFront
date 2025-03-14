@@ -12,7 +12,7 @@ export const cpfValidation = async (cpf) => {
         cpf: cpf
     }
     try {
-        const response = await axios.post(`${API_URL}/checkout/validacpf`, data, {headers: headerValidate});
+        const response = await axios.post(`${API_URL}/checkout/validacpf`, data);
         return response;
     }
     catch (err) {
@@ -26,7 +26,18 @@ export const emailVerify = async (email) => {
         email: email
     }
     try {
-        const response = await axios.post(`${API_URL}/checkout/validaEmail`, data, {headers: headerValidate});
+        const response = await axios.post(`${API_URL}/checkout/validaEmail`, data);
+        return response;
+    }
+    catch (err) {
+        console.error('Erro:', err);
+        return err;
+    }
+}
+
+export const registerWithoutPass = async (dados) => {
+    try {
+        const response = await axios.post(`${API_URL}/user/registerWithoutPass`, dados);
         return response;
     }
     catch (err) {

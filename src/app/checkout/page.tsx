@@ -21,7 +21,7 @@ import { PaymentIcon } from 'react-svg-credit-card-payment-icons';
 import { useToastSide } from '../context/toastSide';
 import { getProfileUser } from '../services/profile';
 import { processPayment, validatePayment } from '../services/payment';
-import { cpfValidation, emailVerify } from '../services/checkout';
+import { cpfValidation, emailVerify, registerWithoutPass } from '../services/checkout';
 import { generateCardToken, prepareCardData, preparePaymentData } from '../services/mercadoPago';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import LocalAtmIcon from '@mui/icons-material/LocalAtm';
@@ -508,6 +508,28 @@ const CheckoutPage = () => {
         setStep(newStep);
     }
 
+    const cadastroPorEmail = async () => {
+        const arrName = nameUser.split(" ");
+        const dados = {
+            name: arrName[0],
+            lastname: arrName[arrName.length - 1],
+            email: emailUser,
+            cpf: cpf ? cpf : '',
+            cpnj: cnpj ? cnpj : '',
+            tipoPessoa: tipoPessoa == '1' ? 'PF' : 'PJ',
+            state_registration: inscEstadual ? inscEstadual : '',
+            company_name: razaoSocial ? razaoSocial : ''
+        }
+
+        const result = await registerWithoutPass(dados);
+        if(result.data.success == true) {
+            alert('Perfil '+(tipoPessoa == '1' ? 'PF' : 'PJ')+' criado com sucesso');
+        }
+        else {
+            alert('Erro ao criar perfil');
+        }
+    }
+
     return (
         <>
             <Cart cartOpened={openedCart} onCartToggle={setOpenedCart}/>
@@ -680,7 +702,27 @@ const CheckoutPage = () => {
                                 </ReactInputMask>
                                 {tipoPessoa == '2' && 
                                     <>
-                                        <TextField sx={{width: '45%',  marginBottom: '12px'}} value={cnpj} onChange={changeCnpj} disabled={disabledUserPJ} label="CNPJ*" variant="standard" />
+                                        <ReactInputMask
+                                            mask="99.999.999/9999-99"
+                                            value={cnpj}
+                                            onChange={changeCnpj}
+                                            disabled={disabledUserPJ}
+                                            maskChar=""
+                                        >
+                                            {(inputProps) => (
+                                                <TextField
+                                                    {...inputProps}
+                                                    label="CNPJ*"
+                                                    variant="standard"
+                                                    sx={{
+                                                        '& .MuiInputBase-input::placeholder': {
+                                                            fontSize: '23px', 
+                                                            fontWeight: 'bold',
+                                                        },width: '45%',  marginBottom: '8px'
+                                                    }}
+                                                />
+                                            )}
+                                        </ReactInputMask>
                                         <TextField sx={{width: '45%',  marginBottom: '12px'}} value={inscEstadual} onChange={changeInscricaoEstadual} disabled={disabledUserPJ} label="Inscrição Estadual*" variant="standard" />
                                         <TextField sx={{width: '100%',  marginBottom: '12px'}} value={razaoSocial} onChange={changeRazaoSocial} disabled={disabledUserPJ} label="Razão Social*" variant="standard" />
                                     </>
@@ -721,7 +763,7 @@ const CheckoutPage = () => {
                                     color="primary"
                                     className='mb-3'
                                     fullWidth 
-                                    onClick={() => changeStep(2)}
+                                    onClick={() => {changeStep(2); cadastroPorEmail();}}
                                     disabled={loadBtn}
                                 >
                                     Continuar

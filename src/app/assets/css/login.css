@@ -302,4 +302,7 @@ ul li {
     height: 45px !important;
     margin: 0 !important;
 }
+#form-login .form-group > div:first-of-type {
+    flex-direction: column;
+}
 

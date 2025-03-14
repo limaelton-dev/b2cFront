@@ -96,7 +96,7 @@
     transition: all ease 0.3s
 }
 .nonactive-column-checkout {
-    filter: blur(3px) opacity(0.5);
+    filter: blur(3px) opacity(0.2);
     pointer-events: none;
     display: block !important;
 }

@@ -113,10 +113,8 @@ export default function LoginPage() {
                                                 onError={handleGoogleError}
                                                 type="standard"
                                                 theme="outline"
-                                                size="large"
                                                 text="signin_with"
                                                 locale="pt"
-                                                width= "500px"
                                             />
                                         </div>
                                         <div className="separator-social d-flex">
