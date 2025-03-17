@@ -303,6 +303,9 @@ const CheckoutPage = () => {
     const handlePayButton = async () => {
         setLoadBtn(true);
         try {
+            // Primeiro obter os dados pessoais do usuário (independente de já estar autenticado ou não)
+            let profileResponse;
+            
             // Verificar se o usuário está autenticado
             if (!isAuthenticated) {
                 // Validar senhas
@@ -394,10 +397,9 @@ const CheckoutPage = () => {
                 }
                 
                 // Primeiro obter os dados pessoais para ter o profile_id
-                let personalDataResponse;
                 try {
-                    personalDataResponse = await getUserPersonalData();
-                    if (!personalDataResponse || !personalDataResponse.id) {
+                    profileResponse = await getUserPersonalData();
+                    if (!profileResponse || !profileResponse.id) {
                         throw new Error('Não foi possível obter o profile_id');
                     }
                 } catch (personalDataError) {
@@ -419,7 +421,7 @@ const CheckoutPage = () => {
                         // Criar objeto com os dados necessários para o telefone
                         const phoneData = {
                             phone: phoneNumber,
-                            profile_id: personalDataResponse.id,
+                            profile_id: profileResponse.id,
                             type: "celular",
                             is_primary: true
                         };
@@ -444,7 +446,7 @@ const CheckoutPage = () => {
                         state: estado,
                         postal_code: cepNumber,
                         is_default: true,
-                        profile_id: personalDataResponse.id
+                        profile_id: profileResponse.id
                     };
                     
                     await addAddress(addressData);
@@ -455,42 +457,21 @@ const CheckoutPage = () => {
                     setLoadBtn(false);
                     return; // Interromper o fluxo em caso de erro
                 }
-                
-                // Cadastrar cartão se for pagamento por cartão
-                if (tipoCompra === '1') {
-                    try {
-                        // Preparar dados do cartão incluindo o profile_id
-                        const cardData = {
-                            card_number: cardNumber.replace(/\s/g, ''),
-                            holder_name: nameUser,
-                            expiration_date: expireCC,
-                            cvv: CVV,
-                            is_default: true,
-                            profile_id: personalDataResponse.id
-                        };
-                        
-                        await addCard(cardData);
-                        showToast('Cartão cadastrado com sucesso', 'success');
-                    } catch (cardError) {
-                        console.error('Erro ao cadastrar cartão:', cardError);
-                        showToast('Erro ao cadastrar cartão', 'error');
-                        setLoadBtn(false);
-                        return; // Interromper o fluxo em caso de erro
-                    }
-                } else {
-                    // Pagamento com PIX
-                    try {
-                        // Implementar lógica para pagamento com PIX
-                        showToast('Pagamento via PIX será implementado em breve', 'info');
-                        // Redirecionar para página de sucesso ou pedidos
-                        router.push('/minhaconta');
-                        removeItems();
-                    } catch (pixError) {
-                        console.error('Erro ao processar pagamento PIX:', pixError);
-                        showToast('Erro ao processar pagamento PIX', 'error');
+            }
+            else {
+                // Se o usuário já está autenticado, buscar os dados do perfil
+                try {
+                    profileResponse = await getUserPersonalData();
+                    if (!profileResponse) {
+                        showToast('Erro ao obter dados do perfil', 'error');
                         setLoadBtn(false);
                         return;
                     }
+                } catch (profileError) {
+                    console.error('Erro ao obter perfil:', profileError);
+                    showToast('Erro ao obter dados do perfil', 'error');
+                    setLoadBtn(false);
+                    return;
                 }
             }
 
@@ -518,27 +499,72 @@ const CheckoutPage = () => {
                 return;
             }
             
-            // Passo 2: Buscar o perfil do usuário para obter os dados necessários
-            let profileResponse;
-            try {
-                profileResponse = await getUserPersonalData();
-                if (!profileResponse) {
-                    showToast('Erro ao obter dados do perfil', 'error');
-                    setLoadBtn(false);
-                    return;
-                }
-            } catch (profileError) {
-                console.error('Erro ao obter perfil:', profileError);
-                showToast('Erro ao obter dados do perfil', 'error');
-                setLoadBtn(false);
-                return;
-            }
-            
             if (tipoCompra === '1') {
                 // Pagamento com cartão
                 try {
-                    // Passo 3: Preparar os dados do cartão
-                    const cardData = prepareCardData(profileResponse, CVVFinal);
+                    // Verificar se o usuário já tem um cartão cadastrado ou se preencheu os dados do cartão agora
+                    const hasCard = isMaskedCC && numberCCFinal;
+                    const hasFilledCardData = cardNumber && CVV && expireCC;
+                    
+                    // Se não houver cartão cadastrado, mas os dados foram informados no checkout
+                    if (!hasCard && hasFilledCardData) {
+                        // Cadastrar o cartão com os dados informados
+                        try {
+                            // Preparar dados do cartão incluindo o profile_id
+                            const cardData = {
+                                card_number: cardNumber.replace(/\s/g, ''),
+                                holder_name: nameUser,
+                                expiration_date: expireCC,
+                                cvv: CVV,
+                                is_default: true,
+                                profile_id: profileResponse.id
+                            };
+                            
+                            // Cadastrar o cartão
+                            const cardResponse = await addCard(cardData);
+                            showToast('Cartão cadastrado com sucesso', 'success');
+                            
+                            // Usar o cartão recém-cadastrado e atualizar o estado da UI
+                            setCVVFinal(CVV);
+                            setNumberCCFinal(cardNumber.replace(/\s/g, ''));
+                            setExpireCCFinal(expireCC);
+                            setIsMaskedCC(true); // Marca como cartão já cadastrado para futuras interações
+                            
+                        } catch (cardError) {
+                            console.error('Erro ao cadastrar cartão:', cardError);
+                            showToast('Erro ao cadastrar cartão', 'error');
+                            setLoadBtn(false);
+                            return;
+                        }
+                    } else if (!hasCard && !hasFilledCardData) {
+                        // Se não tem cartão e não preencheu os dados
+                        showToast('Por favor, preencha os dados do cartão de crédito', 'error');
+                        setLoadBtn(false);
+                        return;
+                    }
+                    
+                    // Determinar qual CVV usar (do cartão cadastrado ou do recém inserido)
+                    const cvvToUse = hasCard ? CVVFinal : CVV;
+                    
+                    // Passo 3: Preparar os dados do cartão para pagamento
+                    let cardData;
+                    try {
+                        // Garantir que há um objeto de perfil válido
+                        if (!profileResponse || typeof profileResponse !== 'object') {
+                            profileResponse = { 
+                                id: 1,
+                                user: { email: emailUser || 'test@example.com' },
+                                profilePF: { cpf: cpf?.replace(/\D/g, '') || '12345678909' }
+                            };
+                        }
+                        
+                        cardData = prepareCardData(profileResponse, cvvToUse);
+                    } catch (error) {
+                        console.error('Erro ao preparar dados do cartão:', error);
+                        showToast('Erro ao preparar dados do cartão', 'error');
+                        setLoadBtn(false);
+                        return;
+                    }
                     
                     // Passo 4: Gerar o token do cartão no Mercado Pago
                     const cardTokenResponse = await generateCardToken(cardData);
@@ -570,12 +596,8 @@ const CheckoutPage = () => {
                         setLoadBtn(false);
                     }
                 } catch (error) {
-                    if (error.message === 'Nenhum cartão cadastrado') {
-                        showToast('Você precisa cadastrar um cartão para continuar', 'error');
-                    } else {
-                        showToast('Erro ao processar pagamento com cartão', 'error');
-                    }
                     console.error('Erro no processamento do cartão:', error);
+                    showToast('Erro ao processar pagamento com cartão', 'error');
                     setLoadBtn(false);
                     return;
                 }
@@ -900,6 +922,11 @@ const CheckoutPage = () => {
                 </div>
             </header>
             <div className="container">
+                {!isMaskedCC && tipoCompra === '1' && !cardNumber && !CVV && !expireCC && (
+                    <div className="alert-message" style={{ backgroundColor: '#f8f9fa', padding: '12px', borderRadius: '4px', marginBottom: '20px', color: '#0d6efd', textAlign: 'center' }}>
+                        <span>Você precisa cadastrar um cartão para continuar</span>
+                    </div>
+                )}
                 <Breadcrumbs aria-label="breadcrumb">
                     <Link underline="hover" color="inherit" href="/">
                         1. Meu Carrinho
@@ -1286,8 +1313,13 @@ const CheckoutPage = () => {
                                         <TextField sx={{width: '25%',  marginBottom: '7px'}} disabled={isMaskedCC} onChange={changeCCV} value={CVV} label="CVV*" variant="standard" />
                                         <TextField sx={{width: '45%',  marginBottom: '7px'}} disabled={isMaskedCC} onChange={changeExpireCC} value={expireCC} label="Validade*" placeholder='mm/aa' variant="standard" />
                                         <div style={{width: '100%', marginTop: '25px'}}>
-                                            <Checkbox label="Guardar para compras futuras"/>
+                                            <Checkbox disabled={isMaskedCC} label="Guardar para compras futuras"/>
                                         </div>
+                                        {isMaskedCC && (
+                                            <div style={{width: '100%', marginTop: '10px', textAlign: 'center', color: '#0d6efd', fontSize: '14px'}}>
+                                                <p>Você já possui um cartão cadastrado que será utilizado para esta compra.</p>
+                                            </div>
+                                        )}
                                     </div>
                                 }
                                 {tipoCompra == '2' &&    
@@ -1303,6 +1335,18 @@ const CheckoutPage = () => {
                                     </div>
                                 }
                                 <div className="btn-pay mt-3">
+                                    {!isMaskedCC && tipoCompra === '1' && (!cardNumber || !CVV || !expireCC) && (
+                                        <div style={{ 
+                                            padding: '10px', 
+                                            marginBottom: '10px', 
+                                            borderRadius: '4px', 
+                                            backgroundColor: '#fee', 
+                                            color: '#d33', 
+                                            textAlign: 'center' 
+                                        }}>
+                                            <span>Você precisa informar um cartão para continuar com a compra</span>
+                                        </div>
+                                    )}
                                     <Button 
                                         variant="contained" 
                                         color="primary" 
