@@ -149,19 +149,21 @@ const CheckoutPage = () => {
 
     // Função para obter o preço correto do produto
     const getProductPrice = (product, item) => {
+        if (!product || !item) return 0;
+        
         // Verificar se o item tem um preço definido
         if (item.price && !isNaN(item.price)) {
-            return item.price * (item.qty || item.quantity);
+            return item.price * (item.qty || item.quantity || 1);
         }
         
         // Verificar se o produto tem preço de venda
         if (product.pro_precovenda && !isNaN(product.pro_precovenda)) {
-            return product.pro_precovenda * (item.qty || item.quantity);
+            return product.pro_precovenda * (item.qty || item.quantity || 1);
         }
         
         // Verificar se o produto tem preço de última compra
         if (product.pro_valorultimacompra && !isNaN(product.pro_valorultimacompra)) {
-            return product.pro_valorultimacompra * (item.qty || item.quantity);
+            return product.pro_valorultimacompra * (item.qty || item.quantity || 1);
         }
         
         // Se nenhum preço válido for encontrado, retornar 0
@@ -170,31 +172,47 @@ const CheckoutPage = () => {
 
     // Função para calcular o subtotal do carrinho
     const calculateSubtotal = () => {
-        return (Number((applyDiscounts(cartItems
-            .reduce((total, item) => total + (item.pro_precovenda * cartData[cartItems.findIndex(i => i.pro_codigo == item.pro_codigo)].qty), 0))
-            .toFixed(2))) + (shippingCost)).toFixed(0)
+        // Calcular o valor base dos produtos com verificações robustas
+        const baseTotal = cartItems.reduce((total, item) => {
+            const index = cartData.findIndex(i => i.id === item.id || i.produto_id === item.pro_codigo);
+            const qty = index >= 0 ? (cartData[index].qty || cartData[index].quantity || 1) : 1;
+            const price = item.pro_precovenda || 0;
+            return total + (price * qty);
+        }, 0);
+
+        // Aplicar descontos
+        const discountedTotal = applyDiscounts(baseTotal);
+        
+        // Adicionar custo de entrega e formatar
+        return (Number(discountedTotal.toFixed(2)) + Number(shippingCost)).toFixed(2);
     };
 
     // Função para caso tenha descontos diferentes
     const applyDiscounts = (val) => {
+        if (!val || isNaN(val)) return 0;
+        
         let result = val; 
-        if(coupon)
+        if (coupon && coupon.percent_discount)
             result = val - ((coupon.percent_discount / 100) * val);
 
         return result;
     }
 
     const applyCouponDiscount = (val) => {
-        if(coupon)
+        if (!val || isNaN(val)) return 0;
+        
+        if (coupon && coupon.percent_discount)
             return val - ((coupon.percent_discount / 100) * val);
 
         return val;
     }
 
     const applyPixDiscount = (val) => {
-        if(!discountPix) return val
+        if (!val || isNaN(val)) return 0;
+        
+        if (!discountPix) return val;
 
-        if(coupon)
+        if (coupon && coupon.percent_discount)
             return (val - ((coupon.percent_discount / 100) * val)) - ((discountPix / 100) * val);
         else
             return val - ((discountPix / 100) * val);
@@ -535,7 +553,7 @@ const CheckoutPage = () => {
                     const paymentData = preparePaymentData(
                         profileResponse, 
                         cardTokenResponse.id, 
-                        calculateSubtotal(), 
+                        Number(calculateSubtotal()), 
                         1 // Número de parcelas
                     );
                     
@@ -894,14 +912,15 @@ const CheckoutPage = () => {
                 <div className="prod-total">
                     <div className="d-flex justify-content-between">
                         <div className="prods">
-                            {cartData.map((item, index) => {
+                            {Array.isArray(cartData) && cartData.length > 0 && Array.isArray(cartItems) && cartItems.length > 0 ? cartData.map((item, index) => {
                                 const itemId = item.id || item.produto_id;
                                 // Encontra o produto correspondente ao item do carrinho
-                                const product = cartItems.find(r => r && (r.id == itemId || r.pro_codigo == itemId));
+                                const product = cartItems.find(r => r && (r.id === itemId || r.pro_codigo === itemId));
+                                if (!product) return null;
                                 return (
-                                <div className="prod" key={item.id || item.produto_id}>
+                                <div className="prod" key={itemId || index}>
                                     <Image
-                                        src={product.imagens[0] ? product.imagens[0].url : HeadphoneImg}
+                                        src={product.imagens && product.imagens[0] ? product.imagens[0].url : HeadphoneImg}
                                         alt={product.pro_descricao || "Produto"}
                                         layout="responsive"
                                         width={200}
@@ -921,37 +940,42 @@ const CheckoutPage = () => {
                                     </div>
                                 </div>
                                 );
-                            })}
+                            }) : <div>Nenhum produto no carrinho</div>}
                         </div>
                         <div className="total">
                             <table>
                                 <tbody>
                                 {
-                                    cartItems.length != 0 ?
+                                    cartItems.length !== 0 ? (
                                     <>
                                         <tr>
                                             <td>Subtotal</td>
                                             <td>R$</td>
                                             <td>{cartItems
-                                            .reduce((total, item) => total + (item.pro_precovenda * cartData[cartItems.findIndex(i => i.pro_codigo == item.pro_codigo)].qty), 0)
+                                            .reduce((total, item) => {
+                                                const index = cartData.findIndex(i => i.id === item.id || i.produto_id === item.pro_codigo);
+                                                const qty = index >= 0 ? (cartData[index].qty || cartData[index].quantity || 1) : 1;
+                                                const price = item.pro_precovenda || 0;
+                                                return total + (price * qty);
+                                            }, 0)
                                             .toFixed(2).replace('.',',')
                                         }</td>
                                         </tr>
                                         <tr>
                                             <td>Descontos</td>
                                             <td>R$</td>
-                                            <td>- {((cartItems
-                                            .reduce((total, item) => total + (item.pro_precovenda * cartData[cartItems.findIndex(i => i.pro_codigo == item.pro_codigo)].qty), 0)
-                                            .toFixed(2)) - (applyCouponDiscount(cartItems
-                                            .reduce((total, item) => total + (item.pro_precovenda * cartData[cartItems.findIndex(i => i.pro_codigo == item.pro_codigo)].qty), 0))
-                                            .toFixed(2))).toString().replace('.',',')
-                                        }</td>
+                                            <td>- {coupon ? coupon.percent_discount : 0}%</td>
                                         </tr>
                                         <tr>
                                             <th>Total à vista</th>
                                             <td>R$</td>
                                             <td>{applyPixDiscount(cartItems
-                                            .reduce((total, item) => total + (item.pro_precovenda * cartData[cartItems.findIndex(i => i.pro_codigo == item.pro_codigo)].qty), 0))
+                                            .reduce((total, item) => {
+                                                const index = cartData.findIndex(i => i.id === item.id || i.produto_id === item.pro_codigo);
+                                                const qty = index >= 0 ? (cartData[index].qty || cartData[index].quantity || 1) : 1;
+                                                const price = item.pro_precovenda || 0;
+                                                return total + (price * qty);
+                                            }, 0))
                                             .toFixed(2).replace('.',',')
                                         }</td>
                                         </tr>
@@ -964,12 +988,21 @@ const CheckoutPage = () => {
                                             <th>Total</th>
                                             <td>R$</td>
                                             <td>{(Number((applyDiscounts(cartItems
-                                            .reduce((total, item) => total + (item.pro_precovenda * cartData[cartItems.findIndex(i => i.pro_codigo == item.pro_codigo)].qty), 0))
+                                            .reduce((total, item) => {
+                                                const index = cartData.findIndex(i => i.id === item.id || i.produto_id === item.pro_codigo);
+                                                const qty = index >= 0 ? (cartData[index].qty || cartData[index].quantity || 1) : 1;
+                                                const price = item.pro_precovenda || 0;
+                                                return total + (price * qty);
+                                            }, 0))
                                             .toFixed(2))) + (shippingCost)).toFixed(2).toString().replace('.',',')
                                         }</td>
                                         </tr>
                                     </>
-                                    : <></>
+                                    ) : (
+                                        <tr>
+                                            <td colSpan={3}>Carrinho vazio</td>
+                                        </tr>
+                                    )
                                 }
                                 </tbody>
                             </table>
