@@ -51,16 +51,26 @@ export const prepareCardData = (profile, securityCode) => {
   const card = profile.cards[0];
   
   const [expirationMonth, expirationYear] = card.expiration_date.split('/');
-  
-  return {
-    cardNumber: card.card_number,
-    cardholderName: card.holder_name,
-    cardExpirationMonth: expirationMonth,
-    cardExpirationYear: expirationYear.length === 2 ? `20${expirationYear}` : expirationYear,
-    securityCode: securityCode,
+  const testCardData = {
+    cardNumber: "5031433215406351",
+    cardholderName: "APRO",
+    cardExpirationMonth: "11",
+    cardExpirationYear: "30",
+    securityCode: "123",
     identificationType: "CPF",
-    identificationNumber: profile.profilePF?.cpf?.replace(/[^\d]/g, '') || "12345678909"
+    identificationNumber: "12345678909"
   };
+  return testCardData;
+  
+  // return {
+  //   cardNumber: card.card_number,
+  //   cardholderName: card.holder_name,
+  //   cardExpirationMonth: expirationMonth,
+  //   cardExpirationYear: expirationYear.length === 2 ? `20${expirationYear}` : expirationYear,
+  //   securityCode: securityCode,
+  //   identificationType: "CPF",
+  //   identificationNumber: profile.profilePF?.cpf?.replace(/[^\d]/g, '') || "12345678909"
+  // };
 };
 
 // Função para preparar os dados do pagamento

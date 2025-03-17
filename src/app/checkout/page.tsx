@@ -19,36 +19,60 @@ import ReactInputMask from 'react-input-mask';
 import axios from 'axios';
 import { PaymentIcon } from 'react-svg-credit-card-payment-icons';
 import { useToastSide } from '../context/toastSide';
-import { getProfileUser } from '../services/profile';
+import { getProfileUser, getUserPersonalData } from '../services/profile';
 import { processPayment, validatePayment } from '../services/payment';
-import { cpfValidation, emailVerify, registerWithoutPass } from '../services/checkout';
+import { cpfValidation, emailVerify, addPhone } from '../services/checkout';
 import { generateCardToken, prepareCardData, preparePaymentData } from '../services/mercadoPago';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import LocalAtmIcon from '@mui/icons-material/LocalAtm';
+import { login, register } from '../services/auth';
+import { addAddress, addCard, updateProfile } from '../minhaconta/services/userAccount';
+import { saveToken } from '../utils/auth';
+import { useCookies } from 'react-cookie';
 
-async function buscaTipoPessoa(id: number) {
+async function buscaTipoPessoa() {
     try {
-        const resp = await getProfileUser(id);
+        const resp = await getProfileUser();
         
         if (resp) {
             return {
                 id: resp.id || 0,
                 profile_type: resp.profile_type || '',
-                bith_date: resp.birth_date || '',
+                birth_date: resp.birth_date || '',
                 cpf: resp.cpf || '',
                 trading_name: resp.trading_name || '',
                 cnpj: resp.cnpj || '',
-                state_registration: resp || '',
-                addresses: resp.addresses || [],
-                cards: resp.cards || []
+                state_registration: resp.state_registration || '',
+                addresses: Array.isArray(resp.addresses) && resp.addresses.length > 0 ? resp.addresses : [],
+                cards: Array.isArray(resp.cards) && resp.cards.length > 0 ? resp.cards : []
             };
         }
 
-        return { id: 0, profile_type: '', bith_date: '', cpf: '', trading_name: '', cnpj: '', state_registration: '', addresses: [], cards: []};
+        return { 
+            id: 0, 
+            profile_type: '', 
+            birth_date: '', 
+            cpf: '', 
+            trading_name: '', 
+            cnpj: '', 
+            state_registration: '', 
+            addresses: [], 
+            cards: []
+        };
 
     } catch (error) {
         console.error('Erro: ', error);
-        return { id: 0, profile_type: '', bith_date: '', cpf: '', trading_name: '', cnpj: '', state_registration: '', addresses: [], cards: []};
+        return { 
+            id: 0, 
+            profile_type: '', 
+            birth_date: '', 
+            cpf: '', 
+            trading_name: '', 
+            cnpj: '', 
+            state_registration: '', 
+            addresses: [], 
+            cards: []
+        };
     }
 }
 
@@ -56,6 +80,7 @@ const CheckoutPage = () => {
     const router = useRouter();
     const { showToast } = useToastSide();
     const { statusMessage, activeCoupon, coupon, setCouponFn } = useCoupon();
+    const [cookies, setCookie] = useCookies(['jwt']);
     const [tipoPessoa, setTipoPessoa] = useState('1');
     const [tipoCompra, setTipoCompra] = useState('1');
     const [cardNumber, setCardNumber] = useState('');
@@ -73,7 +98,7 @@ const CheckoutPage = () => {
     const [cpf, setCpf] = useState('');
     const { cartItems, cartData, removeItems } = useCart();
     const [discountPix, setDiscountPix] = useState(5);
-    const { user } = useAuth();
+    const { user, setUserFn } = useAuth();
     const [nameUser, setNameUser] = useState('');
     const [emailUser, setEmailUser] = useState('');
     const [disabledUser, setDisabledUser] = useState(false);
@@ -95,16 +120,24 @@ const CheckoutPage = () => {
     const [errorCpf, setErrorCpf] = useState(false);
     const [errorEmail, setErrorEmail] = useState(false);
     const [step, setStep] = useState(1);
+    const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [passwordError, setPasswordError] = useState(false);
+    const [passwordErrorMessage, setPasswordErrorMessage] = useState('');
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [errorTelefone, setErrorTelefone] = useState(false);
+    const [errorTelefoneMessage, setErrorTelefoneMessage] = useState('');
     
 
     // Verificar se o usuário está logado
     useEffect(() => {
-        // if (!user || !user.id) {
-        //     showToast('Você precisa estar logado para finalizar a compra', 'error');
-        //     router.push('/login?redirect=checkout');
-        // }
+        if (user && user.id) {
+            setIsAuthenticated(true);
+            setNameUser(user.name);
+            setEmailUser(user.email);
+            setDisabledUser(true);
+        }
     }, [user]);
-
 
     // Verificar se há itens no carrinho
     // useEffect(() => {
@@ -183,7 +216,7 @@ const CheckoutPage = () => {
                 setDisabledUser(true);
     
                 try {
-                    const resultPessoa = await buscaTipoPessoa(user.id);
+                    const resultPessoa = await buscaTipoPessoa();
     
                     if (resultPessoa.profile_type === 'PF') {
                         setCpf(resultPessoa.cpf);
@@ -196,23 +229,31 @@ const CheckoutPage = () => {
                         setDisabledUserPJ(true);
                     }
 
-                    setBairro(resultPessoa.addresses[0].neighborhood);
-                    setCepNumber(resultPessoa.addresses[0].postal_code);
-                    setNumero(resultPessoa.addresses[0].number);
-                    setComplemento(resultPessoa.addresses[0].complement);
-                    setEndereco(resultPessoa.addresses[0].street);
-                    setCidade(resultPessoa.addresses[0].city);
-                    setDisabledAddress(true);
+                    // Verificar se há endereços antes de acessar
+                    if (resultPessoa.addresses && resultPessoa.addresses.length > 0) {
+                        const endereco = resultPessoa.addresses[0];
+                        setBairro(endereco.neighborhood || '');
+                        setCepNumber(endereco.postal_code || '');
+                        setNumero(endereco.number || '');
+                        setComplemento(endereco.complement || '');
+                        setEndereco(endereco.street || '');
+                        setCidade(endereco.city || '');
+                        setEstado(endereco.state || '');
+                        setDisabledAddress(true);
+                    }
 
-                    setCVVFinal(resultPessoa.cards[0].last_four_digits);
-                    setNumberCCFinal(resultPessoa.cards[0].card_number);
-                    setFlagCard(detectCardFlag(resultPessoa.cards[0].card_number));
-                    setExpireCCFinal(resultPessoa.cards[0].expiration_date);
-                    setCardNumber(`XXXX XXXX XXXX ${getLastFourDigits(resultPessoa.cards[0].card_number)}`)
-
-                    setCVV('XXX');
-                    setExpireCC('XX/XX');
-                    setIsMaskedCC(false);
+                    // Verificar se há cartões antes de acessar
+                    if (resultPessoa.cards && resultPessoa.cards.length > 0) {
+                        const cartao = resultPessoa.cards[0];
+                        setCVVFinal(cartao.last_four_digits || '');
+                        setNumberCCFinal(cartao.card_number || '');
+                        setFlagCard(detectCardFlag(cartao.card_number || ''));
+                        setExpireCCFinal(cartao.expiration_date || '');
+                        setCardNumber(`XXXX XXXX XXXX ${getLastFourDigits(cartao.card_number || '')}`);
+                        setCVV('XXX');
+                        setExpireCC('XX/XX');
+                        setIsMaskedCC(true);
+                    }
                 } catch (error) {
                     console.error("Erro ao buscar tipo de pessoa:", error);
                 }
@@ -244,62 +285,301 @@ const CheckoutPage = () => {
     const handlePayButton = async () => {
         setLoadBtn(true);
         try {
+            // Verificar se o usuário está autenticado
+            if (!isAuthenticated) {
+                // Validar senhas
+                if (!validatePasswords(password, confirmPassword)) {
+                    showToast('Por favor, verifique as senhas informadas', 'error');
+                    setLoadBtn(false);
+                    return;
+                }
+
+                // Registrar o usuário
+                const arrName = nameUser.split(" ");
+                const userData = {
+                    name: arrName[0],
+                    lastname: arrName.length > 1 ? arrName[arrName.length - 1] : '',
+                    username: arrName[0].toLowerCase() + (Math.floor(Math.random() * 1000) + 1),
+                    email: emailUser,
+                    password: password,
+                    repassword: confirmPassword
+                }
+
+                let registerResponse;
+                try {
+                    registerResponse = await register(userData);
+                    
+                    if (!registerResponse || !registerResponse.token) {
+                        showToast('Erro ao criar usuário', 'error');
+                        setLoadBtn(false);
+                        return;
+                    }
+                } catch (registerError) {
+                    console.error('Erro ao registrar usuário:', registerError);
+                    showToast('Erro ao criar usuário', 'error');
+                    setLoadBtn(false);
+                    return;
+                }
+
+                // Salvar o token JWT nos cookies
+                saveToken(registerResponse.token);
+                setCookie('jwt', registerResponse.token, { maxAge: 60 * 60 * 24 * 7 }); // 7 dias
+
+                // Atualizar o contexto de autenticação
+                setUserFn({
+                    id: registerResponse.user.id,
+                    name: registerResponse.user.name,
+                    email: registerResponse.user.email
+                });
+                
+                // Salvar dados do usuário no localStorage
+                if (typeof window !== 'undefined') {
+                    localStorage.setItem('user', JSON.stringify({
+                        id: registerResponse.user.id,
+                        name: registerResponse.user.name,
+                        email: registerResponse.user.email
+                    }));
+                }
+                
+                setIsAuthenticated(true);
+                
+                // Aguardar um momento para garantir que o token seja aplicado
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                // Cadastrar dados de perfil (PF ou PJ)
+                try {
+                    // Criar objeto para dados do perfil
+                    let profileUpdateData: any = {
+                        profile_type: tipoPessoa === '1' ? 'PF' : 'PJ'
+                    };
+                    
+                    // Adicionar dados específicos com base no tipo de pessoa
+                    if (tipoPessoa === '1') {
+                        // Pessoa Física
+                        profileUpdateData.cpf = cpf.replace(/\D/g, '');
+                        profileUpdateData.full_name = nameUser;
+                    } else {
+                        // Pessoa Jurídica
+                        profileUpdateData.cnpj = cnpj.replace(/\D/g, '');
+                        profileUpdateData.trading_name = razaoSocial;
+                        profileUpdateData.state_registration = inscEstadual;
+                    }
+                    
+                    // Atualizar perfil
+                    await updateProfile(profileUpdateData);
+                    showToast('Perfil cadastrado com sucesso', 'success');
+                } catch (profileError) {
+                    console.error('Erro ao cadastrar dados de perfil:', profileError);
+                    showToast('Erro ao cadastrar dados de perfil', 'error');
+                    setLoadBtn(false);
+                    return; // Interromper o fluxo em caso de erro
+                }
+                
+                // Primeiro obter os dados pessoais para ter o profile_id
+                let personalDataResponse;
+                try {
+                    personalDataResponse = await getUserPersonalData();
+                    if (!personalDataResponse || !personalDataResponse.id) {
+                        throw new Error('Não foi possível obter o profile_id');
+                    }
+                } catch (personalDataError) {
+                    console.error('Erro ao obter dados pessoais:', personalDataError);
+                    showToast('Erro ao obter dados pessoais', 'error');
+                    setLoadBtn(false);
+                    return;
+                }
+                
+                // Cadastrar telefone
+                if (telCelular) {
+                    try {
+                        // Validar telefone novamente antes de cadastrar
+                        if (!validaTelefone(telCelular)) {
+                            throw new Error('Formato de telefone inválido');
+                        }
+                        
+                        const phoneNumber = telCelular.replace(/\D/g, '');
+                        // Criar objeto com os dados necessários para o telefone
+                        const phoneData = {
+                            phone: phoneNumber,
+                            profile_id: personalDataResponse.id,
+                            type: "celular",
+                            is_primary: true
+                        };
+                        await addPhone(phoneData);
+                        showToast('Telefone cadastrado com sucesso', 'success');
+                    } catch (phoneError) {
+                        console.error('Erro ao adicionar telefone:', phoneError);
+                        showToast('Erro ao adicionar telefone: ' + (phoneError.message || 'Verifique o formato'), 'error');
+                        setLoadBtn(false);
+                        return; // Interromper o fluxo em caso de erro
+                    }
+                }
+                
+                // Cadastrar endereço
+                try {
+                    const addressData = {
+                        street: endereco,
+                        number: numero,
+                        complement: complemento,
+                        neighborhood: bairro,
+                        city: cidade,
+                        state: estado,
+                        postal_code: cepNumber,
+                        is_default: true,
+                        profile_id: personalDataResponse.id
+                    };
+                    
+                    await addAddress(addressData);
+                    showToast('Endereço cadastrado com sucesso', 'success');
+                } catch (addressError) {
+                    console.error('Erro ao cadastrar endereço:', addressError);
+                    showToast('Erro ao cadastrar endereço', 'error');
+                    setLoadBtn(false);
+                    return; // Interromper o fluxo em caso de erro
+                }
+                
+                // Cadastrar cartão se for pagamento por cartão
+                if (tipoCompra === '1') {
+                    try {
+                        // Preparar dados do cartão incluindo o profile_id
+                        const cardData = {
+                            card_number: cardNumber.replace(/\s/g, ''),
+                            holder_name: nameUser,
+                            expiration_date: expireCC,
+                            cvv: CVV,
+                            is_default: true,
+                            profile_id: personalDataResponse.id
+                        };
+                        
+                        await addCard(cardData);
+                        showToast('Cartão cadastrado com sucesso', 'success');
+                    } catch (cardError) {
+                        console.error('Erro ao cadastrar cartão:', cardError);
+                        showToast('Erro ao cadastrar cartão', 'error');
+                        setLoadBtn(false);
+                        return; // Interromper o fluxo em caso de erro
+                    }
+                } else {
+                    // Pagamento com PIX
+                    try {
+                        // Implementar lógica para pagamento com PIX
+                        showToast('Pagamento via PIX será implementado em breve', 'info');
+                        // Redirecionar para página de sucesso ou pedidos
+                        router.push('/minhaconta');
+                        removeItems();
+                    } catch (pixError) {
+                        console.error('Erro ao processar pagamento PIX:', pixError);
+                        showToast('Erro ao processar pagamento PIX', 'error');
+                        setLoadBtn(false);
+                        return;
+                    }
+                }
+            }
+
+            // Aguardar um momento para garantir que o token seja aplicado
+            await new Promise(resolve => setTimeout(resolve, 500));
+
             // Passo 1: Validar o pagamento no backend
-            const validateResponse = await validatePayment({
-                "address_id": 1, // Usar o endereço padrão ou selecionado
-                "payment_method": "card",
-                "card_id": 1 // Usar o cartão padrão ou selecionado
-            });
-            
-            if (validateResponse.status !== 200) {
+            let validateResponse;
+            try {
+                validateResponse = await validatePayment({
+                    "address_id": 1, // Usar o endereço padrão ou selecionado
+                    "payment_method": tipoCompra === '1' ? "card" : "pix",
+                    "card_id": 1 // Usar o cartão padrão ou selecionado
+                });
+                
+                if (validateResponse.status !== 200) {
+                    showToast('Erro ao validar o pagamento', 'error');
+                    setLoadBtn(false);
+                    return;
+                }
+            } catch (validateError) {
+                console.error('Erro ao validar pagamento:', validateError);
                 showToast('Erro ao validar o pagamento', 'error');
                 setLoadBtn(false);
                 return;
             }
             
             // Passo 2: Buscar o perfil do usuário para obter os dados necessários
-            const profileResponse = await getProfileUser(user.id);
-            if (!profileResponse) {
+            let profileResponse;
+            try {
+                profileResponse = await getUserPersonalData();
+                if (!profileResponse) {
+                    showToast('Erro ao obter dados do perfil', 'error');
+                    setLoadBtn(false);
+                    return;
+                }
+            } catch (profileError) {
+                console.error('Erro ao obter perfil:', profileError);
                 showToast('Erro ao obter dados do perfil', 'error');
                 setLoadBtn(false);
                 return;
             }
             
-            // Passo 3: Preparar os dados do cartão
-            const cardData = prepareCardData(profileResponse, CVVFinal);
-            
-            // Passo 4: Gerar o token do cartão no Mercado Pago
-            const cardTokenResponse = await generateCardToken(cardData);
-            
-            console.log(cardTokenResponse)
-            if (!cardTokenResponse || !cardTokenResponse.id) {
-                showToast('Erro ao gerar token do cartão', 'error');
-                setLoadBtn(false);
-                return;
-            }
-            
-            // Passo 5: Preparar os dados do pagamento
-            const paymentData = preparePaymentData(
-                profileResponse, 
-                cardTokenResponse.id, 
-                calculateSubtotal(), 
-                1 // Número de parcelas
-            );
-            
-            // Passo 6: Processar o pagamento no backend
-            const paymentResponse = await processPayment(paymentData, cardTokenResponse.public_key);
-            
-            if (paymentResponse && paymentResponse.success == true) {
-                showToast('Pagamento aprovado com sucesso!', 'success');
-                // Redirecionar para página de sucesso ou pedidos
-                router.push('/minhaconta');
-                removeItems();
+            if (tipoCompra === '1') {
+                // Pagamento com cartão
+                try {
+                    // Passo 3: Preparar os dados do cartão
+                    const cardData = prepareCardData(profileResponse, CVVFinal);
+                    
+                    // Passo 4: Gerar o token do cartão no Mercado Pago
+                    const cardTokenResponse = await generateCardToken(cardData);
+                    
+                    if (!cardTokenResponse || !cardTokenResponse.id) {
+                        showToast('Erro ao gerar token do cartão', 'error');
+                        setLoadBtn(false);
+                        return;
+                    }
+                    
+                    // Passo 5: Preparar os dados do pagamento
+                    const paymentData = preparePaymentData(
+                        profileResponse, 
+                        cardTokenResponse.id, 
+                        calculateSubtotal(), 
+                        1 // Número de parcelas
+                    );
+                    
+                    // Passo 6: Processar o pagamento no backend
+                    const paymentResponse = await processPayment(paymentData, cardTokenResponse.public_key);
+                    
+                    if (paymentResponse && paymentResponse.success == true) {
+                        showToast('Pagamento aprovado com sucesso!', 'success');
+                        // Redirecionar para página de sucesso ou pedidos
+                        router.push('/minhaconta');
+                        removeItems();
+                    } else {
+                        showToast(`Erro no pagamento: ${paymentResponse.status_detail || 'Verifique os dados do cartão'}`, 'error');
+                        setLoadBtn(false);
+                    }
+                } catch (error) {
+                    if (error.message === 'Nenhum cartão cadastrado') {
+                        showToast('Você precisa cadastrar um cartão para continuar', 'error');
+                    } else {
+                        showToast('Erro ao processar pagamento com cartão', 'error');
+                    }
+                    console.error('Erro no processamento do cartão:', error);
+                    setLoadBtn(false);
+                    return;
+                }
             } else {
-                showToast(`Erro no pagamento: ${paymentResponse.status_detail || 'Verifique os dados do cartão'}`, 'error');
+                // Pagamento com PIX
+                try {
+                    // Implementar lógica para pagamento com PIX
+                    showToast('Pagamento via PIX será implementado em breve', 'info');
+                    // Redirecionar para página de sucesso ou pedidos
+                    router.push('/minhaconta');
+                    removeItems();
+                } catch (pixError) {
+                    console.error('Erro ao processar pagamento PIX:', pixError);
+                    showToast('Erro ao processar pagamento PIX', 'error');
+                    setLoadBtn(false);
+                    return;
+                }
             }
         } catch (error) {
             console.error('Erro ao processar pagamento:', error);
             showToast('Erro ao processar pagamento', 'error');
+            setLoadBtn(false);
         } finally {
             setLoadBtn(false);
         }
@@ -366,7 +646,7 @@ const CheckoutPage = () => {
         }
     };
 
-    const validaNumCpf = async (cpf) => {
+    const validaNumCpf = (cpf) => {
         cpf = cpf.replace(/\D/g, '');
     
         if (cpf.length !== 11) {
@@ -398,8 +678,8 @@ const CheckoutPage = () => {
         return cpf[9] == digito1 && cpf[10] == digito2;
     }
 
-    const handleChangeCpf = async (event: React.ChangeEvent<HTMLInputElement>) => {
-        await setCpf(event.target.value);
+    const handleChangeCpf = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setCpf(event.target.value);
     };
 
     useEffect(() => {
@@ -409,7 +689,7 @@ const CheckoutPage = () => {
 
     const validaCpf = async (cpf: string) => {
         if(cpf.length === 14) {
-            const isValidNums = await validaNumCpf(cpf);
+            const isValidNums = validaNumCpf(cpf);
             if(isValidNums) {
                 setLoadingDadosPessoais(true);
                 try {
@@ -472,8 +752,33 @@ const CheckoutPage = () => {
         }
     };
 
+    const validaTelefone = (telefone: string) => {
+        const phoneDigits = telefone.replace(/\D/g, '');
+        
+        // Validação básica - telefone precisa ter ao menos 8 dígitos (fixo) ou 10/11 dígitos (celular)
+        if (phoneDigits.length < 8) {
+            setErrorTelefone(true);
+            setErrorTelefoneMessage('O telefone deve ter ao menos 8 dígitos');
+            return false;
+        } else if (phoneDigits.length > 11) {
+            setErrorTelefone(true);
+            setErrorTelefoneMessage('O telefone não pode ter mais que 11 dígitos');
+            return false;
+        } else {
+            setErrorTelefone(false);
+            setErrorTelefoneMessage('');
+            return true;
+        }
+    };
+
     const changeCelular = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setTelCelular(event.target.value);
+        const phoneValue = event.target.value;
+        setTelCelular(phoneValue);
+        
+        // Validar o formato do telefone quando o usuário inserir o número completo
+        if (phoneValue.length === 15) { // Formato completo (99) 99999-9999
+            validaTelefone(phoneValue);
+        }
     };
 
     const changeName = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -487,46 +792,73 @@ const CheckoutPage = () => {
     const changeStep = (newStep) => {
         if(step == 1) {
             if(tipoPessoa == '1') {
-                if(!nameUser || !emailUser || !cpf || !telCelular && (!errorCpf || !errorEmail)) {
-                    alert('Por favor, preencha os campos necessários primeiro')
+                // Verificando se há campos vazios ou se há erros nos dados
+                if(!nameUser || !emailUser || !cpf || !telCelular || errorCpf || errorEmail) {
+                    showToast('Por favor, preencha todos os campos corretamente', 'error');
+                    return;
+                }
+                
+                // Validar o telefone antes de avançar
+                if(!validaTelefone(telCelular)) {
+                    showToast('Por favor, verifique o número de telefone', 'error');
+                    return;
+                }
+                
+                if(!isAuthenticated && (!password || !confirmPassword)) {
+                    showToast('Por favor, preencha os campos de senha', 'error');
                     return;
                 }
             }
             else {
                 if(!nameUser || !emailUser || !cnpj || !telCelular || !razaoSocial || !inscEstadual) {
-                    alert('Por favor, preencha os campos necessários primeiro')
+                    showToast('Por favor, preencha todos os campos corretamente', 'error');
+                    return;
+                }
+                
+                // Validar o telefone antes de avançar
+                if(!validaTelefone(telCelular)) {
+                    showToast('Por favor, verifique o número de telefone', 'error');
+                    return;
+                }
+                
+                if(!isAuthenticated && (!password || !confirmPassword)) {
+                    showToast('Por favor, preencha os campos de senha', 'error');
                     return;
                 }
             }
         }
         if(step == 2 && newStep != 1) {
             if(!cepNumber || !numero || !endereco || !estado || !cidade || !bairro) {
-                alert('Por favor, preencha os campos necessários primeiro')
+                showToast('Por favor, preencha todos os campos de endereço', 'error');
                 return;
             }
         }
         setStep(newStep);
     }
 
-    const cadastroPorEmail = async () => {
-        const arrName = nameUser.split(" ");
-        const dados = {
-            name: arrName[0],
-            lastname: arrName[arrName.length - 1],
-            email: emailUser,
-            cpf: cpf ? cpf : '',
-            cpnj: cnpj ? cnpj : '',
-            tipoPessoa: tipoPessoa == '1' ? 'PF' : 'PJ',
-            state_registration: inscEstadual ? inscEstadual : '',
-            company_name: razaoSocial ? razaoSocial : ''
-        }
+    const changePassword = (e) => {
+        setPassword(e.target.value);
+        validatePasswords(e.target.value, confirmPassword);
+    }
 
-        const result = await registerWithoutPass(dados);
-        if(result.data.success == true) {
-            alert('Perfil '+(tipoPessoa == '1' ? 'PF' : 'PJ')+' criado com sucesso');
-        }
-        else {
-            alert('Erro ao criar perfil');
+    const changeConfirmPassword = (e) => {
+        setConfirmPassword(e.target.value);
+        validatePasswords(password, e.target.value);
+    }
+
+    const validatePasswords = (pass, confirmPass) => {
+        if (pass !== confirmPass) {
+            setPasswordError(true);
+            setPasswordErrorMessage('As senhas não coincidem');
+            return false;
+        } else if (pass.length < 6) {
+            setPasswordError(true);
+            setPasswordErrorMessage('A senha deve ter pelo menos 6 caracteres');
+            return false;
+        } else {
+            setPasswordError(false);
+            setPasswordErrorMessage('');
+            return true;
         }
     }
 
@@ -680,10 +1012,35 @@ const CheckoutPage = () => {
                                 </RadioGroup>
                                 <TextField sx={{width: '100%',  marginBottom: '12px'}} onChange={changeName} value={nameUser} disabled={disabledUser && false} label="Nome Completo*" variant="standard" />
                                 <TextField sx={{width: '100%',  marginBottom: '12px'}} onChange={changeEmail} error={errorEmail} value={emailUser} disabled={disabledUser && false} onBlur={verificaEmail} helperText={errorEmail ? "Email já cadastrado" : ''} label="Email*" variant="standard" />
+                                {!isAuthenticated && (
+                                    <>
+                                        <TextField 
+                                            sx={{width: '100%', marginBottom: '12px'}} 
+                                            onChange={changePassword} 
+                                            value={password} 
+                                            type="password"
+                                            label="Senha*" 
+                                            variant="standard" 
+                                            error={passwordError}
+                                            helperText={passwordErrorMessage}
+                                        />
+                                        <TextField 
+                                            sx={{width: '100%', marginBottom: '12px'}} 
+                                            onChange={changeConfirmPassword} 
+                                            value={confirmPassword} 
+                                            type="password"
+                                            label="Confirmar Senha*" 
+                                            variant="standard" 
+                                            error={passwordError}
+                                            helperText={passwordError ? passwordErrorMessage : ''}
+                                        />
+                                    </>
+                                )}
                                 <ReactInputMask
                                     mask="(99) 99999-9999"
                                     value={telCelular}
                                     onChange={changeCelular}
+                                    onBlur={() => validaTelefone(telCelular)}
                                     maskChar=""
                                 >
                                     {(inputProps) => (
@@ -691,6 +1048,8 @@ const CheckoutPage = () => {
                                         {...inputProps}
                                         label="Telefone fixo ou Celular*"
                                         variant="standard"
+                                        error={errorTelefone}
+                                        helperText={errorTelefone ? errorTelefoneMessage : ''}
                                         sx={{
                                             '& .MuiInputBase-input::placeholder': {
                                                 fontSize: '23px', 
@@ -763,7 +1122,7 @@ const CheckoutPage = () => {
                                     color="primary"
                                     className='mb-3'
                                     fullWidth 
-                                    onClick={() => {changeStep(2); cadastroPorEmail();}}
+                                    onClick={() => {changeStep(2);}}
                                     disabled={loadBtn}
                                 >
                                     Continuar

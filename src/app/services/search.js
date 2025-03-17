@@ -1,12 +1,16 @@
 'use strict';
 import axios from 'axios';
+import { getToken } from '../utils/auth';
 
 const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 
 export const search = async (busca) => {
     try {
-        const response = await axios.get(`${API_URL}/produtos?s=${busca}&limit=5`);
+        const headers = {
+            Authorization: `Bearer ${getToken()}`
+        };
+        const response = await axios.get(`${API_URL}/produtos?s=${busca}&limit=5`, { headers });
         
         // Verificar se a resposta contém dados
         if (response && response.data) {
