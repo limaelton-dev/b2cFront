@@ -89,6 +89,56 @@ export const fetchUserPhones = async (): Promise<Phone[]> => {
   return mockPhones;
 };
 
+// =======================
+// Métodos de Card (CRUD)
+// =======================
+
+export const createUserCard = async (cardData: Partial<Card>): Promise<Card> => {
+  await delay(500);
+  // Simula a criação de um novo cartão gerando um novo ID
+  const newCard: Card = {
+    id: mockCards.length + 1,
+    card_number: cardData.card_number || "0000000000000000",
+    holder_name: cardData.holder_name || "",
+    expiration_date: cardData.expiration_date || "",
+    is_default: cardData.is_default || false,
+    cvv: cardData.cvv || "",
+    brand: cardData.brand || ""
+  };
+  mockCards.push(newCard);
+  return newCard;
+};
+
+export const updateUserCard = async (cardId: number, cardData: Partial<Card>): Promise<Card> => {
+  await delay(500);
+  const index = mockCards.findIndex(card => card.id === cardId);
+  if (index === -1) {
+    throw new Error("Card not found");
+  }
+  const updatedCard: Card = { ...mockCards[index], ...cardData };
+  mockCards[index] = updatedCard;
+  return updatedCard;
+};
+
+export const deleteUserCard = async (cardId: number): Promise<void> => {
+  await delay(500);
+  const index = mockCards.findIndex(card => card.id === cardId);
+  if (index === -1) {
+    throw new Error("Card not found");
+  }
+  mockCards.splice(index, 1);
+};
+
+// =======================
+// Método para atualizar dados do usuário
+// =======================
+
+export const updateUser = async (userData: Partial<User>): Promise<User> => {
+  await delay(500);
+  Object.assign(mockUser, userData);
+  return mockUser;
+};
+
 
 // export const fetchUser = async (): Promise<User> => {
 //     const response = await axios.get(`${API_URL}/user`, {
