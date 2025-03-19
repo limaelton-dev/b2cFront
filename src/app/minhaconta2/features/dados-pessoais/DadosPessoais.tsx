@@ -10,8 +10,9 @@ import CakeIcon from '@mui/icons-material/Cake';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import WcIcon from '@mui/icons-material/Wc';
 import { ProfilePF, ProfilePJ, User } from '../../../types/user';
-// import EditProfileModal from './EditProfileModal';
+import EditProfileModal from './EditProfileModal';
 import { useUser } from '../../../hooks/useUser';
+import { updateUser } from '../../../services/user';
 
 // Componente para exibir mensagem quando um campo está vazio
 const EmptyFieldMessage = ({ field }: { field: string }) => (
@@ -42,6 +43,7 @@ const formatGender = (gender: string | null) => {
 const DadosPessoais: React.FC = () => {
   const { user, loading, error } = useUser({ includeDetails: true});
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const handleOpenEditModal = () => {
     setIsEditModalOpen(true);
@@ -49,6 +51,30 @@ const DadosPessoais: React.FC = () => {
 
   const handleCloseEditModal = () => {
     setIsEditModalOpen(false);
+  };
+  
+  const handleSaveProfile = async (data: Partial<User>, type: 'profile' | 'user') => {
+    try {
+      setIsSaving(true);
+      
+      // Aqui podemos ter lógicas diferentes dependendo do tipo de dados sendo salvos
+      if (type === 'profile') {
+        console.log('Salvando dados do perfil:', data);
+        await updateUser(data);
+      } else {
+        console.log('Salvando dados do usuário:', data);
+        // Poderia ter uma API específica para atualizar dados do usuário
+        await updateUser(data);
+      }
+      
+      // Recarregar a página para atualizar os dados
+      window.location.reload();
+    } catch (error) {
+      console.error(`Erro ao salvar ${type === 'profile' ? 'perfil' : 'usuário'}:`, error);
+      alert(`Ocorreu um erro ao salvar os dados do ${type === 'profile' ? 'perfil' : 'usuário'}. Por favor, tente novamente.`);
+    } finally {
+      setIsSaving(false);
+    }
   };
   
   let fullName: string | null = null;
@@ -68,14 +94,12 @@ const DadosPessoais: React.FC = () => {
     } else if(user.profile_type === 'PJ') {
       const profilePJ = user.profile as ProfilePJ;
       fullName = profilePJ.company_name;
+      cpfCnpj = profilePJ.cnpj;
       fieldLabelCpfCnpj = 'CNPJ';
     }
   }
 
   const phoneNumber = user?.phone && user.phone.length > 0 ? user.phone[0].number : null;
-
-
-
 
   return (
     <LoadingState loading={loading} error={error}>
@@ -104,7 +128,7 @@ const DadosPessoais: React.FC = () => {
               }
             }}
           >
-            Editar Perfil
+            Editar Dados
           </Button>
         </Box>
 
@@ -122,18 +146,26 @@ const DadosPessoais: React.FC = () => {
               icon={<PersonIcon sx={{ color: '#102d57', fontSize: 20 }} />}
             />
 
-            <InfoCard
-              label="Data de Nascimento"
-              description={renderFieldValue(birthDate, 'Data de Nascimento')}
-              
-              icon={<CakeIcon sx={{ color: '#102d57', fontSize: 20 }} />}
-            />
+            {user?.profile_type === 'PF' && (
+              <>
+                <InfoCard
+                  label="Data de Nascimento"
+                  description={renderFieldValue(birthDate, 'Data de Nascimento')}
+                  icon={<CakeIcon sx={{ color: '#102d57', fontSize: 20 }} />}
+                />
+
+                <InfoCard
+                  label="Gênero"
+                  description={renderFieldValue(formatGender(gender), 'Gênero')}
+                  icon={<WcIcon sx={{ color: '#102d57', fontSize: 20 }} />}
+                />
+              </>
+            )}
 
             <InfoCard
-              label="CPF"
-              description={renderFieldValue(cpfCnpj, 'CPF')}
+              label={fieldLabelCpfCnpj}
+              description={renderFieldValue(cpfCnpj, fieldLabelCpfCnpj)}
               icon={<BadgeIcon sx={{ color: '#102d57', fontSize: 20 }} />}
-            // onAction={() => handleEdit('cpf')}
             />
 
             <InfoCard
@@ -147,27 +179,20 @@ const DadosPessoais: React.FC = () => {
               description={renderFieldValue(phoneNumber, 'Telefone')}
               icon={<PhoneIcon sx={{ color: '#102d57', fontSize: 20 }} />}
             />
-
-            <InfoCard
-              label="Gênero"
-              description={renderFieldValue(formatGender(gender), 'Gênero')}
-              icon={<WcIcon sx={{ color: '#102d57', fontSize: 20 }} />}
-            />
           </Box>
         </Box>
       </Box>
 
       {/* Modal de edição de perfil */}
-      {/* <EditProfileModal 
-        open={isEditModalOpen}
-        onClose={handleCloseEditModal}
-        userData={user}
-        onSave={(data) => {
-          console.log("Salvando dados:", data);
-          handleCloseEditModal();
-        }}
-        loading={false}
-      /> */}
+      {user && (
+        <EditProfileModal 
+          open={isEditModalOpen}
+          onClose={handleCloseEditModal}
+          userData={user}
+          onSave={handleSaveProfile}
+          loading={isSaving}
+        />
+      )}
     </LoadingState>
   );
 };
