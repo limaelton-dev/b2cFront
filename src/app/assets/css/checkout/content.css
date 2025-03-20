@@ -87,3 +87,36 @@
 .MuiRadio-root {
     color: rgb(0 0 0 / 30%);
 }
+.fretes {
+    width: 100%;
+}
+.fretes .frete-box {
+    border: 1px solid #bbbbbb;
+    display: flex;
+    padding: 5px;
+    width: 100%;
+    border-radius: 1px;
+}
+.fretes .frete-box:not(:first-of-type) {
+    border-top: 0px;
+}
+.fretes .frete-box .frete {
+    padding: 5px;
+    border-radius: 3px;
+    display: flex;
+    width: 100%;
+}
+.fretes .frete-box .frete .MuiCheckbox-root{
+    width: 100%;
+}
+.fretes .frete-box .frete label{
+    font-size: 15px;
+}
+.fretes .frete-box .frete .text-frete {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+}
+.fretes .frete-box .frete .text-frete .price {
+    font-weight: bold;
+}

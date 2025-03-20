@@ -640,7 +640,20 @@ const CheckoutPage = () => {
                                     <TextField sx={{width: '42%',  marginBottom: '8px'}} value={cidade} onChange={changeCidade} label="Cidade*" variant="standard" />
                                     <TextField sx={{width: '42%',  marginBottom: '8px'}} value={bairro} onChange={changeBairro} label="Bairro*" variant="standard" />
                                 </Box>
-                                <div style={{width: '100%', marginTop: '20px'}}>
+                                <div className="fretes">
+                                    <h6 style={{marginTop: '10px'}}>Escolha o frete:</h6>
+                                    <div className="frete-box">
+                                        <div className="frete">
+                                            <Checkbox sx={{'& .MuiSvgIcon-root': {background: 'gray', borderRadius: '4px'}, '& .MuiCheckbox-label': {zIndex: '55'}}} label={
+                                                <div className='text-frete'>
+                                                    <span>Correios</span>
+                                                    <span className="price">R$ 126,90</span>
+                                                </div>
+                                            } />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div style={{width: '100%', marginTop: '20px', marginBottom: '20px'}}>
                                     <Checkbox sx={{'& .MuiCheckbox-label': {zIndex: '55'}}} label={<>Aceito a <Link sx={{color: 'blue'}} underline="hover" color="inherit" href="/">Política de Privacidade</Link></>} defaultChecked/>
                                 </div>
                             </div>
