@@ -5,6 +5,7 @@ import AlternateEmailIcon from '@mui/icons-material/AlternateEmail';
 import LockIcon from '@mui/icons-material/Lock';
 import { useEffect, useState } from 'react';
 import { login } from '../services/auth';
+import { loginWithGoogle } from '../services/googleAuth';
 import { CookiesProvider, useCookies } from 'react-cookie';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
@@ -12,6 +13,7 @@ import Logo from '../assets/img/logo_coletek_white.png';
 import svgG from '../assets/img/svg/google.svg';
 import svgF from '../assets/img/svg/facebook.svg';
 import { useAuth } from '../context/auth';
+import { GoogleLogin } from '@react-oauth/google';
 
 export default function LoginPage() {
     const router = useRouter();
@@ -35,6 +37,31 @@ export default function LoginPage() {
         }));
     };
 
+    const handleGoogleSuccess = async (credentialResponse: any) => {
+        setIsLoading(true);
+        const response = await loginWithGoogle(credentialResponse.credential);
+        if(response.status == 200) {
+            setUserFn(response.user);
+            setCookie('jwt', response.token);
+            
+            if (redirect === 'checkout') {
+                router.push('/checkout');
+            } else {
+                router.push('/');
+            }
+        } else {
+            setIsLoading(false);
+            if(response.code == 'ERR_NETWORK')
+                setTextError('Erro de conexão com o servidor.\nPor favor, tente novamente mais tarde');
+            else
+                setTextError('Erro ao fazer login com Google');
+        }
+    };
+
+    const handleGoogleError = () => {
+        setTextError('Erro ao fazer login com Google');
+    };
+
     const submit = async (e: any) => {
         e.preventDefault();
         setIsLoading(true);
@@ -43,7 +70,6 @@ export default function LoginPage() {
             setUserFn(response.user);
             setCookie('jwt', response.token);
             
-            // Redirecionar para a página de checkout se o usuário veio de lá
             if (redirect === 'checkout') {
                 router.push('/checkout');
             } else {
@@ -82,26 +108,14 @@ export default function LoginPage() {
                                 <div style={{width: '100%',display: 'flex', alignItems: 'center'}}>
                                     <form id="form-login" action="" style={{width: '100%'}} method="POST">
                                         <div className="form-group d-flex">
-                                            <a href="#" className="login-social google">
-                                                <Image
-                                                    src={svgG}
-                                                    alt=""
-                                                    width={25}
-                                                    height={25}
-                                                />
-                                                <span style={{marginLeft: '7px'}}>Entrar com o Google</span>
-                                            </a>
-                                        </div>
-                                        <div className="form-group d-flex">
-                                            <a href="#" className="login-social facebook">
-                                                <Image
-                                                    src={svgF}
-                                                    alt=""
-                                                    width={25}
-                                                    height={25}
-                                                />
-                                                <span>Entrar com o Facebook</span>
-                                            </a>
+                                            <GoogleLogin
+                                                onSuccess={handleGoogleSuccess}
+                                                onError={handleGoogleError}
+                                                type="standard"
+                                                theme="outline"
+                                                text="signin_with"
+                                                locale="pt"
+                                            />
                                         </div>
                                         <div className="separator-social d-flex">
                                             <div className="separator"></div>

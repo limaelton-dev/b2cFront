@@ -43,30 +43,36 @@ export const generateCardToken = async (cardData) => {
 };
 
 export const prepareCardData = (profile, securityCode) => {
-  // Verifica se o usuário tem cartões cadastrados
-  if (!profile.cards || profile.cards.length === 0) {
-    throw new Error('Nenhum cartão cadastrado');
-  }
-
-  const card = profile.cards[0];
+  // Simplificando para usar sempre o cartão de teste, sem depender da estrutura de profile.cards
   
-  const [expirationMonth, expirationYear] = card.expiration_date.split('/');
-  
+  // Cartão de teste para ambiente de desenvolvimento
   return {
-    cardNumber: card.card_number,
-    cardholderName: card.holder_name,
-    cardExpirationMonth: expirationMonth,
-    cardExpirationYear: expirationYear.length === 2 ? `20${expirationYear}` : expirationYear,
-    securityCode: securityCode,
+    cardNumber: "5031433215406351",
+    cardholderName: "APRO",
+    cardExpirationMonth: "11",
+    cardExpirationYear: "30",
+    securityCode: securityCode || "123",
     identificationType: "CPF",
-    identificationNumber: profile.profilePF?.cpf?.replace(/[^\d]/g, '') || "12345678909"
+    identificationNumber: "12345678909"
   };
+  
+  // Código para produção (descomentar quando estiver pronto)
+  // const [expirationMonth, expirationYear] = card.expiration_date.split('/');
+  // return {
+  //   cardNumber: card.card_number,
+  //   cardholderName: card.holder_name,
+  //   cardExpirationMonth: expirationMonth,
+  //   cardExpirationYear: expirationYear.length === 2 ? `20${expirationYear}` : expirationYear,
+  //   securityCode: securityCode,
+  //   identificationType: "CPF",
+  //   identificationNumber: profile.profilePF?.cpf?.replace(/[^\d]/g, '') || "12345678909"
+  // };
 };
 
 // Função para preparar os dados do pagamento
 export const preparePaymentData = (profile, token, cartTotal, installments = 1) => {
-  // Determina o tipo de cartão (visa, master, amex, etc)
-  const paymentMethodId = profile.cards[0].card_type?.toLowerCase() || "master";
+  // Usando "master" como método de pagamento padrão para testes
+  const paymentMethodId = "master";
   
   return {
     transaction_amount: parseFloat(cartTotal),

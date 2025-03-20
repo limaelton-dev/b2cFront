@@ -285,3 +285,24 @@ ul li {
     font-size: 15px;
     text-decoration: none;
 }
+
+/* Estilos para o botão do Google */
+#login2 .form-group.d-flex {
+    margin: 20px 0px 20px 0px !important;
+}
+
+#login2 .form-group.d-flex > div {
+    width: 250% !important;
+    display: flex !important;
+    justify-content: center !important;
+}
+
+#login2 .form-group.d-flex > div > iframe {
+    width: 100% !important;
+    height: 45px !important;
+    margin: 0 !important;
+}
+#form-login .form-group > div:first-of-type {
+    flex-direction: column;
+}
+
