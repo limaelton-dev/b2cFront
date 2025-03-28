@@ -60,9 +60,9 @@ export const getProdsArr = async (arr) => {
     }
 };
 
-export const getProdsLimit = async (limit, category = '') => {
+export const getProdsLimit = async (limit, category = '', fabricante = '') => {
     try {
-        const response = await axios.get(`${API_URL}/produtos?limit=${limit}${category? '&categoria='+category : ''}`);
+        const response = await axios.get(`${API_URL}/produtos?limit=${limit}${category? '&categoria='+category : ''}${fabricante? '&fabricante='+fabricante : ''}`);
         return response;
     }
     catch (err) {
@@ -81,6 +81,18 @@ export const getProdutosCategoria = async (limit) => {
         return err;
     }
 };
+
+export const getProdutosFabricante = async (limit) => {
+    try {
+        const response = await axios.get(`${API_URL}/produtofabricante?limit=${limit}`);
+        return response;
+    }
+    catch (err) {
+        console.error('Erro ao obter categorias de produtos:', err);
+        return err;
+    }
+};
+
 
 export const getCart = async () => {
     // Se o usuário não estiver autenticado, retornamos um objeto vazio

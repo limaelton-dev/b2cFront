@@ -19,12 +19,12 @@ import Accordion from '@mui/material/Accordion';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
-import { getProdsLimit, getProdutosCategoria } from '../services/produto/page';
+import { getProdsLimit, getProdutosCategoria, getProdutosFabricante } from '../services/produto/page';
 import NoImage from "../assets/img/noimage.png";
 
-const getProdutos = async (limit: number, category) => {
+const getProdutos = async (limit: number, category, fabricante) => {
     try {
-        const resp = await getProdsLimit(limit, category);
+        const resp = await getProdsLimit(limit, category, fabricante);
         const prodFormatted = resp.data.map((produto: any) => ({
             id: produto.id,
             pro_codigo: produto.id,
@@ -63,6 +63,22 @@ const getProdutoCategory = async (limit: number) => {
     }
 };
 
+const getProdutoFabricante = async (limit: number) => {
+    try {
+        const resp = await getProdutosFabricante(limit);
+        const prodFormatted = resp.data.map((produto: any) => ({
+            id: produto.id,
+            fab_codigo: produto.fab_codigo,
+            fab_descricao: produto.fab_descricao,
+        }));
+        return prodFormatted;
+    } catch (error) {
+        console.error('Erro: ', error);
+        return [];
+    }
+};
+
+
 const ProductsPage = () => {
     const [openedCart, setOpenedCart] = useState(false);
     const [loadBtn, setLoadBtn] = useState(false);
@@ -73,7 +89,9 @@ const ProductsPage = () => {
     const [isActiveColorId, setIsActiveColorId] = useState(null)
     const { codigo } = useParams();
     const [categories, setCategories] = useState<{id: number,tpo_codigo: number,tpo_descricao: string}[]>([]);
+    const [fabricantes, setFabricantes] = useState<{id: number,fab_codigo: number,fab_descricao: string}[]>([]);
     const [catSett, setCatSett] = useState([]);
+    const [fabSett, setFabSett] = useState([]);
     const [product, setProduct] = useState({
         pro_codigo: 54862,
         pro_descricao: 'DISCO FLAP 4 1/2" GRÃO 400',
@@ -83,28 +101,34 @@ const ProductsPage = () => {
     const searchParams = useSearchParams();
 
     const category = searchParams.get("categoria");
+    const fabricante = searchParams.get("fabricante");
     const offer = searchParams.get("offer");
 
     useEffect(() => {
         const loadProdutos = async () => {
-            const products = await getProdutos(12,category);
+            const products = await getProdutos(12,category,fabricante);
             setProducts(products);
         };
         const loadCategories = async () => {
             const categories = await getProdutoCategory(10);
             setCategories(categories);
         };
+        const loadFabricantes = async () => {
+            const fabricantes = await getProdutoFabricante(10);
+            setFabricantes(fabricantes);
+        };
         if (category) {
             const categoriasArray = category.split(",").map(Number);
             setCatSett(categoriasArray);
         }
+        loadFabricantes();
         loadProdutos();
         loadCategories()
     },[]);
 
     const handleAtualizaFiltros = async () => {
         const atualizaProdutos = async () => {
-            const products = await getProdutos(12,catSett.join(','));
+            const products = await getProdutos(12,catSett.join(','), fabSett.join(','));
             setProducts(products);
         };
         atualizaProdutos();
@@ -112,6 +136,12 @@ const ProductsPage = () => {
     
     const handleCheckboxChange = (event: React.ChangeEvent<HTMLInputElement>, id: number) => {
         setCatSett((prev) =>
+          event.target.checked ? [...prev, id] : prev.filter((item) => item !== id)
+        );
+    };
+
+    const handleCheckboxChangeFab = (event: React.ChangeEvent<HTMLInputElement>, id: number) => {
+        setFabSett((prev) =>
           event.target.checked ? [...prev, id] : prev.filter((item) => item !== id)
         );
     };
@@ -172,9 +202,11 @@ const ProductsPage = () => {
                                     </AccordionSummary>
                                     <AccordionDetails>
                                         <FormGroup>
-                                            <FormControlLabel control={<Checkbox size='small' />} label="C3tech" />
-                                            <FormControlLabel control={<Checkbox size='small' />} label="Logitech" />
-                                            <FormControlLabel control={<Checkbox size='small' />} label="HP" />
+                                            {fabricantes.map((f) => (
+                                                <>
+                                                    <FormControlLabel key={f.id} control={<Checkbox onChange={(event) => handleCheckboxChangeFab(event, f.id)} checked={fabSett.includes(f.id)} size='small' />} label={f.fab_descricao} />
+                                                </>
+                                            ))}
                                         </FormGroup>
                                     </AccordionDetails>
                                 </Accordion>
