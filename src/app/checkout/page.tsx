@@ -860,50 +860,67 @@ const CheckoutPage = () => {
     };
 
     const changeStep = (newStep) => {
-        if(step == 1) {
+        // Permite navegação livre entre etapas 1 e 2
+        if (newStep === 1 || newStep === 2) {
+            setStep(newStep);
+            return;
+        }
+        
+        // Se estiver tentando acessar o pagamento (etapa 3), validar todos os campos necessários
+        if (newStep === 3) {
+            // Validar Dados Pessoais (etapa 1)
             if(tipoPessoa == '1') {
                 // Verificando se há campos vazios ou se há erros nos dados
                 if(!nameUser || !emailUser || !cpf || !telCelular || errorCpf || errorEmail) {
-                    showToast('Por favor, preencha todos os campos corretamente', 'error');
+                    showToast('Por favor, preencha todos os campos de dados pessoais corretamente', 'error');
+                    setStep(1); // Redireciona para etapa 1 para corrigir
                     return;
                 }
                 
                 // Validar o telefone antes de avançar
                 if(!validaTelefone(telCelular)) {
                     showToast('Por favor, verifique o número de telefone', 'error');
+                    setStep(1);
                     return;
                 }
                 
                 if(!isAuthenticated && (!password || !confirmPassword)) {
                     showToast('Por favor, preencha os campos de senha', 'error');
+                    setStep(1);
                     return;
                 }
             }
             else {
                 if(!nameUser || !emailUser || !cnpj || !telCelular || !razaoSocial || !inscEstadual) {
-                    showToast('Por favor, preencha todos os campos corretamente', 'error');
+                    showToast('Por favor, preencha todos os campos de dados pessoais corretamente', 'error');
+                    setStep(1);
                     return;
                 }
                 
                 // Validar o telefone antes de avançar
                 if(!validaTelefone(telCelular)) {
                     showToast('Por favor, verifique o número de telefone', 'error');
+                    setStep(1);
                     return;
                 }
                 
                 if(!isAuthenticated && (!password || !confirmPassword)) {
                     showToast('Por favor, preencha os campos de senha', 'error');
+                    setStep(1);
                     return;
                 }
             }
-        }
-        if(step == 2 && newStep != 1) {
+
+            // Validar Endereço (etapa 2)
             if(!cepNumber || !numero || !endereco || !estado || !cidade || !bairro) {
                 showToast('Por favor, preencha todos os campos de endereço', 'error');
+                setStep(2); // Redireciona para etapa 2 para corrigir
                 return;
             }
+            
+            // Se passou por todas as validações, avançar para pagamento
+            setStep(newStep);
         }
-        setStep(newStep);
     }
 
     const changePassword = (e) => {
@@ -1068,8 +1085,18 @@ const CheckoutPage = () => {
                 </div>
                 <div className="ship-pay d-flex justify-content-between flex-wrap">
                     <div className="data-person content-ship-pay">
-                        <span className='title-section'>
-                            Dados Pessoais
+                        <span className='title-section' style={{ 
+                            cursor: 'pointer', 
+                            fontWeight: step === 1 ? 'bold' : 'normal',
+                            color: step === 1 ? '#0d6efd' : 'inherit',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            padding: '8px 0',
+                            borderBottom: step === 1 ? '2px solid #0d6efd' : 'none',
+                            transition: 'all 0.3s ease'
+                        }} onClick={() => changeStep(1)}>
+                            Dados Pessoais {step !== 1 && <span style={{ fontSize: '12px', marginLeft: '4px' }}>(clique para editar)</span>}
                         </span>
                         <form action="" className='d-flex justify-content-between flex-wrap' style={{position: 'relative'}}>
                             {loadingDadosPessoais ? (
@@ -1221,8 +1248,18 @@ const CheckoutPage = () => {
                         </form>
                     </div>
                     <div className="shipping content-ship-pay px-3">
-                        <span className='title-section'>
-                            Entrega
+                        <span className='title-section' style={{ 
+                            cursor: 'pointer', 
+                            fontWeight: step === 2 ? 'bold' : 'normal',
+                            color: step === 2 ? '#0d6efd' : 'inherit',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            padding: '8px 0',
+                            borderBottom: step === 2 ? '2px solid #0d6efd' : 'none',
+                            transition: 'all 0.3s ease'
+                        }} onClick={() => changeStep(2)}>
+                            Entrega {step !== 2 && <span style={{ fontSize: '12px', marginLeft: '4px' }}>(clique para editar)</span>}
                         </span>
                         <form action="" className='d-flex justify-content-center flex-wrap position-relative'>
                             <button type='button' className='button-change-checkout' onClick={() => changeStep(2)} style={{display: step == 2 ? 'none' : 'block'}}>
@@ -1306,7 +1343,17 @@ const CheckoutPage = () => {
                         </form>
                     </div>
                     <div className="payment content-ship-pay px-5">
-                        <span className='title-section'>
+                        <span className='title-section' style={{ 
+                            cursor: 'pointer', 
+                            fontWeight: step === 3 ? 'bold' : 'normal',
+                            color: step === 3 ? '#0d6efd' : 'inherit',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            padding: '8px 0',
+                            borderBottom: step === 3 ? '2px solid #0d6efd' : 'none',
+                            transition: 'all 0.3s ease'
+                        }} onClick={() => changeStep(3)}>
                             Pagamento
                         </span>
                         <div className="position-relative d-flex flex-wrap" style={{ width: '100%', height: '100%' }}>
