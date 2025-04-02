@@ -17,6 +17,7 @@ import { AuthContextType, User } from './interfaces/interfaces';
 import { Link } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import { logout } from './services/auth';
+import { getProdutosFabricante } from './services/produto/page';
 
 const URL = process.env.NEXT_PUBLIC_URL || '';
 export default function Header({ cartOpened, onCartToggle }) {
@@ -25,6 +26,7 @@ export default function Header({ cartOpened, onCartToggle }) {
     const { cartItems } = useCart();
     const [debounceTimeout, setDebounceTimeout] = useState<NodeJS.Timeout | null>(null);
     const [results, setResults] = useState<any[]>([]);
+    const [fabricantes, setFabricantes] = useState<{id: number,fab_codigo: number,fab_descricao: string}[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
 
     
@@ -36,6 +38,19 @@ export default function Header({ cartOpened, onCartToggle }) {
             setResults([]);
         }
     };
+
+    useEffect(() => {
+        async function fabricantes() {
+            const resp = await getProdutosFabricante(10);
+            const prodFormatted = resp.data.map((produto: any) => ({
+                id: produto.id,
+                fab_codigo: produto.fab_codigo,
+                fab_descricao: produto.fab_descricao,
+            }));
+            setFabricantes(prodFormatted);
+        }
+        fabricantes();
+    }, [])
 
     useEffect(() => {
         if (searchTerm.length < 4) return;
@@ -192,33 +207,42 @@ export default function Header({ cartOpened, onCartToggle }) {
                     </div>
                     <div className="row d-flex">
                         <div className="categories d-flex justify-content-between">
-                            <div className="menu" style={{color: '#1976d2'}}>
+                            <div className="menu" style={{color: '#1976d2', position: 'relative'}}>
                                 <MenuIcon sx={{marginRight: '5px', color: "#1976d2"}} />
                                 Departamentos
+                                <div className='departamento-box'>
+                                    <ul>
+                                        {fabricantes.map((f) => (
+                                            <li>
+                                                <a href={`/produtos?limit=12&fabricante=${f.fab_codigo}&page=1`}>{f.fab_descricao}</a>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
                             </div>
                             <ul>
                                 <li>
-                                    <Link underline="hover" color="inherit" href="/produtos?categoria=1">
+                                    <Link underline="hover" color="inherit" href="/produtos?categoria=1&page=1">
                                         Gabinete
                                     </Link>
                                 </li>
                                 <li>
-                                    <Link underline="hover" color="inherit" href="/produtos?categoria=2">
+                                    <Link underline="hover" color="inherit" href="/produtos?categoria=2&page=1">
                                         Mouse
                                     </Link>
                                 </li>
                                 <li>
-                                    <Link underline="hover" color="inherit" href="/produtos?categoria=7">
+                                    <Link underline="hover" color="inherit" href="/produtos?categoria=7&page=1">
                                         Teclado
                                     </Link>
                                 </li>
                                 <li>
-                                    <Link underline="hover" color="inherit" href="/produtos?categoria=6">
+                                    <Link underline="hover" color="inherit" href="/produtos?categoria=6&page=1">
                                         Acessórios
                                     </Link>
                                 </li>
                                 <li>
-                                    <Link underline="hover" color="inherit" href="/produtos?categoria=5">
+                                    <Link underline="hover" color="inherit" href="/produtos?categoria=5&page=1">
                                         Fonte de Alimentação
                                     </Link>
                                 </li>

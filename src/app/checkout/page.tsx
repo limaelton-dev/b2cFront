@@ -263,6 +263,13 @@ const CheckoutPage = () => {
                         setCidade(endereco.city || '');
                         setEstado(endereco.state || '');
                         setDisabledAddress(true);
+                        const frete = await valorFrete(endereco.postal_code, user.profile_id);
+                        if(frete) {
+                            setFreteNome('PAC');
+                            setFretePreco(frete.data.data.totalPreco);
+                            setPrazo(frete.data.data.maiorPrazo);
+                        }
+
                     }
 
                     // Verificar se há cartões antes de acessar
