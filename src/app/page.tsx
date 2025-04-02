@@ -18,13 +18,12 @@ import { useToastSide } from './context/toastSide';
 const getProdutosPage = async (limit: number) => {
     try {
         const resp = await getProdsLimit(limit);
-        const prodFormatted = resp.data.map((produto: any) => ({
+        const prodFormatted = resp.data.items.map((produto: any) => ({
             id: produto.id,
             pro_codigo: produto.pro_codigo,
             pro_descricao: produto.pro_descricao,
             pro_desc_tecnica: produto.pro_desc_tecnica,
             pro_precovenda: produto.pro_precovenda,
-            pro_valorultimacompra: produto.pro_valorultimacompra,
             imagens: produto.imagens,
             name: produto.pro_desc_tecnica,
             img: produto.imagens && produto.imagens.length > 0 ? produto.imagens[0].url : "",

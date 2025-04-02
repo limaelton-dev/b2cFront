@@ -12,23 +12,25 @@ import { getProdsLimit, getProduto } from '../../services/produto/page';
 import Cart from '../../components/cart';
 import Header from '../../header';
 import { useCart } from '../../context/cart';
-import { Alert, Snackbar, Slide, Button, CircularProgress, Typography } from '@mui/material';
+import { Alert, Snackbar, Slide, Button, CircularProgress, Typography, TextField, Checkbox } from '@mui/material';
 import { useToastSide } from '../../context/toastSide';
 import ScrollTopButton from '../../components/scrollTopButton';
 import useScrollToDiv from '../../components/useScrollToDiv';
 import Footer from '../../footer';
 import { Carousel } from 'primereact/carousel';
+import ReactInputMask from 'react-input-mask';
+import axios from 'axios';
+import { valorFreteDeslogado } from '../../services/checkout';
 
 const getProdutosPage = async (limit: number) => {
     try {
         const resp = await getProdsLimit(limit);
-        const prodFormatted = resp.data.map((produto: any) => ({
+        const prodFormatted = resp.data.items.map((produto: any) => ({
             id: produto.id,
             pro_codigo: produto.pro_codigo,
             pro_descricao: produto.pro_descricao,
             pro_desc_tecnica: produto.pro_desc_tecnica,
             pro_precovenda: produto.pro_precovenda,
-            pro_valorultimacompra: produto.pro_valorultimacompra,
             imagens: produto.imagens,
             name: produto.pro_desc_tecnica,
             img: produto.imagens && produto.imagens.length > 0 ? produto.imagens[0].url : "",
@@ -46,14 +48,19 @@ const ProductPage = () => {
     const offsetTop = useState(0);
     const scrollTo = useScrollToDiv();
     const { showToast } = useToastSide();
-    const { addToCart, cartItems } = useCart();
+    const { addToCart, cartItems, cartData } = useCart();
     const [loadBtn, setLoadBtn] = useState(false);
     const [isPromoProd, setIsPromoProd] = useState(false);
     const [selectedImg, setSelectedImg] = useState('');
+    const [cep, setCep] = useState('');
     const [isActiveColorId, setIsActiveColorId] = useState(null)
     const [loadingProduct, setLoadingProduct] = useState<number | null>(null);
     const [prodsRelation, setProdsRelation] = useState<object[]>([]);
+    const [loadingCep, setLoadingCep] = useState(false);
     const { codigo } = useParams();
+    const [freteNome, setFreteNome] = useState('');
+    const [fretePreco, setFretePreco] = useState(0);
+    const [prazo, setPrazo] = useState(0);
     const [product, setProduct] = useState({
         id: 54862,
         pro_descricao: 'DISCO FLAP 4 1/2" GRÃO 400',
@@ -226,6 +233,40 @@ const ProductPage = () => {
         setSelectedImg(product.imagens.find((imagem) => imagem.id === id).url)
     }
 
+    const buscarEndereco = async (cep: string) => {
+        if (cep.length === 9) {
+            setLoadingCep(true);
+            try {
+                const response = await axios.get(`https://viacep.com.br/ws/${cep}/json/`);
+                const data = response.data;
+                setTimeout(async () => {
+                    if (data.erro) {
+                        alert('CEP não encontrado!');
+                        setLoadingCep(false);
+                    } else {
+                        const dadosProdutos = cartData.map(r => ({produto_id: r.id, quantity: r.qty}));
+                        const frete = await valorFreteDeslogado(cep, dadosProdutos);
+                        if(frete) {
+                            setFreteNome('PAC');
+                            setFretePreco(frete.data.data.totalPreco);
+                            setPrazo(frete.data.data.maiorPrazo);
+                        }
+                    }
+                    setLoadingCep(false);
+                },800)
+            } catch (error) {
+                alert('Erro ao buscar o endereço.');
+                setLoadingCep(false);
+            }
+        }
+    };
+
+    const handleChangeCep = (e) => {
+        setCep(e.target.value);
+        if (cep.length === 9) 
+            buscarEndereco(cep);
+    }
+
     return (
     <>
         <Cart cartOpened={openedCart} onCartToggle={setOpenedCart}/>
@@ -344,6 +385,43 @@ const ProductPage = () => {
                             </div> */}
                             <hr />
                             <div className="content-price d-flex flex-direction-column align-items-center">
+                                <h6>Calcule o Frete:</h6>
+                                <div className="frete" style={{marginBottom: '15px'}}>
+                                    <div className={'d-flex justify-content-center align-items-center'} style={{marginTop: '20px',  marginBottom: '8px'}}>
+                                    <ReactInputMask
+                                        mask="99999-999"
+                                        value={cep}
+                                        onChange={handleChangeCep}
+                                        maskChar=""
+                                    >
+                                        {(inputProps) => (
+                                            <TextField
+                                            {...inputProps}
+                                            label="Digite o CEP"
+                                            variant="standard"
+                                            sx={{
+                                                '& .MuiInputBase-input::placeholder': {
+                                                    fontSize: '23px', 
+                                                    fontWeight: 'bold',
+                                                },width: '90px',  marginBottom: '8px'
+                                            }}
+                                            />
+                                        )}
+                                    </ReactInputMask>
+                                    </div>
+                                    {freteNome && 
+                                        <>
+                                            <div className="frete-box">
+                                                <div className="frete">
+                                                    <div className='text-frete'>
+                                                        <span>{freteNome} {'(até '+prazo+' dias úteis)'} </span>
+                                                        <span className="price">R$ {fretePreco.toFixed(2).replace('.',',')}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </>
+                                    }
+                                </div>
                                 <span className="price text-center">
                                     R$ {Number(product.pro_precovenda).toFixed(2).replace('.',',')}
                                 </span>

@@ -252,17 +252,17 @@ header .ofertas-link:hover {
     width: 100%;
 }
 .departamento-box ul li a {
-    color: black;
-    text-align: center;
+    text-align: left;
     width: 100%;
     display: flex;
     margin: 0px;
-    padding: 5px 0px;
-    justify-content: center;
+    padding: 8px 0px 8px 10px;
+    justify-content: flex-start;
     text-decoration: none;
     transition: all ease 0.15s;
+    color: #3b73aa;
 }
 .departamento-box ul li a:hover {
     text-decoration: underline;
-    background-color: #c5c5c5;
+    background-color: #b3ceff;
 }
