@@ -140,9 +140,9 @@ const ProductsPage = () => {
         );
     };
 
-    const handleCheckboxChangeFab = (event: React.ChangeEvent<HTMLInputElement>, id: number) => {
+    const handleCheckboxChangeFab = (event: React.ChangeEvent<HTMLInputElement>, fab_codigo: number) => {
         setFabSett((prev) =>
-          event.target.checked ? [...prev, id] : prev.filter((item) => item !== id)
+          event.target.checked ? [...prev, fab_codigo] : prev.filter((item) => item !== fab_codigo)
         );
     };
     
@@ -204,7 +204,7 @@ const ProductsPage = () => {
                                         <FormGroup>
                                             {fabricantes.map((f) => (
                                                 <>
-                                                    <FormControlLabel key={f.id} control={<Checkbox onChange={(event) => handleCheckboxChangeFab(event, f.id)} checked={fabSett.includes(f.id)} size='small' />} label={f.fab_descricao} />
+                                                    <FormControlLabel key={f.fab_codigo} control={<Checkbox onChange={(event) => handleCheckboxChangeFab(event, f.fab_codigo)} checked={fabSett.includes(f.fab_codigo)} size='small' />} label={f.fab_descricao} />
                                                 </>
                                             ))}
                                         </FormGroup>

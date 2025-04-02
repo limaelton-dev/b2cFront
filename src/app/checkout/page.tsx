@@ -681,7 +681,6 @@ const CheckoutPage = () => {
                             const frete = await valorFrete(cep, profileId);
                             if(frete) {
                                 setFreteNome('PAC');
-                                console.log('Aquiiiiii ÓO o freteeee',frete.data);
                                 setFretePreco(frete.data.data.totalPreco);
                                 setPrazo(frete.data.data.maiorPrazo);
                             }
@@ -691,7 +690,6 @@ const CheckoutPage = () => {
                             const frete = await valorFreteDeslogado(cep, dadosProdutos);
                             if(frete) {
                                 setFreteNome('PAC');
-                                console.log('Aquiiiiii ÓO o freteeee',frete.data);
                                 setFretePreco(frete.data.data.totalPreco);
                                 setPrazo(frete.data.data.maiorPrazo);
                             }
