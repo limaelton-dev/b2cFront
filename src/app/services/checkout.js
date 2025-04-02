@@ -109,9 +109,25 @@ export const addPhone = async (phoneData) => {
 export const valorFrete = async (cep, profileId) => {
     try {
         const headers = {
-            Authorization: `Bearer ${getToken()}`
+            Authorization: `Bearer ${getToken()}`,
+            'Content-Type': 'application/json'
         };
-        const response = await axios.get(`${API_URL}/api/logistica/carrinho/frete?cepDestino=${cep.replace(/\D/, '')}&profileId=${profileId}`, { headers });
+        
+        // Obtendo os dados do carrinho do localStorage com a chave correta
+        const cartDataStr = localStorage.getItem('cart');
+        const cartData = cartDataStr ? JSON.parse(cartDataStr) : [];
+        
+        // Formatando os dados do carrinho para a API
+        const cart_data = cartData.map(item => ({
+            produto_id: item.id || item.produto_id,
+            quantity: item.qty || item.quantity || 1
+        }));
+        
+        const response = await axios.post(
+            `${API_URL}/api/logistica/carrinho/frete?cepDestino=${cep.replace(/\D/g, '')}&profileId=${profileId}`,
+            { cart_data },
+            { headers }
+        );
         return response;
     }
     catch (err) {
@@ -123,9 +139,23 @@ export const valorFrete = async (cep, profileId) => {
 export const valorFreteDeslogado = async (cep, dados) => {
     try {
         const headers = {
-            Authorization: `Bearer ${getToken()}`
+            Authorization: `Bearer ${getToken()}`,
+            'Content-Type': 'application/json'
         };
-        const response = await axios.get(`${API_URL}/api/logistica/carrinho/frete?cepDestino=${cep.replace(/\D/, '')}`, dados, { headers });
+        
+        // Se dados já estiver formatado corretamente, use-o. Caso contrário, construa o cart_data
+        const cart_data = Array.isArray(dados) 
+            ? dados.map(item => ({
+                produto_id: item.id || item.produto_id,
+                quantity: item.qty || item.quantity || 1
+              }))
+            : dados;
+        
+        const response = await axios.post(
+            `${API_URL}/api/logistica/carrinho/frete?cepDestino=${cep.replace(/\D/g, '')}`,
+            { cart_data },
+            { headers }
+        );
         return response;
     }
     catch (err) {

@@ -693,7 +693,11 @@ const CheckoutPage = () => {
                             }
                         }
                         else {
-                            const dadosProdutos = cartData.map(r => ({produto_id: r.id, quantity: r.qty}));
+                            // Formatar os dados conforme o formato esperado pela API
+                            const dadosProdutos = cartData.map(r => ({
+                                produto_id: r.id || r.produto_id,
+                                quantity: r.qty || r.quantity || 1
+                            }));
                             const frete = await valorFreteDeslogado(cep, dadosProdutos);
                             if(frete) {
                                 setFreteNome('PAC');
