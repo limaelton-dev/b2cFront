@@ -1039,7 +1039,7 @@ const CheckoutPage = () => {
                                         <tr>
                                             <td>Entrega</td>
                                             <td>R$</td>
-                                            <td>{shippingCost.toFixed(2).toString().replace('.',',')}</td>
+                                            <td>{fretePreco ? fretePreco.toFixed(2).replace('.',',') : '0,00'}</td>
                                         </tr>
                                         <tr>
                                             <th>Total</th>
