@@ -60,9 +60,25 @@ export const getProdsArr = async (arr) => {
     }
 };
 
-export const getProdsLimit = async (limit, category = '', fabricante = '') => {
+export const getProdsLimit = async (limit = 12, category = '', fabricante = '', page = 1, timestamp = null) => {
     try {
-        const response = await axios.get(`${API_URL}/produtos?limit=${limit}${category? '&categoria='+category : ''}${fabricante? '&fabricante='+fabricante : ''}`);
+        const url = `${API_URL}/produtos?limit=${limit}&page=${page}${category? '&categoria='+category : ''}${fabricante? '&fabricante='+fabricante : ''}${timestamp ? '&_t='+timestamp : ''}`;
+        
+        const response = await axios.get(url);
+        
+        // Se a resposta for um array, formatamos para o formato esperado
+        if (Array.isArray(response.data)) {
+            const formattedResponse = {
+                data: {
+                    items: response.data,
+                    totalItems: response.data.length,
+                    totalPages: 1,
+                    currentPage: page
+                }
+            };
+            return formattedResponse;
+        }
+        
         return response;
     }
     catch (err) {
