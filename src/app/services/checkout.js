@@ -105,3 +105,31 @@ export const addPhone = async (phoneData) => {
         throw err; // Lançar o erro para ser tratado pelo chamador
     }
 }
+
+export const valorFrete = async (cep, profileId) => {
+    try {
+        const headers = {
+            Authorization: `Bearer ${getToken()}`
+        };
+        const response = await axios.get(`${API_URL}/api/logistica/carrinho/frete?cepDestino=${cep.replace(/\D/, '')}&profileId=${profileId}`, { headers });
+        return response;
+    }
+    catch (err) {
+        console.error('Erro:', err);
+        return err;
+    }
+}
+
+export const valorFreteDeslogado = async (cep, dados) => {
+    try {
+        const headers = {
+            Authorization: `Bearer ${getToken()}`
+        };
+        const response = await axios.get(`${API_URL}/api/logistica/carrinho/frete?cepDestino=${cep.replace(/\D/, '')}`, dados, { headers });
+        return response;
+    }
+    catch (err) {
+        console.error('Erro:', err);
+        return err;
+    }
+}

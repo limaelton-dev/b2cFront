@@ -43,7 +43,9 @@ export interface ToastSideContextType {
 export interface User {
     id: number,
     name: string,
-    email: string
+    email: string,
+    username?: string,
+    profile_id?: number
 }
 
 export interface CouponShow {

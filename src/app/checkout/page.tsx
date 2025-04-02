@@ -21,7 +21,7 @@ import { PaymentIcon } from 'react-svg-credit-card-payment-icons';
 import { useToastSide } from '../context/toastSide';
 import { getProfileUser, getUserPersonalData } from '../services/profile';
 import { processPayment, validatePayment } from '../services/payment';
-import { cpfValidation, emailVerify, addPhone } from '../services/checkout';
+import { cpfValidation, emailVerify, addPhone, valorFrete, valorFreteDeslogado } from '../services/checkout';
 import { generateCardToken, prepareCardData, preparePaymentData } from '../services/mercadoPago';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import LocalAtmIcon from '@mui/icons-material/LocalAtm';
@@ -81,6 +81,7 @@ const CheckoutPage = () => {
     const { showToast } = useToastSide();
     const { statusMessage, activeCoupon, coupon, setCouponFn } = useCoupon();
     const [cookies, setCookie] = useCookies(['jwt']);
+    const [profileId, setProfileId] = useState(0);
     const [tipoPessoa, setTipoPessoa] = useState('1');
     const [tipoCompra, setTipoCompra] = useState('1');
     const [cardNumber, setCardNumber] = useState('');
@@ -127,6 +128,9 @@ const CheckoutPage = () => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [errorTelefone, setErrorTelefone] = useState(false);
     const [errorTelefoneMessage, setErrorTelefoneMessage] = useState('');
+    const [freteNome, setFreteNome] = useState('');
+    const [fretePreco, setFretePreco] = useState(0);
+    const [prazo, setPrazo] = useState(0);
     
 
     // Verificar se o usuário está logado
@@ -136,6 +140,7 @@ const CheckoutPage = () => {
             setNameUser(user.name);
             setEmailUser(user.email);
             setDisabledUser(true);
+            setProfileId(user.profile_id);
         }
     }, [user]);
 
@@ -672,10 +677,30 @@ const CheckoutPage = () => {
                         alert('CEP não encontrado!');
                         setLoadingCep(false);
                     } else {
+                        if(user.name) {
+                            const frete = await valorFrete(cep, profileId);
+                            if(frete) {
+                                setFreteNome('PAC');
+                                console.log('Aquiiiiii ÓO o freteeee',frete.data);
+                                setFretePreco(frete.data.data.totalPreco);
+                                setPrazo(frete.data.data.maiorPrazo);
+                            }
+                        }
+                        else {
+                            const dadosProdutos = cartData.map(r => ({produto_id: r.id, quantity: r.qty}));
+                            const frete = await valorFreteDeslogado(cep, dadosProdutos);
+                            if(frete) {
+                                setFreteNome('PAC');
+                                console.log('Aquiiiiii ÓO o freteeee',frete.data);
+                                setFretePreco(frete.data.data.totalPreco);
+                                setPrazo(frete.data.data.maiorPrazo);
+                            }
+                        }
                         setEndereco(data.logradouro || '');
                         setBairro(data.bairro || '');
                         setCidade(data.localidade || '');
                         setEstado(data.uf || '');
+
                     }
                     setLoadingCep(false);
                 },800)
@@ -723,7 +748,7 @@ const CheckoutPage = () => {
     };
 
     useEffect(() => {
-        if (cpf.length === 14) 
+        if (cpf.length === 14 && !isAuthenticated) 
             validaCpf(cpf);
     }, [cpf])
 
@@ -1245,17 +1270,21 @@ const CheckoutPage = () => {
                                         <TextField sx={{width: '42%',  marginBottom: '8px'}} value={bairro} onChange={changeBairro} label="Bairro*" variant="standard" />
                                     </Box>
                                     <div className="fretes">
-                                        <h6 style={{marginTop: '10px'}}>Escolha o frete:</h6>
-                                        <div className="frete-box">
-                                            <div className="frete">
-                                                <Checkbox sx={{'& .MuiSvgIcon-root': {background: 'gray', borderRadius: '4px'}, '& .MuiCheckbox-label': {zIndex: '55'}}} label={
-                                                    <div className='text-frete'>
-                                                        <span>Correios</span>
-                                                        <span className="price">R$ 126,90</span>
+                                        {freteNome && 
+                                            <>
+                                                <h6 style={{marginTop: '10px'}}>Escolha o frete:</h6>
+                                                <div className="frete-box">
+                                                    <div className="frete">
+                                                        <Checkbox sx={{'& .MuiSvgIcon-root': {background: 'gray', borderRadius: '4px'}, '& .MuiCheckbox-label': {zIndex: '55'}}} label={
+                                                            <div className='text-frete'>
+                                                                <span>{freteNome} {'(até '+prazo+' dias úteis)'} </span>
+                                                                <span className="price">R$ {fretePreco.toFixed(2).replace('.',',')}</span>
+                                                            </div>
+                                                        } />
                                                     </div>
-                                                } />
-                                            </div>
-                                        </div>
+                                                </div>
+                                            </>
+                                        }
                                     </div>
                                     <Button 
                                         variant="contained" 
