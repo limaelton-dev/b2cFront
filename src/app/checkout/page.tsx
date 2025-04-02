@@ -141,6 +141,9 @@ const CheckoutPage = () => {
             setEmailUser(user.email);
             setDisabledUser(true);
             setProfileId(user.profile_id);
+            // Desabilitar todos os campos de dados pessoais quando o usuário está logado
+            setDisabledUserPF(true);
+            setDisabledUserPJ(true);
         }
     }, [user]);
 
@@ -243,13 +246,15 @@ const CheckoutPage = () => {
     
                     if (resultPessoa.profile_type === 'PF') {
                         setCpf(resultPessoa.cpf);
-                        setDisabledUserPF(false);
+                        setDisabledUserPF(true); // Campo CPF não editável para usuário logado
+                        setTipoPessoa('1');
                     } 
                     if (resultPessoa.profile_type === 'PJ') {
                         setCnpj(resultPessoa.cnpj);
                         setRazaoSocial(resultPessoa.trading_name);
                         setInscEstadual(resultPessoa.state_registration);
                         setDisabledUserPJ(true);
+                        setTipoPessoa('2');
                     }
 
                     // Verificar se há endereços antes de acessar
@@ -300,7 +305,10 @@ const CheckoutPage = () => {
     }
     
     const changeRadioTipoPessoa = (e) => {
-        setTipoPessoa(e.target.value)
+        // Não permitir alteração do tipo de pessoa quando o usuário está logado
+        if (!isAuthenticated) {
+            setTipoPessoa(e.target.value)
+        }
     }
 
     const changeRadioTipoCompra = (e) => {
@@ -693,7 +701,11 @@ const CheckoutPage = () => {
                             }
                         }
                         else {
-                            const dadosProdutos = cartData.map(r => ({produto_id: r.id, quantity: r.qty}));
+                            // Formatar os dados conforme o formato esperado pela API
+                            const dadosProdutos = cartData.map(r => ({
+                                produto_id: r.id || r.produto_id,
+                                quantity: r.qty || r.quantity || 1
+                            }));
                             const frete = await valorFreteDeslogado(cep, dadosProdutos);
                             if(frete) {
                                 setFreteNome('PAC');
@@ -860,50 +872,67 @@ const CheckoutPage = () => {
     };
 
     const changeStep = (newStep) => {
-        if(step == 1) {
+        // Permite navegação livre entre etapas 1 e 2
+        if (newStep === 1 || newStep === 2) {
+            setStep(newStep);
+            return;
+        }
+        
+        // Se estiver tentando acessar o pagamento (etapa 3), validar todos os campos necessários
+        if (newStep === 3) {
+            // Validar Dados Pessoais (etapa 1)
             if(tipoPessoa == '1') {
                 // Verificando se há campos vazios ou se há erros nos dados
                 if(!nameUser || !emailUser || !cpf || !telCelular || errorCpf || errorEmail) {
-                    showToast('Por favor, preencha todos os campos corretamente', 'error');
+                    showToast('Por favor, preencha todos os campos de dados pessoais corretamente', 'error');
+                    setStep(1); // Redireciona para etapa 1 para corrigir
                     return;
                 }
                 
                 // Validar o telefone antes de avançar
                 if(!validaTelefone(telCelular)) {
                     showToast('Por favor, verifique o número de telefone', 'error');
+                    setStep(1);
                     return;
                 }
                 
                 if(!isAuthenticated && (!password || !confirmPassword)) {
                     showToast('Por favor, preencha os campos de senha', 'error');
+                    setStep(1);
                     return;
                 }
             }
             else {
                 if(!nameUser || !emailUser || !cnpj || !telCelular || !razaoSocial || !inscEstadual) {
-                    showToast('Por favor, preencha todos os campos corretamente', 'error');
+                    showToast('Por favor, preencha todos os campos de dados pessoais corretamente', 'error');
+                    setStep(1);
                     return;
                 }
                 
                 // Validar o telefone antes de avançar
                 if(!validaTelefone(telCelular)) {
                     showToast('Por favor, verifique o número de telefone', 'error');
+                    setStep(1);
                     return;
                 }
                 
                 if(!isAuthenticated && (!password || !confirmPassword)) {
                     showToast('Por favor, preencha os campos de senha', 'error');
+                    setStep(1);
                     return;
                 }
             }
-        }
-        if(step == 2 && newStep != 1) {
+
+            // Validar Endereço (etapa 2)
             if(!cepNumber || !numero || !endereco || !estado || !cidade || !bairro) {
                 showToast('Por favor, preencha todos os campos de endereço', 'error');
+                setStep(2); // Redireciona para etapa 2 para corrigir
                 return;
             }
+            
+            // Se passou por todas as validações, avançar para pagamento
+            setStep(newStep);
         }
-        setStep(newStep);
     }
 
     const changePassword = (e) => {
@@ -1068,8 +1097,18 @@ const CheckoutPage = () => {
                 </div>
                 <div className="ship-pay d-flex justify-content-between flex-wrap">
                     <div className="data-person content-ship-pay">
-                        <span className='title-section'>
-                            Dados Pessoais
+                        <span className='title-section' style={{ 
+                            cursor: 'pointer', 
+                            fontWeight: step === 1 ? 'bold' : 'normal',
+                            color: step === 1 ? '#0d6efd' : 'inherit',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            padding: '8px 0',
+                            borderBottom: step === 1 ? '2px solid #0d6efd' : 'none',
+                            transition: 'all 0.3s ease'
+                        }} onClick={() => changeStep(1)}>
+                            Dados Pessoais {step !== 1 && <span style={{ fontSize: '12px', marginLeft: '4px' }}>(clique para editar)</span>}
                         </span>
                         <form action="" className='d-flex justify-content-between flex-wrap' style={{position: 'relative'}}>
                             {loadingDadosPessoais ? (
@@ -1097,11 +1136,11 @@ const CheckoutPage = () => {
                                     name="row-radio-buttons-group"
                                     sx={{justifyContent: 'space-between', width: '100%'}}
                                 >
-                                    <FormControlLabel value="1" sx={{margin: '0px'}} control={<Radio />} onClick={changeRadioTipoPessoa} label="Pessoa Física" />
-                                    <FormControlLabel value="2" sx={{margin: '0px'}} control={<Radio />} onClick={changeRadioTipoPessoa} label="Pessoa Jurídica" />
+                                    <FormControlLabel value="1" sx={{margin: '0px'}} control={<Radio disabled={isAuthenticated} />} onClick={changeRadioTipoPessoa} label="Pessoa Física" />
+                                    <FormControlLabel value="2" sx={{margin: '0px'}} control={<Radio disabled={isAuthenticated} />} onClick={changeRadioTipoPessoa} label="Pessoa Jurídica" />
                                 </RadioGroup>
-                                <TextField sx={{width: '100%',  marginBottom: '12px'}} onChange={changeName} value={nameUser} disabled={disabledUser && false} label="Nome Completo*" variant="standard" />
-                                <TextField sx={{width: '100%',  marginBottom: '12px'}} onChange={changeEmail} error={errorEmail} value={emailUser} disabled={disabledUser && false} onBlur={verificaEmail} helperText={errorEmail ? "Email já cadastrado" : ''} label="Email*" variant="standard" />
+                                <TextField sx={{width: '100%',  marginBottom: '12px'}} onChange={changeName} value={nameUser} disabled={disabledUser} label="Nome Completo*" variant="standard" />
+                                <TextField sx={{width: '100%',  marginBottom: '12px'}} onChange={changeEmail} error={errorEmail} value={emailUser} disabled={disabledUser} onBlur={verificaEmail} helperText={errorEmail ? "Email já cadastrado" : ''} label="Email*" variant="standard" />
                                 {!isAuthenticated && (
                                     <>
                                         <TextField 
@@ -1132,6 +1171,7 @@ const CheckoutPage = () => {
                                     onChange={changeCelular}
                                     onBlur={() => validaTelefone(telCelular)}
                                     maskChar=""
+                                    disabled={isAuthenticated}
                                 >
                                     {(inputProps) => (
                                         <TextField
@@ -1221,8 +1261,18 @@ const CheckoutPage = () => {
                         </form>
                     </div>
                     <div className="shipping content-ship-pay px-3">
-                        <span className='title-section'>
-                            Entrega
+                        <span className='title-section' style={{ 
+                            cursor: 'pointer', 
+                            fontWeight: step === 2 ? 'bold' : 'normal',
+                            color: step === 2 ? '#0d6efd' : 'inherit',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            padding: '8px 0',
+                            borderBottom: step === 2 ? '2px solid #0d6efd' : 'none',
+                            transition: 'all 0.3s ease'
+                        }} onClick={() => changeStep(2)}>
+                            Entrega {step !== 2 && <span style={{ fontSize: '12px', marginLeft: '4px' }}>(clique para editar)</span>}
                         </span>
                         <form action="" className='d-flex justify-content-center flex-wrap position-relative'>
                             <button type='button' className='button-change-checkout' onClick={() => changeStep(2)} style={{display: step == 2 ? 'none' : 'block'}}>
@@ -1306,7 +1356,17 @@ const CheckoutPage = () => {
                         </form>
                     </div>
                     <div className="payment content-ship-pay px-5">
-                        <span className='title-section'>
+                        <span className='title-section' style={{ 
+                            cursor: 'pointer', 
+                            fontWeight: step === 3 ? 'bold' : 'normal',
+                            color: step === 3 ? '#0d6efd' : 'inherit',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            padding: '8px 0',
+                            borderBottom: step === 3 ? '2px solid #0d6efd' : 'none',
+                            transition: 'all 0.3s ease'
+                        }} onClick={() => changeStep(3)}>
                             Pagamento
                         </span>
                         <div className="position-relative d-flex flex-wrap" style={{ width: '100%', height: '100%' }}>
