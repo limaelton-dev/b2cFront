@@ -141,6 +141,9 @@ const CheckoutPage = () => {
             setEmailUser(user.email);
             setDisabledUser(true);
             setProfileId(user.profile_id);
+            // Desabilitar todos os campos de dados pessoais quando o usuário está logado
+            setDisabledUserPF(true);
+            setDisabledUserPJ(true);
         }
     }, [user]);
 
@@ -243,13 +246,15 @@ const CheckoutPage = () => {
     
                     if (resultPessoa.profile_type === 'PF') {
                         setCpf(resultPessoa.cpf);
-                        setDisabledUserPF(false);
+                        setDisabledUserPF(true); // Campo CPF não editável para usuário logado
+                        setTipoPessoa('1');
                     } 
                     if (resultPessoa.profile_type === 'PJ') {
                         setCnpj(resultPessoa.cnpj);
                         setRazaoSocial(resultPessoa.trading_name);
                         setInscEstadual(resultPessoa.state_registration);
                         setDisabledUserPJ(true);
+                        setTipoPessoa('2');
                     }
 
                     // Verificar se há endereços antes de acessar
@@ -300,7 +305,10 @@ const CheckoutPage = () => {
     }
     
     const changeRadioTipoPessoa = (e) => {
-        setTipoPessoa(e.target.value)
+        // Não permitir alteração do tipo de pessoa quando o usuário está logado
+        if (!isAuthenticated) {
+            setTipoPessoa(e.target.value)
+        }
     }
 
     const changeRadioTipoCompra = (e) => {
@@ -1128,11 +1136,11 @@ const CheckoutPage = () => {
                                     name="row-radio-buttons-group"
                                     sx={{justifyContent: 'space-between', width: '100%'}}
                                 >
-                                    <FormControlLabel value="1" sx={{margin: '0px'}} control={<Radio />} onClick={changeRadioTipoPessoa} label="Pessoa Física" />
-                                    <FormControlLabel value="2" sx={{margin: '0px'}} control={<Radio />} onClick={changeRadioTipoPessoa} label="Pessoa Jurídica" />
+                                    <FormControlLabel value="1" sx={{margin: '0px'}} control={<Radio disabled={isAuthenticated} />} onClick={changeRadioTipoPessoa} label="Pessoa Física" />
+                                    <FormControlLabel value="2" sx={{margin: '0px'}} control={<Radio disabled={isAuthenticated} />} onClick={changeRadioTipoPessoa} label="Pessoa Jurídica" />
                                 </RadioGroup>
-                                <TextField sx={{width: '100%',  marginBottom: '12px'}} onChange={changeName} value={nameUser} disabled={disabledUser && false} label="Nome Completo*" variant="standard" />
-                                <TextField sx={{width: '100%',  marginBottom: '12px'}} onChange={changeEmail} error={errorEmail} value={emailUser} disabled={disabledUser && false} onBlur={verificaEmail} helperText={errorEmail ? "Email já cadastrado" : ''} label="Email*" variant="standard" />
+                                <TextField sx={{width: '100%',  marginBottom: '12px'}} onChange={changeName} value={nameUser} disabled={disabledUser} label="Nome Completo*" variant="standard" />
+                                <TextField sx={{width: '100%',  marginBottom: '12px'}} onChange={changeEmail} error={errorEmail} value={emailUser} disabled={disabledUser} onBlur={verificaEmail} helperText={errorEmail ? "Email já cadastrado" : ''} label="Email*" variant="standard" />
                                 {!isAuthenticated && (
                                     <>
                                         <TextField 
@@ -1163,6 +1171,7 @@ const CheckoutPage = () => {
                                     onChange={changeCelular}
                                     onBlur={() => validaTelefone(telCelular)}
                                     maskChar=""
+                                    disabled={isAuthenticated}
                                 >
                                     {(inputProps) => (
                                         <TextField
