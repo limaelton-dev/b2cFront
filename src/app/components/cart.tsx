@@ -11,15 +11,21 @@ import { useToastSide } from '../context/toastSide';
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import { getAddressUser } from '../services/profile';
+import { valorFrete } from '../services/checkout';
+import { useAuth } from '../context/auth';
 
 export default function Cart({ cartOpened, onCartToggle }) {
     const { showToast } = useToastSide();
     const { openDialog } = useAlertDialog();
+    const { user } = useAuth();
     const { statusMessage, activeCoupon, coupon, setCouponFn } = useCoupon();
     const { cartItems, cartData, changeQtyItem, removeFromCart } = useCart();
     const [inpCoupon, setInpCoupon] = useState<string>('');
+    const [freteNome, setFreteNome] = useState<string>('');
     const [min, setMin] = useState(1);
     const [max, setMax] = useState(100);
+    const [frete, setFrete] = useState(0);
     const [errorCoupon, setErrorCoupon] = useState(false);
     const [discountPix, setDiscountPix] = useState(5);
     const [loadingCoupon, setLoadingCoupon] = useState(false);
@@ -133,6 +139,19 @@ export default function Cart({ cartOpened, onCartToggle }) {
 
     useEffect(() => {
         console.log(cartItems)
+        async function getAddress() {
+            if(user.name) {
+                const resp = await getAddressUser();
+                if(resp) {
+                    const freteVal = await valorFrete(resp[0].postal_code.replace(/\D/,''), user.profile_id);
+                    setFrete(freteVal.data.data.totalPreco);
+                    if(freteVal) {
+                        setFreteNome('PAC - até ' + freteVal.data.data.maiorPrazo + ' dias úteis');
+                    }
+                }
+            }
+        }
+        getAddress()
     }, [cartItems])
 
     // Verifica se os dados do carrinho estão sincronizados
@@ -310,8 +329,8 @@ export default function Cart({ cartOpened, onCartToggle }) {
                         style={{
                             borderBottomLeftRadius: '0px',
                             borderTopLeftRadius: '0px',
-                            borderRadius: '15px',
-                            padding: '10px 4px',
+                            borderRadius: '14px',
+                            padding: '5px 4px',
                             width: '250px',
                             maxWidth: '250px',
                             display: 'flex',
@@ -407,9 +426,17 @@ export default function Cart({ cartOpened, onCartToggle }) {
                                 </span>
                             </div>
                             <div className="totals discount">
+                                <span>Entrega: 
+                                    {user.name ? <span className='mini'>({freteNome})</span> : ''}
+                                </span>
+                                <span className='price-totals'>
+                                    <b>R$ {frete.toFixed(2).replace('.',',') || '0,00'}</b>
+                                </span>
+                            </div>
+                            <div className="totals discount">
                                 <span><b>Total: </b></span>
                                 <span className='price-totals'>
-                                    <b>R$ {formatPrice(applyDiscounts(calculateSubtotal()))}</b>
+                                    <b>R$ {formatPrice(applyDiscounts(calculateSubtotal()) + frete)}</b>
                                 </span>
                             </div>
                             <a href="/checkout" className="link-to-buy">Finalizar Pedido</a>

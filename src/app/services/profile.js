@@ -40,6 +40,17 @@ export const getProfileUser = async () => {
     }
 };
 
+export const getAddressUser = async () => {
+    try {
+        const resp = await axios.get(`${API_URL}/address`, getAuthConfig());
+        return resp.data || [];
+    }
+    catch (err) {
+        console.error('Erro ao obter perfil do usuário:', err);
+        return null;
+    }
+}
+
 // Função para obter apenas os dados pessoais do usuário
 export const getUserPersonalData = async () => {
     try {

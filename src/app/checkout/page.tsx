@@ -1079,7 +1079,7 @@ const CheckoutPage = () => {
                                                 const qty = index >= 0 ? (cartData[index].qty || cartData[index].quantity || 1) : 1;
                                                 const price = item.pro_precovenda || 0;
                                                 return total + (price * qty);
-                                            }, 0))
+                                            }, 0) + fretePreco)
                                             .toFixed(2))) + (shippingCost)).toFixed(2).toString().replace('.',',')
                                         }</td>
                                         </tr>
