@@ -44,7 +44,8 @@ async function buscaTipoPessoa() {
                 cnpj: resp.cnpj || '',
                 state_registration: resp.state_registration || '',
                 addresses: Array.isArray(resp.addresses) && resp.addresses.length > 0 ? resp.addresses : [],
-                cards: Array.isArray(resp.cards) && resp.cards.length > 0 ? resp.cards : []
+                cards: Array.isArray(resp.cards) && resp.cards.length > 0 ? resp.cards : [],
+                phone: resp.phone || ''
             };
         }
 
@@ -57,7 +58,8 @@ async function buscaTipoPessoa() {
             cnpj: '', 
             state_registration: '', 
             addresses: [], 
-            cards: []
+            cards: [],
+            phone: ''
         };
 
     } catch (error) {
@@ -71,7 +73,8 @@ async function buscaTipoPessoa() {
             cnpj: '', 
             state_registration: '', 
             addresses: [], 
-            cards: []
+            cards: [],
+            phone: ''
         };
     }
 }
@@ -141,8 +144,9 @@ const CheckoutPage = () => {
             setEmailUser(user.email);
             setDisabledUser(true);
             setProfileId(user.profile_id);
-            // Não vamos desabilitar todos os campos automaticamente
-            // Os campos serão desabilitados apenas se tiverem valores válidos
+            // Desabilitar todos os campos de dados pessoais quando o usuário está logado
+            setDisabledUserPF(true);
+            setDisabledUserPJ(true);
         }
     }, [user]);
 
@@ -242,74 +246,74 @@ const CheckoutPage = () => {
     
                 try {
                     const resultPessoa = await buscaTipoPessoa();
-                    
-                    // Buscar dados pessoais para obter o telefone
-                    const userData = await getUserPersonalData();
-                    
-                    // Verificar se existem telefones cadastrados
-                    if (userData && userData.phones && userData.phones.length > 0) {
-                        // Obter o telefone principal ou o primeiro da lista
-                        const primaryPhone = userData.phones.find(phone => phone.is_primary) || userData.phones[0];
-                        if (primaryPhone) {
-                            // Formatar o telefone no padrão (99) 99999-9999
-                            const phoneNumber = primaryPhone.number;
-                            const formattedPhone = phoneNumber.length === 11 
-                                ? `(${phoneNumber.substring(0, 2)}) ${phoneNumber.substring(2, 7)}-${phoneNumber.substring(7)}`
-                                : phoneNumber.length === 10 
-                                    ? `(${phoneNumber.substring(0, 2)}) ${phoneNumber.substring(2, 6)}-${phoneNumber.substring(6)}`
-                                    : phoneNumber;
-                            
-                            setTelCelular(formattedPhone);
-                        }
-                    }
     
                     if (resultPessoa.profile_type === 'PF') {
-                        setCpf(resultPessoa.cpf);
-                        setDisabledUserPF(resultPessoa.cpf && resultPessoa.cpf.length > 0); // Campo CPF só será desabilitado se existir
+                        // Somente desabilitar o campo CPF se existir valor
+                        if (resultPessoa.cpf && resultPessoa.cpf.trim() !== '') {
+                            setCpf(resultPessoa.cpf);
+                            setDisabledUserPF(true);
+                        }
                         setTipoPessoa('1');
                     } 
                     if (resultPessoa.profile_type === 'PJ') {
-                        setCnpj(resultPessoa.cnpj);
-                        setRazaoSocial(resultPessoa.trading_name);
-                        setInscEstadual(resultPessoa.state_registration);
-                        // Desabilitar campos apenas se todos os dados de PJ estiverem preenchidos
-                        const temDadosPJCompletos = resultPessoa.cnpj && resultPessoa.trading_name && resultPessoa.state_registration;
-                        setDisabledUserPJ(temDadosPJCompletos);
+                        // Somente desabilitar os campos se existirem valores
+                        if (resultPessoa.cnpj && resultPessoa.cnpj.trim() !== '') {
+                            setCnpj(resultPessoa.cnpj);
+                            setDisabledUserPJ(true);
+                        }
+                        if (resultPessoa.trading_name && resultPessoa.trading_name.trim() !== '') {
+                            setRazaoSocial(resultPessoa.trading_name);
+                        }
+                        if (resultPessoa.state_registration && resultPessoa.state_registration.trim() !== '') {
+                            setInscEstadual(resultPessoa.state_registration);
+                        }
                         setTipoPessoa('2');
                     }
+                    
+                    // Verificar e configurar o telefone
+                    if (resultPessoa.phone) {
+                        setTelCelular(resultPessoa.phone);
+                    }
 
-                    // Verificar se há endereços antes de acessar e se estão completos
+                    // Verificar se há endereços antes de acessar
                     if (resultPessoa.addresses && resultPessoa.addresses.length > 0) {
                         const endereco = resultPessoa.addresses[0];
-                        setBairro(endereco.neighborhood || '');
-                        setCepNumber(endereco.postal_code || '');
-                        setNumero(endereco.number || '');
-                        setComplemento(endereco.complement || '');
-                        setEndereco(endereco.street || '');
-                        setCidade(endereco.city || '');
-                        setEstado(endereco.state || '');
                         
-                        // Verificar se o endereço está completo antes de desabilitar
-                        const enderecoCompleto = endereco.street && endereco.neighborhood && 
-                                               endereco.city && endereco.state && 
-                                               endereco.postal_code && endereco.number;
-                        setDisabledAddress(enderecoCompleto);
-                        const frete = await valorFrete(endereco.postal_code, user.profile_id);
-                        if(frete) {
-                            setFreteNome('PAC');
-                            setFretePreco(frete.data.data.totalPreco);
-                            setPrazo(frete.data.data.maiorPrazo);
+                        // Somente preencher e desabilitar campos se existirem valores
+                        if (endereco.neighborhood) setBairro(endereco.neighborhood);
+                        if (endereco.postal_code) setCepNumber(endereco.postal_code);
+                        if (endereco.number) setNumero(endereco.number);
+                        if (endereco.complement) setComplemento(endereco.complement);
+                        if (endereco.street) setEndereco(endereco.street);
+                        if (endereco.city) setCidade(endereco.city);
+                        if (endereco.state) setEstado(endereco.state);
+                        
+                        // Somente desabilitar se todos os campos essenciais tiverem valores
+                        if (endereco.street && endereco.number && endereco.postal_code && 
+                            endereco.neighborhood && endereco.city && endereco.state) {
+                            setDisabledAddress(true);
+                        }
+                        
+                        if (endereco.postal_code) {
+                            const frete = await valorFrete(endereco.postal_code, user.profile_id);
+                            if(frete) {
+                                setFreteNome('PAC');
+                                setFretePreco(frete.data.data.totalPreco);
+                                setPrazo(frete.data.data.maiorPrazo);
+                            }
                         }
                     }
 
                     // Verificar se há cartões antes de acessar
                     if (resultPessoa.cards && resultPessoa.cards.length > 0) {
                         const cartao = resultPessoa.cards[0];
-                        setCVVFinal(cartao.last_four_digits || '');
-                        setNumberCCFinal(cartao.card_number || '');
-                        setFlagCard(detectCardFlag(cartao.card_number || ''));
-                        setExpireCCFinal(cartao.expiration_date || '');
-                        setCardNumber(`XXXX XXXX XXXX ${getLastFourDigits(cartao.card_number || '')}`);
+                        if (cartao.last_four_digits) setCVVFinal(cartao.last_four_digits);
+                        if (cartao.card_number) {
+                            setNumberCCFinal(cartao.card_number);
+                            setFlagCard(detectCardFlag(cartao.card_number));
+                            setCardNumber(`XXXX XXXX XXXX ${getLastFourDigits(cartao.card_number)}`);
+                        }
+                        if (cartao.expiration_date) setExpireCCFinal(cartao.expiration_date);
                         setCVV('XXX');
                         setExpireCC('XX/XX');
                         setIsMaskedCC(true);
@@ -348,7 +352,7 @@ const CheckoutPage = () => {
     const handlePayButton = async () => {
         setLoadBtn(true);
         try {
-            // Primeiro obter os dados pessoais do usuário
+            // Primeiro obter os dados pessoais do usuário (independente de já estar autenticado ou não)
             let profileResponse;
             
             // Verificar se o usuário está autenticado
@@ -454,8 +458,8 @@ const CheckoutPage = () => {
                     return;
                 }
                 
-                // Cadastrar telefone apenas se o usuário não estiver autenticado previamente
-                if (telCelular && !isAuthenticated) {
+                // Cadastrar telefone
+                if (telCelular) {
                     try {
                         // Validar telefone novamente antes de cadastrar
                         if (!validaTelefone(telCelular)) {
@@ -908,14 +912,14 @@ const CheckoutPage = () => {
             // Validar Dados Pessoais (etapa 1)
             if(tipoPessoa == '1') {
                 // Verificando se há campos vazios ou se há erros nos dados
-                if(!nameUser || !emailUser || !cpf || (!telCelular && !isAuthenticated) || errorCpf || errorEmail) {
+                if(!nameUser || !emailUser || !cpf || !telCelular || errorCpf || errorEmail) {
                     showToast('Por favor, preencha todos os campos de dados pessoais corretamente', 'error');
                     setStep(1); // Redireciona para etapa 1 para corrigir
                     return;
                 }
                 
-                // Validar o telefone apenas se foi preenchido ou se o usuário não está autenticado
-                if(telCelular && !validaTelefone(telCelular)) {
+                // Validar o telefone antes de avançar
+                if(!validaTelefone(telCelular)) {
                     showToast('Por favor, verifique o número de telefone', 'error');
                     setStep(1);
                     return;
@@ -928,14 +932,14 @@ const CheckoutPage = () => {
                 }
             }
             else {
-                if(!nameUser || !emailUser || !cnpj || (!telCelular && !isAuthenticated) || !razaoSocial || !inscEstadual) {
+                if(!nameUser || !emailUser || !cnpj || !telCelular || !razaoSocial || !inscEstadual) {
                     showToast('Por favor, preencha todos os campos de dados pessoais corretamente', 'error');
                     setStep(1);
                     return;
                 }
                 
-                // Validar o telefone apenas se foi preenchido ou se o usuário não está autenticado
-                if(telCelular && !validaTelefone(telCelular)) {
+                // Validar o telefone antes de avançar
+                if(!validaTelefone(telCelular)) {
                     showToast('Por favor, verifique o número de telefone', 'error');
                     setStep(1);
                     return;
@@ -1104,7 +1108,7 @@ const CheckoutPage = () => {
                                                 const qty = index >= 0 ? (cartData[index].qty || cartData[index].quantity || 1) : 1;
                                                 const price = item.pro_precovenda || 0;
                                                 return total + (price * qty);
-                                            }, 0) + fretePreco)
+                                            }, 0))
                                             .toFixed(2))) + (shippingCost)).toFixed(2).toString().replace('.',',')
                                         }</td>
                                         </tr>
@@ -1190,13 +1194,27 @@ const CheckoutPage = () => {
                                         />
                                     </>
                                 )}
+                                
+                                {isAuthenticated && telCelular && (
+                                    <Box sx={{width: '100%', display: 'flex', justifyContent: 'flex-end', marginBottom: '10px'}}>
+                                        <Button 
+                                            variant="text" 
+                                            color="primary" 
+                                            size="small"
+                                            onClick={() => setIsAuthenticated(false)}
+                                        >
+                                            Editar telefone
+                                        </Button>
+                                    </Box>
+                                )}
+                                
                                 <ReactInputMask
                                     mask="(99) 99999-9999"
                                     value={telCelular}
                                     onChange={changeCelular}
                                     onBlur={() => validaTelefone(telCelular)}
                                     maskChar=""
-                                    disabled={isAuthenticated}
+                                    disabled={false}
                                 >
                                     {(inputProps) => (
                                         <TextField
@@ -1216,6 +1234,18 @@ const CheckoutPage = () => {
                                 </ReactInputMask>
                                 {tipoPessoa == '2' && 
                                     <>
+                                        {disabledUserPJ && (
+                                            <Box sx={{width: '100%', display: 'flex', justifyContent: 'flex-end', marginBottom: '10px'}}>
+                                                <Button 
+                                                    variant="text" 
+                                                    color="primary" 
+                                                    size="small"
+                                                    onClick={() => setDisabledUserPJ(false)}
+                                                >
+                                                    Editar dados PJ
+                                                </Button>
+                                            </Box>
+                                        )}
                                         <ReactInputMask
                                             mask="99.999.999/9999-99"
                                             value={cnpj}
@@ -1243,6 +1273,18 @@ const CheckoutPage = () => {
                                 }
                                 {tipoPessoa == '1' && 
                                     <>
+                                        {disabledUserPF && (
+                                            <Box sx={{width: '100%', display: 'flex', justifyContent: 'flex-end', marginBottom: '10px'}}>
+                                                <Button 
+                                                    variant="text" 
+                                                    color="primary" 
+                                                    size="small"
+                                                    onClick={() => setDisabledUserPF(false)}
+                                                >
+                                                    Editar CPF
+                                                </Button>
+                                            </Box>
+                                        )}
                                         <ReactInputMask
                                             mask="999.999.999-99"
                                             value={cpf}
@@ -1282,216 +1324,228 @@ const CheckoutPage = () => {
                                 >
                                     Continuar
                                 </Button>
-                            </Box>
-                        </form>
-                    </div>
-                    <div className="shipping content-ship-pay px-3">
-                        <span className='title-section' style={{ 
-                            cursor: 'pointer', 
-                            fontWeight: step === 2 ? 'bold' : 'normal',
-                            color: step === 2 ? '#0d6efd' : 'inherit',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            padding: '8px 0',
-                            borderBottom: step === 2 ? '2px solid #0d6efd' : 'none',
-                            transition: 'all 0.3s ease'
-                        }} onClick={() => changeStep(2)}>
-                            Entrega {step !== 2 && <span style={{ fontSize: '12px', marginLeft: '4px' }}>(clique para editar)</span>}
-                        </span>
-                        <form action="" className='d-flex justify-content-center flex-wrap position-relative'>
-                            <button type='button' className='button-change-checkout' onClick={() => changeStep(2)} style={{display: step == 2 ? 'none' : 'block'}}>
-                                <LocalShippingIcon></LocalShippingIcon>
-                            </button>
-                            <div className={'d-flex justify-content-center flex-wrap '+(step == 2 ? 'active-column-checkout' : 'nonactive-column-checkout')}>
-                                <div className={'d-flex justify-content-center align-items-center'} style={{marginTop: '20px',  marginBottom: '8px'}}>
-                                    <ReactInputMask
-                                        mask="99999-999"
-                                        value={cepNumber}
-                                        onChange={handleChangeCep}
-                                        maskChar=""
-                                    >
-                                        {(inputProps) => (
-                                            <TextField
-                                            {...inputProps}
-                                            label="Cep*"
-                                            variant="standard"
-                                            sx={{
-                                                '& .MuiInputBase-input::placeholder': {
-                                                    fontSize: '23px', 
-                                                    fontWeight: 'bold',
-                                                },width: '60%',  marginBottom: '8px'
-                                            }}
-                                            />
-                                        )}
-                                    </ReactInputMask>
-                                </div>
-                                <div className='d-flex justify-content-between flex-wrap' style={{ position: 'relative' }}>
-                                    {loadingCep ? (
-                                        <Box sx={{ 
-                                            position: 'absolute', 
-                                            top: '40%', 
-                                            left: '50%', 
-                                            transform: 'translate(-50%, -50%)', 
-                                            display: 'flex', 
-                                            justifyContent: 'center', 
-                                            alignItems: 'center',
-                                            zIndex: '99999'
-                                        }}>
-                                            <CircularProgress />
-                                        </Box>
-                                    ) : ''}
-                                    <Box className='d-flex justify-content-between flex-wrap' sx={{filter: loadingCep ? 'blur(2px)' : 'blur:(0px)'}}>
-                                        <TextField sx={{width: '100%',  marginBottom: '8px', marginTop: '0px'}} value={endereco} onChange={changeEndereco} label="Endereço de Entrega*" variant="standard" />
-                                        <TextField sx={{width: '19%',  marginBottom: '8px'}} value={numero} onChange={changeNumero} label="Número*" variant="standard" />
-                                        <TextField sx={{width: '45%',  marginBottom: '8px'}} value={complemento} onChange={changeComplemento} label="Complemento" variant="standard" />
-                                        <TextField sx={{width: '31%',  marginBottom: '8px'}} value={estado} onChange={changeEstado} label="Estado*" variant="standard" />
-                                        <TextField sx={{width: '42%',  marginBottom: '8px'}} value={cidade} onChange={changeCidade} label="Cidade*" variant="standard" />
-                                        <TextField sx={{width: '42%',  marginBottom: '8px'}} value={bairro} onChange={changeBairro} label="Bairro*" variant="standard" />
-                                    </Box>
-                                    <div className="fretes">
-                                        {freteNome && 
-                                            <>
-                                                <h6 style={{marginTop: '10px'}}>Escolha o frete:</h6>
-                                                <div className="frete-box">
-                                                    <div className="frete">
-                                                        <Checkbox sx={{'& .MuiSvgIcon-root': {background: 'gray', borderRadius: '4px'}, '& .MuiCheckbox-label': {zIndex: '55'}}} label={
-                                                            <div className='text-frete'>
-                                                                <span>{freteNome} {'(até '+prazo+' dias úteis)'} </span>
-                                                                <span className="price">R$ {fretePreco.toFixed(2).replace('.',',')}</span>
-                                                            </div>
-                                                        } />
-                                                    </div>
-                                                </div>
-                                            </>
-                                        }
-                                    </div>
-                                    <Button 
-                                        variant="contained" 
-                                        color="primary"
-                                        className='mb-3'
-                                        fullWidth 
-                                        onClick={() => changeStep(3)}
-                                        disabled={loadBtn}
-                                    >
-                                        Continuar
-                                    </Button>
-                                </div> 
-                            </div>
-                        </form>
-                    </div>
-                    <div className="payment content-ship-pay px-5">
-                        <span className='title-section' style={{ 
-                            cursor: 'pointer', 
-                            fontWeight: step === 3 ? 'bold' : 'normal',
-                            color: step === 3 ? '#0d6efd' : 'inherit',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            padding: '8px 0',
-                            borderBottom: step === 3 ? '2px solid #0d6efd' : 'none',
-                            transition: 'all 0.3s ease'
-                        }} onClick={() => changeStep(3)}>
-                            Pagamento
-                        </span>
-                        <div className="position-relative d-flex flex-wrap" style={{ width: '100%', height: '100%' }}>
-                            <button type='button' className='button-change-checkout' onClick={() => changeStep(3)} style={{display: step == 3 ? 'none' : 'block'}}>
-                                <LocalAtmIcon></LocalAtmIcon>
-                            </button>
-                            <div className={'d-flex justify-content-center flex-wrap '+(step == 3 ? 'active-column-checkout' : 'nonactive-column-checkout')}>
-                                <RadioGroup
-                                    row
-                                    value={tipoCompra}
-                                    aria-labelledby="demo-row-radio-buttons-group-label"
-                                    name="row-radio-buttons-group"
-                                    sx={{justifyContent: 'space-between', width: '100%', marginTop: '15px'}}
-                                >
-                                    <FormControlLabel value="1" sx={{margin: '0px'}} control={<Radio />} onClick={changeRadioTipoCompra} label="Cartão de Crédito" />
-                                    <FormControlLabel value="2" sx={{margin: '0px'}} control={<Radio />} onClick={changeRadioTipoCompra} label="Pix" />
-                                </RadioGroup>
-                                {tipoCompra == '1' &&    
-                                    <div className='d-flex justify-content-between flex-wrap' style={{height: '158px'}}>
+                            </form>
+                        </div>
+                        <div className="shipping content-ship-pay px-3">
+                            <span className='title-section' style={{ 
+                                cursor: 'pointer', 
+                                fontWeight: step === 2 ? 'bold' : 'normal',
+                                color: step === 2 ? '#0d6efd' : 'inherit',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                padding: '8px 0',
+                                borderBottom: step === 2 ? '2px solid #0d6efd' : 'none',
+                                transition: 'all 0.3s ease'
+                            }} onClick={() => changeStep(2)}>
+                                Entrega {step !== 2 && <span style={{ fontSize: '12px', marginLeft: '4px' }}>(clique para editar)</span>}
+                            </span>
+                            <form action="" className='d-flex justify-content-center flex-wrap position-relative'>
+                                <button type='button' className='button-change-checkout' onClick={() => changeStep(2)} style={{display: step == 2 ? 'none' : 'block'}}>
+                                    <LocalShippingIcon></LocalShippingIcon>
+                                </button>
+                                <div className={'d-flex justify-content-center flex-wrap '+(step == 2 ? 'active-column-checkout' : 'nonactive-column-checkout')}>
+                                    <div className={'d-flex justify-content-center align-items-center'} style={{marginTop: '20px',  marginBottom: '8px'}}>
                                         <ReactInputMask
-                                            mask="9999 9999 9999 9999"
-                                            value={cardNumber}
-                                            onChange={handleChangeCardNumber}
-                                            disabled={isMaskedCC}
-                                            maskChar="X"
-                                            >
+                                            mask="99999-999"
+                                            value={cepNumber}
+                                            onChange={handleChangeCep}
+                                            maskChar=""
+                                        >
                                             {(inputProps) => (
                                                 <TextField
                                                 {...inputProps}
-                                                label="Número do Cartão"
+                                                label="Cep*"
                                                 variant="standard"
-                                                placeholder='•••• •••• •••• ••••'
-                                                slotProps={{
-                                                    input: {
-                                                        endAdornment: (
-                                                            <InputAdornment position="end">
-                                                                {flagCard}
-                                                            </InputAdornment>
-                                                        ),
-                                                    },
-                                                }}
                                                 sx={{
                                                     '& .MuiInputBase-input::placeholder': {
                                                         fontSize: '23px', 
                                                         fontWeight: 'bold',
-                                                    },width: '100%',  marginBottom: '4px', marginTop: '0px'
+                                                    },width: '60%',  marginBottom: '8px'
                                                 }}
                                                 />
                                             )}
                                         </ReactInputMask>
-                                        <TextField sx={{width: '25%',  marginBottom: '7px'}} disabled={isMaskedCC} onChange={changeCCV} value={CVV} label="CVV*" variant="standard" />
-                                        <TextField sx={{width: '45%',  marginBottom: '7px'}} disabled={isMaskedCC} onChange={changeExpireCC} value={expireCC} label="Validade*" placeholder='mm/aa' variant="standard" />
-                                        <div style={{width: '100%', marginTop: '25px'}}>
-                                            <Checkbox disabled={isMaskedCC} label="Guardar para compras futuras"/>
+                                    </div>
+                                    <div className='d-flex justify-content-between flex-wrap' style={{ position: 'relative' }}>
+                                        {loadingCep ? (
+                                            <Box sx={{ 
+                                                position: 'absolute', 
+                                                top: '40%', 
+                                                left: '50%', 
+                                                transform: 'translate(-50%, -50%)', 
+                                                display: 'flex', 
+                                                justifyContent: 'center', 
+                                                alignItems: 'center',
+                                                zIndex: '99999'
+                                            }}>
+                                                <CircularProgress />
+                                            </Box>
+                                        ) : ''}
+                                        <Box className='d-flex justify-content-between flex-wrap' sx={{filter: loadingCep ? 'blur(2px)' : 'blur:(0px)', width: '100%'}}>
+                                            {disabledAddress && (
+                                                <Box sx={{width: '100%', display: 'flex', justifyContent: 'flex-end', marginBottom: '10px'}}>
+                                                    <Button 
+                                                        variant="text" 
+                                                        color="primary" 
+                                                        size="small"
+                                                        onClick={() => setDisabledAddress(false)}
+                                                    >
+                                                        Editar endereço
+                                                    </Button>
+                                                </Box>
+                                            )}
+                                            <TextField sx={{width: '100%',  marginBottom: '8px', marginTop: '0px'}} value={endereco} onChange={changeEndereco} label="Endereço de Entrega*" variant="standard" disabled={disabledAddress} />
+                                            <TextField sx={{width: '19%',  marginBottom: '8px'}} value={numero} onChange={changeNumero} label="Número*" variant="standard" disabled={disabledAddress} />
+                                            <TextField sx={{width: '45%',  marginBottom: '8px'}} value={complemento} onChange={changeComplemento} label="Complemento" variant="standard" disabled={disabledAddress} />
+                                            <TextField sx={{width: '31%',  marginBottom: '8px'}} value={estado} onChange={changeEstado} label="Estado*" variant="standard" disabled={disabledAddress} />
+                                            <TextField sx={{width: '42%',  marginBottom: '8px'}} value={cidade} onChange={changeCidade} label="Cidade*" variant="standard" disabled={disabledAddress} />
+                                            <TextField sx={{width: '42%',  marginBottom: '8px'}} value={bairro} onChange={changeBairro} label="Bairro*" variant="standard" disabled={disabledAddress} />
+                                        </Box>
+                                        <div className="fretes">
+                                            {freteNome && 
+                                                <>
+                                                    <h6 style={{marginTop: '10px'}}>Escolha o frete:</h6>
+                                                    <div className="frete-box">
+                                                        <div className="frete">
+                                                            <Checkbox sx={{'& .MuiSvgIcon-root': {background: 'gray', borderRadius: '4px'}, '& .MuiCheckbox-label': {zIndex: '55'}}} label={
+                                                                <div className='text-frete'>
+                                                                    <span>{freteNome} {'(até '+prazo+' dias úteis)'} </span>
+                                                                    <span className="price">R$ {fretePreco.toFixed(2).replace('.',',')}</span>
+                                                                </div>
+                                                            } />
+                                                        </div>
+                                                    </div>
+                                                </>
+                                            }
                                         </div>
-                                        {isMaskedCC && (
-                                            <div style={{width: '100%', marginTop: '10px', textAlign: 'center', color: '#0d6efd', fontSize: '14px'}}>
-                                                <p>Você já possui um cartão cadastrado que será utilizado para esta compra.</p>
+                                        <Button 
+                                            variant="contained" 
+                                            color="primary"
+                                            className='mb-3'
+                                            fullWidth 
+                                            onClick={() => changeStep(3)}
+                                            disabled={loadBtn}
+                                        >
+                                            Continuar
+                                        </Button>
+                                    </div> 
+                                </div>
+                            </form>
+                        </div>
+                        <div className="payment content-ship-pay px-5">
+                            <span className='title-section' style={{ 
+                                cursor: 'pointer', 
+                                fontWeight: step === 3 ? 'bold' : 'normal',
+                                color: step === 3 ? '#0d6efd' : 'inherit',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                padding: '8px 0',
+                                borderBottom: step === 3 ? '2px solid #0d6efd' : 'none',
+                                transition: 'all 0.3s ease'
+                            }} onClick={() => changeStep(3)}>
+                                Pagamento
+                            </span>
+                            <div className="position-relative d-flex flex-wrap" style={{ width: '100%', height: '100%' }}>
+                                <button type='button' className='button-change-checkout' onClick={() => changeStep(3)} style={{display: step == 3 ? 'none' : 'block'}}>
+                                    <LocalAtmIcon></LocalAtmIcon>
+                                </button>
+                                <div className={'d-flex justify-content-center flex-wrap '+(step == 3 ? 'active-column-checkout' : 'nonactive-column-checkout')}>
+                                    <RadioGroup
+                                        row
+                                        value={tipoCompra}
+                                        aria-labelledby="demo-row-radio-buttons-group-label"
+                                        name="row-radio-buttons-group"
+                                        sx={{justifyContent: 'space-between', width: '100%', marginTop: '15px'}}
+                                    >
+                                        <FormControlLabel value="1" sx={{margin: '0px'}} control={<Radio />} onClick={changeRadioTipoCompra} label="Cartão de Crédito" />
+                                        <FormControlLabel value="2" sx={{margin: '0px'}} control={<Radio />} onClick={changeRadioTipoCompra} label="Pix" />
+                                    </RadioGroup>
+                                    {tipoCompra == '1' &&    
+                                        <div className='d-flex justify-content-between flex-wrap' style={{height: '158px'}}>
+                                            <ReactInputMask
+                                                mask="9999 9999 9999 9999"
+                                                value={cardNumber}
+                                                onChange={handleChangeCardNumber}
+                                                disabled={isMaskedCC}
+                                                maskChar="X"
+                                                >
+                                                {(inputProps) => (
+                                                    <TextField
+                                                    {...inputProps}
+                                                    label="Número do Cartão"
+                                                    variant="standard"
+                                                    placeholder='•••• •••• •••• ••••'
+                                                    slotProps={{
+                                                        input: {
+                                                            endAdornment: (
+                                                                <InputAdornment position="end">
+                                                                    {flagCard}
+                                                                </InputAdornment>
+                                                            ),
+                                                        },
+                                                    }}
+                                                    sx={{
+                                                        '& .MuiInputBase-input::placeholder': {
+                                                            fontSize: '23px', 
+                                                            fontWeight: 'bold',
+                                                        },width: '100%',  marginBottom: '4px', marginTop: '0px'
+                                                    }}
+                                                    />
+                                                )}
+                                            </ReactInputMask>
+                                            <TextField sx={{width: '25%',  marginBottom: '7px'}} disabled={isMaskedCC} onChange={changeCCV} value={CVV} label="CVV*" variant="standard" />
+                                            <TextField sx={{width: '45%',  marginBottom: '7px'}} disabled={isMaskedCC} onChange={changeExpireCC} value={expireCC} label="Validade*" placeholder='mm/aa' variant="standard" />
+                                            <div style={{width: '100%', marginTop: '25px'}}>
+                                                <Checkbox disabled={isMaskedCC} label="Guardar para compras futuras"/>
+                                            </div>
+                                            {isMaskedCC && (
+                                                <div style={{width: '100%', marginTop: '10px', textAlign: 'center', color: '#0d6efd', fontSize: '14px'}}>
+                                                    <p>Você já possui um cartão cadastrado que será utilizado para esta compra.</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    }
+                                    {tipoCompra == '2' &&    
+                                        <div className='d-flex justify-content-center align-items-center' style={{height: '158px'}}>
+                                            <span>A chave pix será liberada após a confirmação</span>
+                                        </div>
+                                    }
+                                    {tipoPessoa == '2' && 
+                                        <div className='d-flex justify-content-between flex-wrap'>
+                                            <div style={{width: '100%', marginTop: '3px'}}>
+                                                <Checkbox label="Estou autorizado a comprar em nome da empresa"/>
+                                            </div>
+                                        </div>
+                                    }
+                                    <div className="btn-pay mt-3">
+                                        {!isMaskedCC && tipoCompra === '1' && (!cardNumber || !CVV || !expireCC) && (
+                                            <div style={{ 
+                                                padding: '10px', 
+                                                marginBottom: '10px', 
+                                                borderRadius: '4px', 
+                                                backgroundColor: '#fee', 
+                                                color: '#d33', 
+                                                textAlign: 'center' 
+                                            }}>
+                                                <span>Você precisa informar um cartão para continuar com a compra</span>
                                             </div>
                                         )}
+                                        <Button 
+                                            variant="contained" 
+                                            color="primary" 
+                                            fullWidth 
+                                            onClick={handlePayButton}
+                                            disabled={loadBtn}
+                                        >
+                                            {loadBtn ? (
+                                                <CircularProgress size={24} color="inherit" />
+                                            ) : (
+                                                'Finalizar Compra'
+                                            )}
+                                        </Button>
                                     </div>
-                                }
-                                {tipoCompra == '2' &&    
-                                    <div className='d-flex justify-content-center align-items-center' style={{height: '158px'}}>
-                                        <span>A chave pix será liberada após a confirmação</span>
-                                    </div>
-                                }
-                                {tipoPessoa == '2' && 
-                                    <div className='d-flex justify-content-between flex-wrap'>
-                                        <div style={{width: '100%', marginTop: '3px'}}>
-                                            <Checkbox label="Estou autorizado a comprar em nome da empresa"/>
-                                        </div>
-                                    </div>
-                                }
-                                <div className="btn-pay mt-3">
-                                    {!isMaskedCC && tipoCompra === '1' && (!cardNumber || !CVV || !expireCC) && (
-                                        <div style={{ 
-                                            padding: '10px', 
-                                            marginBottom: '10px', 
-                                            borderRadius: '4px', 
-                                            backgroundColor: '#fee', 
-                                            color: '#d33', 
-                                            textAlign: 'center' 
-                                        }}>
-                                            <span>Você precisa informar um cartão para continuar com a compra</span>
-                                        </div>
-                                    )}
-                                    <Button 
-                                        variant="contained" 
-                                        color="primary" 
-                                        fullWidth 
-                                        onClick={handlePayButton}
-                                        disabled={loadBtn}
-                                    >
-                                        {loadBtn ? (
-                                            <CircularProgress size={24} color="inherit" />
-                                        ) : (
-                                            'Finalizar Compra'
-                                        )}
-                                    </Button>
                                 </div>
                             </div>
                         </div>
