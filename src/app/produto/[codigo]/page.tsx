@@ -61,6 +61,7 @@ const ProductPage = () => {
     const [freteNome, setFreteNome] = useState('');
     const [fretePreco, setFretePreco] = useState(0);
     const [prazo, setPrazo] = useState(0);
+    const [freteError, setFreteError] = useState('');
     const [product, setProduct] = useState({
         id: 54862,
         pro_descricao: 'DISCO FLAP 4 1/2" GRÃO 400',
@@ -236,35 +237,70 @@ const ProductPage = () => {
     const buscarEndereco = async (cep: string) => {
         if (cep.length === 9) {
             setLoadingCep(true);
+            setFreteError('');
             try {
                 const response = await axios.get(`https://viacep.com.br/ws/${cep}/json/`);
                 const data = response.data;
                 setTimeout(async () => {
                     if (data.erro) {
-                        alert('CEP não encontrado!');
+                        setFreteError('CEP não encontrado!');
                         setLoadingCep(false);
                     } else {
-                        const dadosProdutos = cartData.map(r => ({produto_id: r.id, quantity: r.qty}));
-                        const frete = await valorFreteDeslogado(cep, dadosProdutos);
-                        if(frete) {
-                            setFreteNome('PAC');
-                            setFretePreco(frete.data.data.totalPreco);
-                            setPrazo(frete.data.data.maiorPrazo);
+                        try {
+                            // Verificar se o ID do produto está disponível
+                            const produtoId = product.id;
+                            
+                            if (!produtoId) {
+                                setFreteError('Produto não identificado');
+                                setLoadingCep(false);
+                                return;
+                            }
+                            
+                            // Usar apenas o produto atual para cálculo de frete
+                            const dadosProdutos = [{
+                                produto_id: produtoId,
+                                quantity: 1
+                            }];
+                            
+                            console.log('Calculando frete para produto:', produtoId, 'CEP:', cep);
+                            const frete = await valorFreteDeslogado(cep, dadosProdutos);
+                            console.log('Resposta API frete:', frete?.data);
+                            
+                            if (frete && frete.data && frete.data.data) {
+                                setFreteNome('PAC');
+                                setFretePreco(frete.data.data.totalPreco);
+                                setPrazo(frete.data.data.maiorPrazo);
+                                console.log('Frete calculado com sucesso:', frete.data.data);
+                            } else {
+                                console.error('Resposta inválida da API de frete:', frete);
+                                setFreteError('Não foi possível calcular o frete para este produto.');
+                            }
+                        } catch (freteError) {
+                            console.error('Erro ao calcular frete:', freteError);
+                            setFreteError('Erro ao calcular o frete. Tente novamente.');
                         }
                     }
                     setLoadingCep(false);
-                },800)
+                }, 800);
             } catch (error) {
-                alert('Erro ao buscar o endereço.');
+                console.error('Erro ao buscar o endereço:', error);
+                setFreteError('Erro ao buscar o endereço.');
                 setLoadingCep(false);
             }
         }
     };
 
     const handleChangeCep = (e) => {
-        setCep(e.target.value);
-        if (cep.length === 9) 
+        const newCep = e.target.value;
+        setCep(newCep);
+    }
+    
+    const calcularFrete = () => {
+        if (cep && cep.length === 9) {
             buscarEndereco(cep);
+        } else {
+            setFreteError('Digite um CEP válido');
+        }
     }
 
     return (
@@ -387,7 +423,7 @@ const ProductPage = () => {
                             <div className="content-price d-flex flex-direction-column align-items-center">
                                 <h6>Calcule o Frete:</h6>
                                 <div className="frete" style={{marginBottom: '15px'}}>
-                                    <div className={'d-flex justify-content-center align-items-center'} style={{marginTop: '20px',  marginBottom: '8px'}}>
+                                    <div className={'d-flex flex-column justify-content-center align-items-center'} style={{marginTop: '20px', marginBottom: '8px'}}>
                                     <ReactInputMask
                                         mask="99999-999"
                                         value={cep}
@@ -408,7 +444,28 @@ const ProductPage = () => {
                                             />
                                         )}
                                     </ReactInputMask>
+                                    <Button 
+                                        variant="outlined" 
+                                        color="primary" 
+                                        size="small" 
+                                        onClick={calcularFrete}
+                                        disabled={loadingCep}
+                                        style={{marginTop: '5px', fontSize: '12px', textTransform: 'none'}}
+                                    >
+                                        Calcular
+                                    </Button>
                                     </div>
+                                    {loadingCep && (
+                                        <div className="text-center">
+                                            <CircularProgress size={20} color="primary" />
+                                            <span className="ml-2">Calculando frete...</span>
+                                        </div>
+                                    )}
+                                    {freteError && (
+                                        <div className="text-center text-danger">
+                                            <small>{freteError}</small>
+                                        </div>
+                                    )}
                                     {freteNome && 
                                         <>
                                             <div className="frete-box">
