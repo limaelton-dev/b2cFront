@@ -14,8 +14,11 @@ import { useAuth } from './context/auth';
 import PersonOutlineOutlinedIcon from '@mui/icons-material/PersonOutlineOutlined';
 import { useRouter } from 'next/navigation';
 import { AuthContextType, User } from './interfaces/interfaces';
-import { Link } from '@mui/material';
+import { Link, Typography, Button, Menu, MenuItem, ListItemIcon, Divider, Paper } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
+import SearchIcon from '@mui/icons-material/Search';
 import { logout } from './services/auth';
 import { getProdutosFabricante } from './services/produto/page';
 
@@ -28,6 +31,8 @@ export default function Header({ cartOpened, onCartToggle }) {
     const [results, setResults] = useState<any[]>([]);
     const [fabricantes, setFabricantes] = useState<{id: number,fab_codigo: number,fab_descricao: string}[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
+    const [anchorEl, setAnchorEl] = useState(null);
+    const open = Boolean(anchorEl);
 
     
     const changeSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -81,6 +86,25 @@ export default function Header({ cartOpened, onCartToggle }) {
     const changeOpenedCart = () => {
         onCartToggle(!cartOpened)
     }
+
+    const handleMenuClick = (event) => {
+        setAnchorEl(event.currentTarget);
+    };
+    
+    const handleMenuClose = () => {
+        setAnchorEl(null);
+    };
+
+    // Novas funções para controlar o hover
+    const handleMouseEnter = (event) => {
+        setAnchorEl(event.currentTarget);
+    };
+    
+    const handleMouseLeave = () => {
+        setTimeout(() => {
+            setAnchorEl(null);
+        }, 150);
+    };
 
     return (
         <header id="header-page">
@@ -207,18 +231,85 @@ export default function Header({ cartOpened, onCartToggle }) {
                     </div>
                     <div className="row d-flex">
                         <div className="categories d-flex justify-content-between">
-                            <div className="menu" style={{color: '#1976d2', position: 'relative'}}>
-                                <MenuIcon sx={{marginRight: '5px', color: "#1976d2"}} />
-                                Departamentos
-                                <div className='departamento-box'>
-                                    <ul>
-                                        {fabricantes.map((f) => (
-                                            <li>
-                                                <a href={`/produtos?limit=12&fabricante=${f.fab_codigo}&page=1`}>{f.fab_descricao}</a>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </div>
+                            <div>
+                                <Button
+                                    aria-controls={open ? 'departamentos-menu' : undefined}
+                                    aria-haspopup="true"
+                                    aria-expanded={open ? 'true' : undefined}
+                                    onClick={handleMenuClick}
+                                    onMouseEnter={handleMouseEnter}
+                                    endIcon={<KeyboardArrowDownIcon />}
+                                    disableRipple
+                                    sx={{ 
+                                        color: '#1976d2', 
+                                        textTransform: 'none',
+                                        fontSize: '16px',
+                                        fontWeight: 500,
+                                        cursor: 'pointer',
+                                        borderRadius: '4px 4px 0 0',
+                                        backgroundColor: open ? 'rgba(25, 118, 210, 0.08)' : 'transparent',
+                                        '&:hover': {
+                                            backgroundColor: 'rgba(25, 118, 210, 0.08)'
+                                        },
+                                        zIndex: open ? 1301 : 'auto'
+                                    }}
+                                >
+                                    Departamentos
+                                </Button>
+                                <Menu
+                                    id="departamentos-menu"
+                                    anchorEl={anchorEl}
+                                    open={open}
+                                    onClose={handleMenuClose}
+                                    MenuListProps={{
+                                        'aria-labelledby': 'departamentos-button',
+                                        onMouseLeave: handleMouseLeave,
+                                        onMouseEnter: () => clearTimeout(debounceTimeout)
+                                    }}
+                                    PaperProps={{
+                                        elevation: 3,
+                                        onMouseLeave: handleMouseLeave,
+                                        sx: { 
+                                            width: 220,
+                                            maxHeight: 400,
+                                            overflow: 'auto',
+                                            borderRadius: '0 0 8px 8px',
+                                            mt: 0,
+                                            border: '1px solid rgba(25, 118, 210, 0.2)',
+                                            borderTop: 'none'
+                                        }
+                                    }}
+                                    transformOrigin={{ horizontal: 'left', vertical: 'top' }}
+                                    anchorOrigin={{ horizontal: 'left', vertical: 'bottom' }}
+                                    disableAutoFocus
+                                    disableEnforceFocus
+                                    slotProps={{
+                                        paper: {
+                                            onMouseEnter: () => clearTimeout(debounceTimeout),
+                                            onMouseLeave: handleMouseLeave
+                                        }
+                                    }}
+                                >
+                                    {fabricantes.map((f) => (
+                                        <MenuItem 
+                                            key={f.fab_codigo} 
+                                            onClick={() => {
+                                                handleMenuClose();
+                                                router.push(`/produtos?limit=12&fabricante=${f.fab_codigo}&page=1`);
+                                            }}
+                                            sx={{
+                                                py: 1,
+                                                px: 2,
+                                                '&:hover': {
+                                                    backgroundColor: 'rgba(25, 118, 210, 0.08)',
+                                                    color: '#1976d2'
+                                                }
+                                            }}
+                                        >
+                                            <Typography variant="body2">{f.fab_descricao}</Typography>
+                                        </MenuItem>
+                                    ))}
+                                </Menu>
                             </div>
                             <ul>
                                 <li>
