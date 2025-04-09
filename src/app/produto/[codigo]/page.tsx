@@ -104,6 +104,8 @@ const ProductPage = () => {
 
     useEffect(() => {
         const header = document.getElementById("header-page");
+        const headerPrice = document.getElementsByClassName("banner-product")[0];
+        console.log(headerPrice)
         const sticky = header.offsetTop;
 
         const myFunction = (e) => {
@@ -126,6 +128,16 @@ const ProductPage = () => {
             }
         };
         fetchProduto();
+
+        const myFunctionTwo = (e) => {
+            console.log(window.scrollY)
+            if (window.scrollY > 200) {
+                headerPrice.classList.add("fixed");
+            } else {
+                headerPrice.classList.remove("fixed");
+            }
+        }
+        window.addEventListener('scroll', myFunctionTwo);
     },[])
 
     const handleAddToCart = async () => {

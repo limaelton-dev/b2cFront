@@ -1,5 +1,11 @@
 .banner-product {
+    top: 0px;
     background-color: black;
+    z-index: 99999;
+}
+.banner-product.fixed {
+    position: fixed;
+    width: 100%;
 }
 .banner-product {
     padding: 20px 0px;
