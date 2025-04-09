@@ -273,7 +273,7 @@ export default function HomePage() {
                             <p>Lançamentos</p>
                         </div>
                         <div className="products prod-listing">
-                            <Carousel value={prodsNew} numVisible={4} numScroll={2} itemTemplate={productTemplate} responsiveOptions={responsiveOptions}/>
+                            <Carousel value={prodsNew} numVisible={4} numScroll={2} itemTemplate={productTemplate} responsiveOptions={responsiveOptions} circular />
                             
                         </div>
                     </div>
@@ -284,7 +284,7 @@ export default function HomePage() {
                             <p>Nossas marcas</p>
                         </div>
                         <div className="content-marcas">
-                            <Carousel value={marcas} numVisible={5} numScroll={1} itemTemplate={templateMarca}/>
+                            <Carousel value={marcas} numVisible={5} numScroll={1} itemTemplate={templateMarca} circular />
                         </div>
                     </div>
                 </section>
@@ -294,7 +294,7 @@ export default function HomePage() {
                             <p>Mais vendidos</p>
                         </div>
                         <div className="products prod-listing">
-                            <Carousel value={prodsMaisVend} numVisible={4} numScroll={2} itemTemplate={productTemplate} responsiveOptions={responsiveOptions}/>
+                            <Carousel value={prodsMaisVend} numVisible={4} numScroll={2} itemTemplate={productTemplate} responsiveOptions={responsiveOptions} circular />
                         </div>
                     </div>
                 </section>
