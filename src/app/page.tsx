@@ -3,6 +3,7 @@ import React from 'react';
 import Image from 'next/image';
 import './assets/css/home.css';
 import LogoColetek from './assets/img/logo_coletek.png';
+import bgNewsletter from './assets/img/background.png';
 import Banner1 from './assets/img/132.jpg';
 import HeadphoneImg from './assets/img/headphone.png';
 import { useEffect, useState, useRef } from 'react';
@@ -10,10 +11,11 @@ import Header from './header';
 import Footer from './footer';
 import Cart from './components/cart';
 import { Carousel } from 'primereact/carousel';
-import { Typography } from '@mui/material';
+import { Radio, Typography } from '@mui/material';
 import { getProdsLimit } from './services/produto/page';
 import { useCart } from './context/cart';
 import { useToastSide } from './context/toastSide';
+import Checkbox, { checkboxClasses } from '@mui/joy/Checkbox';
 
 const getProdutosPage = async (limit: number) => {
     try {
@@ -67,7 +69,7 @@ export default function HomePage() {
             {link: "", img: LogoColetek},
             {link: "", img: LogoColetek}
         ]);
-        
+        console.log(bgNewsletter.src)
     }, []);
     
     const responsiveOptions = [
@@ -408,6 +410,24 @@ export default function HomePage() {
                     <div className="container">
                         <div className="banner-promo-full">
                                     
+                        </div>
+                    </div>
+                </section>
+                <section id="newsletter" style={{backgroundImage: "url('"+bgNewsletter.src+"')", backgroundSize: '100% 400%'}}>
+                    <div className="container d-flex">
+                        <div className="col-lg-5 d-flex align-items-start flex-direction-column justify-content-center" style={{height: '250px'}}>
+                            <h3 style={{color: 'white'}}>Fique por dentro de todas as nossas ofertas e novidades</h3>
+                            <h6 style={{color: 'white'}}><b>Cadastre seu email</b> para receber todas as atualizações.</h6>
+                        </div>
+                        <div className="col-lg-7 d-flex align-items-start flex-direction-column justify-content-center inputs">
+                            <div className='inputs-newsletter'>
+                                <input type="text" placeholder='Digite seu Nome' />
+                                <input type="text" placeholder='Digite seu Email' />
+                                <button type='button'>Quero receber as novidades</button>
+                            </div>
+                            <div style={{marginTop: '15px', color: 'white'}}>
+                                <Checkbox sx={{'& .MuiCheckbox-label': {zIndex: '55'}, color: 'white'}} label={<>Estou ciente das condições de tratamento dos meus dados pessoais e forneço meu conscentimento conforme descrito na <b>Política de Privacidade</b>. Você pode cancelar a inscrição a qualquer momento por meio do link nos email de nossa comunicação.</>}/>
+                            </div>
                         </div>
                     </div>
                 </section>
