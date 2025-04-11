@@ -123,7 +123,7 @@ export default function HomePage() {
                         </svg>
                     </div>
                 </div>
-                <a className='title-link-product' href={`/produto/${product.id}`}>
+                <a className='title-link-product' href={`/produto/${product.pro_descricao}`}>
                     <Typography
                         variant="body1"
                         className='title-product'
