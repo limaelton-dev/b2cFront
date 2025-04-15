@@ -197,6 +197,7 @@ const ProductsPage = () => {
     const fabricante = searchParams.get("fabricante");
     const offer = searchParams.get("offer");
     const page = searchParams.get("page") ? parseInt(searchParams.get("page")) : 1;
+    const buscaParams = searchParams.get("s");
 
     const loadProductsData = async (pageNum = page, cat = category, fab = fabricante) => {
         setIsLoading(true);
@@ -229,7 +230,7 @@ const ProductsPage = () => {
             try {
                 // Função para carregar produtos diretamente do backend
                 const timestamp = new Date().getTime();
-                const backendQueryUrl = `${backendUrl}/produtos?limit=${itemsPerPage}&page=${page}&_nocache=${timestamp}${category ? '&categoria='+category : ''}${fabricante ? '&fabricante='+fabricante : ''}`;
+                const backendQueryUrl = `${backendUrl}/produtos?limit=${itemsPerPage}&page=${page}&_nocache=${timestamp}${category ? '&categoria='+category : ''}${buscaParams ? '&s='+buscaParams : ''}${fabricante ? '&fabricante='+fabricante : ''}`;
                 
                 const response = await fetch(backendQueryUrl, {
                     method: 'GET',

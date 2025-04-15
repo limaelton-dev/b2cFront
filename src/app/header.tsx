@@ -12,7 +12,7 @@ import LaunchIcon from '@mui/icons-material/Launch';
 import { useCart } from './context/cart';
 import { useAuth } from './context/auth';
 import PersonOutlineOutlinedIcon from '@mui/icons-material/PersonOutlineOutlined';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { AuthContextType, User } from './interfaces/interfaces';
 import { Link, Typography, Button, Menu, MenuItem, ListItemIcon, Divider, Paper } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
@@ -24,6 +24,7 @@ import { getProdutosFabricante } from './services/produto/page';
 
 const URL = process.env.NEXT_PUBLIC_URL || '';
 export default function Header({ cartOpened, onCartToggle }) {
+    const pathname = usePathname();
     const router = useRouter();
     const { user } = useAuth();
     const { cartItems } = useCart();
@@ -56,6 +57,37 @@ export default function Header({ cartOpened, onCartToggle }) {
         }
         fabricantes();
     }, [])
+
+    const handleKeyDown =  async (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            if(pathname == '/produtos') {
+                const params = new URLSearchParams();
+                await params.set('s', searchTerm);
+                await router.push(`?${params.toString()}`);
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            }
+            else {
+                router.push(`/produtos?s=${searchTerm}`)
+            }
+        }
+    };
+
+    const clickSearch = async () => {
+        if(pathname == '/produtos') {
+            const params = new URLSearchParams();
+            await params.set('s', searchTerm);
+            await router.push(`?${params.toString()}`);
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        }
+        else {
+            router.push(`/produtos?s=${searchTerm}`)
+        }
+    }
 
     useEffect(() => {
         if (searchTerm.length < 4) return;
@@ -157,8 +189,8 @@ export default function Header({ cartOpened, onCartToggle }) {
                                         <option value="1" defaultValue={1}>Todas categorias</option>
                                         <option value="2">Categoria 1</option>
                                     </select>
-                                    <input type="text" id="search" onChange={changeSearch}/>
-                                    <button>
+                                    <input type="text" id="search" onKeyDown={handleKeyDown} onChange={changeSearch}/>
+                                    <button type='button' onClick={clickSearch}>
                                         <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#fff">
                                             <path d="M784-120 532-372q-30 24-69 38t-83 14q-109 0-184.5-75.5T120-580q0-109 75.5-184.5T380-840q109 0 184.5 75.5T640-580q0 44-14 83t-38 69l252 252-56 56ZM380-400q75 0 127.5-52.5T560-580q0-75-52.5-127.5T380-760q-75 0-127.5 52.5T200-580q0 75 52.5 127.5T380-400Z"/>
                                         </svg>
