@@ -101,6 +101,12 @@ html {
     background-color: white;
     color: #209c20;
 }
+.rewind {
+    cursor: pointer;
+}
+.rewind:hover {
+    text-decoration: underline;
+}
 #prod-newest .p-carousel.p-component {
     width: 100%;
 }
@@ -119,4 +125,7 @@ html {
 }
 .logout-button:hover, .acc-button:hover {
     text-decoration: underline;
+}
+.w-100 {
+    width: 100%;
 }

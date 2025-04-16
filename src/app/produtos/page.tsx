@@ -12,7 +12,8 @@ import { getProduto } from '../services/produto/page';
 import Cart from '../components/cart';
 import Header from '../header';
 import { useCart } from '../context/cart';
-import { Alert, Snackbar, Slide, Button, CircularProgress, Typography, Checkbox, FormControlLabel, FormGroup, Pagination, Switch } from '@mui/material';
+import { Alert, Snackbar, Slide, Button, CircularProgress, Typography, Checkbox, FormControlLabel, FormGroup, Pagination, Switch, Breadcrumbs, Link } from '@mui/material';
+import HomeIcon from '@mui/icons-material/Home';
 import { useToastSide } from '../context/toastSide';
 import Footer from '../footer';
 import Accordion from '@mui/material/Accordion';
@@ -452,6 +453,24 @@ const ProductsPage = () => {
             <Cart cartOpened={openedCart} onCartToggle={setOpenedCart}/>
             <Header cartOpened={openedCart} onCartToggle={setOpenedCart} />
             <div className="container d-flex flex-wrap justify-content-center mt-3">
+                <div className="w-100 mb-3">
+                    <Breadcrumbs aria-label="breadcrumb">
+                        <Link
+                            underline="hover"
+                            sx={{ display: 'flex', alignItems: 'center' }}
+                            color="inherit"
+                            href="/"
+                        >
+                        <HomeIcon sx={{ mr: 0.5 }} fontSize="inherit" />
+                            Home
+                        </Link>
+                        <Typography
+                            sx={{ color: 'text.primary', display: 'flex', alignItems: 'center' }}
+                        >
+                            Produtos
+                        </Typography>
+                    </Breadcrumbs>
+                </div>
                 <div style={{width:'20%'}}>
                     <div className="filtros-bg" style={{borderRadius: '6px', border: '1px solid #c1c1c1'}}>
                         <div className="filtros">

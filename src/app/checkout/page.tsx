@@ -29,6 +29,7 @@ import { login, register } from '../services/auth';
 import { addAddress, addCard, updateProfile } from '../minhaconta/services/userAccount';
 import { saveToken } from '../utils/auth';
 import { useCookies } from 'react-cookie';
+import HomeIcon from '@mui/icons-material/Home';
 
 async function buscaTipoPessoa() {
     try {
@@ -1011,15 +1012,24 @@ const CheckoutPage = () => {
                         <span>Você precisa cadastrar um cartão para continuar</span>
                     </div>
                 )}
-                <Breadcrumbs aria-label="breadcrumb">
-                    <Link underline="hover" color="inherit" href="/">
-                        1. Meu Carrinho
-                    </Link>
-                    <Typography sx={{ color: 'text.primary' }}>2. Identificação e pagamento</Typography>
-                </Breadcrumbs>
-                <Link underline="hover" className='d-flex align-items-center' color="inherit" href="/">
-                    <ArrowBackIosIcon style={{fontSize: '13px'}}/> Voltar
-                </Link>
+                <div className="w-100 mb-3">
+                    <Breadcrumbs aria-label="breadcrumb">
+                        <Link
+                            underline="hover"
+                            sx={{ display: 'flex', alignItems: 'center' }}
+                            color="inherit"
+                            href="/"
+                        >
+                        <HomeIcon sx={{ mr: 0.5 }} fontSize="inherit" />
+                            Home
+                        </Link>
+                        <Typography
+                            sx={{ color: 'text.primary', display: 'flex', alignItems: 'center' }}
+                        >
+                            Checkout
+                        </Typography>
+                    </Breadcrumbs>
+                </div>
                 <div className="prod-total">
                     <div className="d-flex justify-content-between">
                         <div className="prods">

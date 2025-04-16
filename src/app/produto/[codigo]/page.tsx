@@ -12,7 +12,7 @@ import { getProdsLimit, getProduto } from '../../services/produto/page';
 import Cart from '../../components/cart';
 import Header from '../../header';
 import { useCart } from '../../context/cart';
-import { Alert, Snackbar, Slide, Button, CircularProgress, Typography, TextField, Checkbox } from '@mui/material';
+import { Alert, Snackbar, Slide, Button, CircularProgress, Typography, TextField, Checkbox, Breadcrumbs, Link } from '@mui/material';
 import { useToastSide } from '../../context/toastSide';
 import ScrollTopButton from '../../components/scrollTopButton';
 import useScrollToDiv from '../../components/useScrollToDiv';
@@ -21,6 +21,7 @@ import { Carousel } from 'primereact/carousel';
 import ReactInputMask from 'react-input-mask';
 import axios from 'axios';
 import { valorFreteDeslogado } from '../../services/checkout';
+import HomeIcon from '@mui/icons-material/Home';
 
 const getProdutosPage = async (limit: number) => {
     try {
@@ -320,6 +321,26 @@ const ProductPage = () => {
         <ScrollTopButton/>
         <main>
             <section id="content-product">
+                <div className="container">
+                    <div className="w-100 mb-3">
+                        <Breadcrumbs aria-label="breadcrumb">
+                            <Link
+                                underline="hover"
+                                sx={{ display: 'flex', alignItems: 'center' }}
+                                color="inherit"
+                                href="/"
+                            >
+                            <HomeIcon sx={{ mr: 0.5 }} fontSize="inherit" />
+                                Home
+                            </Link>
+                            <Typography
+                                sx={{ color: 'text.primary', display: 'flex', alignItems: 'center' }}
+                            >
+                                {product.pro_descricao}
+                            </Typography>
+                        </Breadcrumbs>
+                    </div>
+                </div>
                 <div className="banner-product">
                     <div className="container d-flex">
                         <div className="col-lg-6 d-flex flex-column">
@@ -449,7 +470,7 @@ const ProductPage = () => {
                                                 '& .MuiInputBase-input::placeholder': {
                                                     fontSize: '23px', 
                                                     fontWeight: 'bold',
-                                                },width: '90px',  marginBottom: '8px'
+                                                },width: '120px',  marginBottom: '8px'
                                             }}
                                             />
                                         )}
