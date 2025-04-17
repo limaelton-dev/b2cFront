@@ -26,6 +26,7 @@ const getProdutosPage = async (limit: number) => {
             pro_descricao: produto.pro_descricao,
             pro_desc_tecnica: produto.pro_desc_tecnica,
             pro_precovenda: produto.pro_precovenda,
+            pro_url_amigavel: produto.pro_url_amigavel,
             imagens: produto.imagens,
             name: produto.pro_desc_tecnica,
             img: produto.imagens && produto.imagens.length > 0 ? produto.imagens[0].url : "",
@@ -100,13 +101,15 @@ export default function HomePage() {
                 <div className="wishlist-button">
 
                 </div>
-                <Image
-                        src={product.img}
-                        width={200}
-                        height={200}
-                        alt="Headphone"
-                        layout="responsive"
-                />
+                <a href={`/produto/${product.pro_url_amigavel}`}>
+                    <Image
+                            src={product.img}
+                            width={200}
+                            height={200}
+                            alt="Headphone"
+                            layout="responsive"
+                    />
+                </a>
                 <div className="promo green">
                     Até 20% OFF
                 </div>
@@ -123,7 +126,7 @@ export default function HomePage() {
                         </svg>
                     </div>
                 </div>
-                <a className='title-link-product' href={`/produto/${product.pro_descricao}`}>
+                <a className='title-link-product' href={`/produto/${product.pro_url_amigavel}`}>
                     <Typography
                         variant="body1"
                         className='title-product'

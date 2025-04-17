@@ -74,6 +74,7 @@ const getProdutos = async (limit: number, category, fabricante, page = 1) => {
                 name: produto.pro_desc_tecnica || produto.pro_descricao,
                 pro_desc_tecnica: produto.pro_desc_tecnica || produto.pro_descricao,
                 pro_descricao: produto.pro_descricao || produto.pro_desc_tecnica || '',
+                pro_url_amigavel: produto.pro_url_amigavel || '',
                 img: produto.imagens && produto.imagens.length > 0 ? produto.imagens[0].url : NoImage,
                 imagens: produto.imagens || [],
                 pro_imagem: produto.imagens && produto.imagens.length > 0 ? produto.imagens[0].url : NoImage,
@@ -102,6 +103,7 @@ const getProdutos = async (limit: number, category, fabricante, page = 1) => {
                 pro_desc_tecnica: produto.pro_desc_tecnica || produto.pro_descricao,
                 pro_descricao: produto.pro_descricao || produto.pro_desc_tecnica || '',
                 img: produto.imagens && produto.imagens.length > 0 ? produto.imagens[0].url : NoImage,
+                pro_url_amigavel: produto.pro_url_amigavel || '',
                 imagens: produto.imagens || [],
                 pro_imagem: produto.imagens && produto.imagens.length > 0 ? produto.imagens[0].url : NoImage,
                 price: 'R$ '+(produto.pro_precovenda || 0).toFixed(2).replace('.', ','),
@@ -174,7 +176,7 @@ const ProductsPage = () => {
     const [isLoading, setIsLoading] = useState(false);
     const { showToast } = useToastSide();
     const { addToCart, cartItems } = useCart();
-    const [products, setProducts] = useState<{id: number, name: string; img: string; price: string; sku: string }[]>([]);
+    const [products, setProducts] = useState<{id: number, name: string; pro_url_amigavel: string; img: string; price: string; sku: string }[]>([]);
     const [isActiveColorId, setIsActiveColorId] = useState(null)
     const { codigo } = useParams();
     const [categories, setCategories] = useState<{id: number,tpo_codigo: number,tpo_descricao: string}[]>([]);
@@ -256,6 +258,7 @@ const ProductsPage = () => {
                         name: produto.pro_desc_tecnica || produto.pro_descricao,
                         pro_desc_tecnica: produto.pro_desc_tecnica || produto.pro_descricao,
                         pro_descricao: produto.pro_descricao || produto.pro_desc_tecnica || '',
+                        pro_url_amigavel: produto.pro_url_amigavel || '',
                         img: produto.imagens && produto.imagens.length > 0 ? produto.imagens[0].url : NoImage,
                         imagens: produto.imagens || [],
                         pro_imagem: produto.imagens && produto.imagens.length > 0 ? produto.imagens[0].url : NoImage,
@@ -407,6 +410,7 @@ const ProductsPage = () => {
                     name: produto.pro_desc_tecnica || produto.pro_descricao,
                     pro_desc_tecnica: produto.pro_desc_tecnica || produto.pro_descricao,
                     pro_descricao: produto.pro_descricao || produto.pro_desc_tecnica || '',
+                    pro_url_amigavel: produto.pro_url_amigavel || '',
                     img: produto.imagens && produto.imagens.length > 0 ? produto.imagens[0].url : NoImage,
                     imagens: produto.imagens || [],
                     pro_imagem: produto.imagens && produto.imagens.length > 0 ? produto.imagens[0].url : NoImage,
@@ -561,13 +565,15 @@ const ProductsPage = () => {
                                 <div className="wishlist-button">
                 
                                 </div>
-                                <Image
-                                        src={produto.img}
-                                        width={200}
-                                        height={200}
-                                        alt="Produto"
-                                        layout="responsive"
-                                />
+                                <a href={`/produto/${produto.pro_url_amigavel}`}>
+                                    <Image
+                                            src={produto.img}
+                                            width={200}
+                                            height={200}
+                                            alt="Produto"
+                                            layout="responsive"
+                                    />
+                                </a>
                                 <div className="promo green">
                                     Até 20% OFF
                                 </div>
@@ -584,7 +590,7 @@ const ProductsPage = () => {
                                         </svg>
                                     </div>
                                 </div>
-                                <a className='title-link-product' href={`/produto/${produto.id}`}>
+                                <a className='title-link-product' href={`/produto/${produto.pro_url_amigavel}`}>
                                     <Typography
                                         variant="body1"
                                         className='title-product'
