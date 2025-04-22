@@ -379,7 +379,7 @@ const ProductsPage = () => {
             
             // Fazer requisição direta ao backend com opções anti-cache
             const timestamp = new Date().getTime();
-            const backendQueryUrl = `${backendUrl}/produtos?limit=${itemsPerPage}&page=${value}&_nocache=${timestamp}${categoriaParam ? '&categoria='+categoriaParam : ''}${fabricanteParam ? '&fabricante='+fabricanteParam : ''}`;
+            const backendQueryUrl = `${backendUrl}/produtos?limit=${itemsPerPage}&page=${value}&_nocache=${timestamp}${buscaParams ? '&s='+buscaParams : ''}${categoriaParam ? '&categoria='+categoriaParam : ''}${fabricanteParam ? '&fabricante='+fabricanteParam : ''}`;
             
             const response = await fetch(backendQueryUrl, {
                 method: 'GET',
