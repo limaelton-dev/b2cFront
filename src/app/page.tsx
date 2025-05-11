@@ -20,18 +20,19 @@ import Checkbox, { checkboxClasses } from '@mui/joy/Checkbox';
 const getProdutosPage = async (limit: number) => {
     try {
         const resp = await getProdsLimit(limit);
-        const prodFormatted = resp.data.items.map((produto: any) => ({
+        console.log(resp)
+        const prodFormatted = resp.data.data.map((produto: any) => ({
             id: produto.id,
-            pro_codigo: produto.pro_codigo,
-            pro_descricao: produto.pro_descricao,
-            pro_desc_tecnica: produto.pro_desc_tecnica,
-            pro_precovenda: produto.pro_precovenda,
-            pro_url_amigavel: produto.pro_url_amigavel,
-            imagens: produto.imagens,
-            name: produto.pro_desc_tecnica,
-            img: produto.imagens && produto.imagens.length > 0 ? produto.imagens[0].url : "",
-            price: produto.pro_precovenda ? `R$ ${produto.pro_precovenda.toFixed(2).replace('.', ',')}` : 'Preço indisponível',
-            sku: produto.pro_partnum_sku,
+            pro_codigo: produto.reference,
+            pro_descricao: produto.name,
+            pro_desc_tecnica: produto.techDescription,
+            pro_precovenda: produto.price,
+            pro_url_amigavel: produto.slug,
+            imagens: produto.images,
+            name: produto.name,
+            img: produto.images && produto.images.length > 0 ? produto.images[0].url : "",
+            price: produto.price ? `R$ ${produto.price.replace('.', ',')}` : 'Preço indisponível',
+            sku: produto.model,
         }));
         return prodFormatted;
     } catch (error) {

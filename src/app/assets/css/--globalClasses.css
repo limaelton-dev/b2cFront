@@ -133,3 +133,31 @@ html {
 #recomend .p-carousel.p-component {
     width: 100%;
 }
+.relative-item {
+    position: relative;
+}
+#departamentos-menu .css-1xomo8h-MuiPaper-root-MuiPopover-paper-MuiMenu-paper {
+    overflow: visible;
+}
+.submenu-itens {
+    position: absolute;
+    display: none;
+    left: 100%;
+    top: 0px;
+    background-color: white;
+    height: 270px;
+    width: 200px;
+    color: black;
+    border-radius: 3px;
+    box-shadow: 1px 3px 5px 1px #00000050;
+}
+#departamentos-menu ul li:hover .submenu-itens {
+    display: flex;
+    flex-direction: column;
+}
+.submenu-itens li {
+    display: flex;
+}
+.submenu-itens li:hover {
+    color:cornflowerblue;
+}

@@ -10,7 +10,7 @@ export const search = async (busca) => {
         const headers = {
             Authorization: `Bearer ${getToken()}`
         };
-        const response = await axios.get(`${API_URL}/produtos?s=${busca}&limit=5`, { headers });
+        const response = await axios.get(`${API_URL}/product?s=${busca}&limit=5`, { headers });
         
         // Verificar se a resposta contém dados
         if (response && response.data) {

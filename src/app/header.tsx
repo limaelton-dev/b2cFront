@@ -22,6 +22,14 @@ import SearchIcon from '@mui/icons-material/Search';
 import { logout } from './services/auth';
 import { getProdutosFabricante } from './services/produto/page';
 
+
+
+interface ProductResponse {
+  brand: any;
+  categories: any[];
+}
+
+
 const URL = process.env.NEXT_PUBLIC_URL || '';
 export default function Header({ cartOpened, onCartToggle }) {
     const pathname = usePathname();
@@ -30,7 +38,7 @@ export default function Header({ cartOpened, onCartToggle }) {
     const { cartItems } = useCart();
     const [debounceTimeout, setDebounceTimeout] = useState<NodeJS.Timeout | null>(null);
     const [results, setResults] = useState<any[]>([]);
-    const [fabricantes, setFabricantes] = useState<{id: number,fab_codigo: number,fab_descricao: string}[]>([]);
+    const [fabricantes, setFabricantes] = useState<ProductResponse[]>(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [anchorEl, setAnchorEl] = useState(null);
     const open = Boolean(anchorEl);
@@ -46,22 +54,22 @@ export default function Header({ cartOpened, onCartToggle }) {
     };
 
     useEffect(() => {
-        async function fabricantes() {
-            const resp = await getProdutosFabricante(10);
-            const prodFormatted = resp.data.map((produto: any) => ({
-                id: produto.id,
-                fab_codigo: produto.fab_codigo,
-                fab_descricao: produto.fab_descricao,
+        async function getFabricantes() {
+            const resp = await getProdutosFabricante();
+            console.log(resp.data, 'Oiee')
+            const prodFormatted = resp.data.map((b: any) => ({
+                brand: b.brand,
+                categories: b.categories
             }));
             setFabricantes(prodFormatted);
         }
-        fabricantes();
+        getFabricantes();
     }, [])
 
     const handleKeyDown =  async (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === 'Enter') {
             e.preventDefault();
-            if(pathname == '/produtos') {
+            if(pathname == '/product') {
                 const params = new URLSearchParams();
                 await params.set('s', searchTerm);
                 await router.push(`?${params.toString()}`);
@@ -70,13 +78,13 @@ export default function Header({ cartOpened, onCartToggle }) {
                 }, 1000);
             }
             else {
-                router.push(`/produtos?s=${searchTerm}`)
+                router.push(`/product?s=${searchTerm}`)
             }
         }
     };
 
     const clickSearch = async () => {
-        if(pathname == '/produtos') {
+        if(pathname == '/product') {
             const params = new URLSearchParams();
             await params.set('s', searchTerm);
             await router.push(`?${params.toString()}`);
@@ -85,7 +93,7 @@ export default function Header({ cartOpened, onCartToggle }) {
             }, 1000);
         }
         else {
-            router.push(`/produtos?s=${searchTerm}`)
+            router.push(`/product?s=${searchTerm}`)
         }
     }
 
@@ -298,6 +306,9 @@ export default function Header({ cartOpened, onCartToggle }) {
                                         onMouseLeave: handleMouseLeave,
                                         onMouseEnter: () => clearTimeout(debounceTimeout)
                                     }}
+                                    sx={{
+                                        overflow: 'initial'
+                                    }}
                                     PaperProps={{
                                         elevation: 3,
                                         onMouseLeave: handleMouseLeave,
@@ -322,12 +333,13 @@ export default function Header({ cartOpened, onCartToggle }) {
                                         }
                                     }}
                                 >
-                                    {fabricantes.map((f) => (
+                                    {fabricantes && fabricantes.map((f) => (
                                         <MenuItem 
-                                            key={f.fab_codigo} 
+                                            key={f.brand.id}
+                                            className='relative-item'
                                             onClick={() => {
                                                 handleMenuClose();
-                                                router.push(`/produtos?limit=12&fabricante=${f.fab_codigo}&page=1`);
+                                                router.push(`/produtos?limit=12&fabricante=${f.brand.id}&page=1`);
                                             }}
                                             sx={{
                                                 py: 1,
@@ -338,7 +350,30 @@ export default function Header({ cartOpened, onCartToggle }) {
                                                 }
                                             }}
                                         >
-                                            <Typography variant="body2">{f.fab_descricao}</Typography>
+                                            <Typography variant="body2">{f.brand.name}</Typography>
+                                            <div className="submenu-itens">
+                                                {f.categories && f.categories.map((j) => (
+                                                    
+                                                    <MenuItem 
+                                                        key={j.id} 
+                                                        className='submenu-items'
+                                                        onClick={() => {
+                                                            handleMenuClose();
+                                                            router.push(`/produtos?limit=12&fabricante=${j.id}&page=1`);
+                                                        }}
+                                                        sx={{
+                                                            py: 1,
+                                                            px: 2,
+                                                            '&:hover': {
+                                                                backgroundColor: 'rgba(25, 118, 210, 0.08)',
+                                                                color: '#1976d2'
+                                                            }
+                                                        }}
+                                                    >
+                                                        <Typography variant="body2">{j.name}</Typography>
+                                                    </MenuItem>
+                                                ))}   
+                                            </div>
                                         </MenuItem>
                                     ))}
                                 </Menu>

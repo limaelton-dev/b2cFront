@@ -6,7 +6,7 @@ const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 export const getProduto = async (id) => {
     try {
-        const response = await axios.get(`${API_URL}/produtos/${id}`);
+        const response = await axios.get(`${API_URL}/product/${id}`);
         return response;
     }
     catch (err) {
@@ -29,7 +29,7 @@ export const getProdsArr = async (arr) => {
         }
         
         console.log('Buscando produtos com IDs:', validIds.join(','));
-        const response = await axios.get(`${API_URL}/produtos/${validIds.join(',')}`);
+        const response = await axios.get(`${API_URL}/product/${validIds.join(',')}`);
         
         // Verificar se a resposta contém dados válidos
         if (response && response.data) {
@@ -62,7 +62,7 @@ export const getProdsArr = async (arr) => {
 
 export const getProdsLimit = async (limit = 12, category = '', fabricante = '', page = 1, timestamp = null) => {
     try {
-        const url = `${API_URL}/produtos?limit=${limit}&page=${page}${category? '&categoria='+category : ''}${fabricante? '&fabricante='+fabricante : ''}${timestamp ? '&_t='+timestamp : ''}`;
+        const url = `${API_URL}/product?limit=${limit}&page=${page}${category? '&categoria='+category : ''}${fabricante? '&fabricante='+fabricante : ''}${timestamp ? '&_t='+timestamp : ''}`;
         
         const response = await axios.get(url);
         
@@ -98,9 +98,9 @@ export const getProdutosCategoria = async (limit) => {
     }
 };
 
-export const getProdutosFabricante = async (limit) => {
+export const getProdutosFabricante = async () => {
     try {
-        const response = await axios.get(`${API_URL}/produtofabricante?limit=${limit}`);
+        const response = await axios.get(`${API_URL}/category/menu`);
         return response;
     }
     catch (err) {
