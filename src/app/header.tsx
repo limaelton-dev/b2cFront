@@ -56,7 +56,6 @@ export default function Header({ cartOpened, onCartToggle }) {
     useEffect(() => {
         async function getFabricantes() {
             const resp = await getProdutosFabricante();
-            console.log(resp.data, 'Oiee')
             const prodFormatted = resp.data.map((b: any) => ({
                 brand: b.brand,
                 categories: b.categories
@@ -69,7 +68,7 @@ export default function Header({ cartOpened, onCartToggle }) {
     const handleKeyDown =  async (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === 'Enter') {
             e.preventDefault();
-            if(pathname == '/product') {
+            if(pathname == '/produtos') {
                 const params = new URLSearchParams();
                 await params.set('s', searchTerm);
                 await router.push(`?${params.toString()}`);
@@ -78,13 +77,13 @@ export default function Header({ cartOpened, onCartToggle }) {
                 }, 1000);
             }
             else {
-                router.push(`/product?s=${searchTerm}`)
+                router.push(`/produtos?s=${searchTerm}`)
             }
         }
     };
 
     const clickSearch = async () => {
-        if(pathname == '/product') {
+        if(pathname == '/produtos') {
             const params = new URLSearchParams();
             await params.set('s', searchTerm);
             await router.push(`?${params.toString()}`);
@@ -93,7 +92,7 @@ export default function Header({ cartOpened, onCartToggle }) {
             }, 1000);
         }
         else {
-            router.push(`/product?s=${searchTerm}`)
+            router.push(`/produtos?s=${searchTerm}`)
         }
     }
 

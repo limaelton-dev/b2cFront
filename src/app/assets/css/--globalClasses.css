@@ -161,3 +161,9 @@ html {
 .submenu-itens li:hover {
     color:cornflowerblue;
 }
+.MuiBreadcrumbs-root {
+    font-size: 14px;
+}
+.MuiBreadcrumbs-root li p {
+    font-size: 14px;
+}

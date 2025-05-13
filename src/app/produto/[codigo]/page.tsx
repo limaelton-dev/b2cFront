@@ -26,19 +26,25 @@ import HomeIcon from '@mui/icons-material/Home';
 const getProdutosPage = async (limit: number) => {
     try {
         const resp = await getProdsLimit(limit);
-        const prodFormatted = resp.data.items.map((produto: any) => ({
+        const prodFormatted = resp.data.data.map((produto: any) => ({
             id: produto.id,
-            pro_codigo: produto.pro_codigo,
-            pro_descricao: produto.pro_descricao,
-            pro_desc_tecnica: produto.pro_desc_tecnica,
-            pro_precovenda: produto.pro_precovenda,
-            pro_url_amigavel: produto.pro_url_amigavel,
-            imagens: produto.imagens,
-            name: produto.pro_desc_tecnica,
-            img: produto.imagens && produto.imagens.length > 0 ? produto.imagens[0].url : "",
-            price: produto.pro_precovenda ? `R$ ${produto.pro_precovenda.toFixed(2).replace('.', ',')}` : 'Preço indisponível',
-            sku: produto.pro_partnum_sku,
+            pro_codigo: produto.id,
+            pro_descricao: produto.name,
+            techDescription: produto.techDescription,
+            pro_precovenda: produto.price,
+            pro_url_amigavel: produto.slug,
+            images: produto.images,
+            name: produto.techDescription,
+            img: produto.images && produto.images.length > 0 ? produto.images[0].url : "",
+            preco: produto.price ? `R$ ${produto.price.replace('.', ',')}` : 'Preço indisponível',
+            model: produto.model,
+            reference: produto.reference,
+            brand: produto.brand,
+            description: produto.description,
+            packagingContent: produto.packagingContent,
+            barcode: produto.barcode
         }));
+
         return prodFormatted;
     } catch (error) {
         console.error('Erro: ', error);
@@ -66,22 +72,33 @@ const ProductPage = () => {
     const [freteError, setFreteError] = useState('');
     const [product, setProduct] = useState({
         id: 54862,
-        pro_descricao: 'DISCO FLAP 4 1/2" GRÃO 400',
-        pro_precovenda: 139.90,
+        pro_descricao: '',
+        pro_precovenda: "0.00",
         pro_url_amigavel: '',
         pro_modelo_com: '',
         pro_apresentacao: '',
         pro_referencia: '',
-        pro_desc_tecnica: '',
         pro_codigobarra: '',
         pro_prazogarantia: '',
         pro_conteudo_emb: '',
+        name: '',
+        model: '',
+        price: '',
+        reference: '',
+        barcode: '',
+        description: '',
         cores: [],
-        imagens: [],
-        fabricante: {
+        images: [],
+        packagingContent: '',
+        categoryLevel1: {
+            name:''
+        },
+        categoryLevel2: {
+            name:''
+        },
+        brand: {
             id: 1,
-            fab_codigo: 1,
-            fab_descricao: '',
+            name: '',
         }
     });
     const [openedCart, setOpenedCart] = useState(false);
@@ -123,7 +140,7 @@ const ProductPage = () => {
                 const response = await getProduto(codigo);
                 if(response.status === 200 && response.data) {
                     setProduct(response.data[0]);
-                    setSelectedImg(response.data[0].imagens[0].url)
+                    setSelectedImg(response.data[0].images[0].url)
                 }
             } catch (error) {
                 console.error('Erro ao buscar produtos', error);
@@ -216,10 +233,10 @@ const ProductPage = () => {
                     </Typography>
                 </a>
                 <div className="description">
-                    {product.sku}
+                    {product.model}
                 </div>
                 <div className="price">
-                    {product.price}
+                    {product.preco}
                     <div className="discount">
                         (5% OFF)
                     </div>
@@ -246,7 +263,7 @@ const ProductPage = () => {
     }
 
     const changePicture = (id) => {
-        setSelectedImg(product.imagens.find((imagem) => imagem.id === id).url)
+        setSelectedImg(product.images.find((imagem) => imagem.id === id).url)
     }
 
     const buscarEndereco = async (cep: string) => {
@@ -334,13 +351,23 @@ const ProductPage = () => {
                                 color="inherit"
                                 href="/"
                             >
-                            <HomeIcon sx={{ mr: 0.5 }} fontSize="inherit" />
+                                <HomeIcon sx={{ mr: 0.5 }} fontSize="inherit" />
                                 Home
                             </Link>
                             <Typography
                                 sx={{ color: 'text.primary', display: 'flex', alignItems: 'center' }}
                             >
-                                {product.pro_descricao}
+                                {product.categoryLevel1.name}
+                            </Typography>
+                            <Typography
+                                sx={{ color: 'text.primary', display: 'flex', alignItems: 'center' }}
+                            >
+                                {product.categoryLevel2.name}
+                            </Typography>
+                            <Typography
+                                sx={{ color: 'text.primary', display: 'flex', alignItems: 'center' }}
+                            >
+                                {product.name}
                             </Typography>
                         </Breadcrumbs>
                     </div>
@@ -349,7 +376,7 @@ const ProductPage = () => {
                     <div className="container d-flex">
                         <div className="col-lg-6 d-flex flex-column">
                             <h2>{product.pro_descricao}</h2>
-                            <span className='sku'>{product.pro_modelo_com}</span>
+                            <span className='sku'>{product.model}</span>
                             <div className="nav-product">
                                 <div className="button-nav" onClick={() => scrollTo('caracteristicas')}><b>Características</b></div>
                                 <div className="button-nav" onClick={() => scrollTo('especificacoes')}><b>Especificações Técnicas</b></div>
@@ -360,16 +387,16 @@ const ProductPage = () => {
                             <div className="price-info-head col-lg-6">
                                 <span className='price'>
                                     {isPromoProd ? 
-                                        <span>R$ {Number(product.pro_precovenda).toFixed(2).replace('.',',')}</span>
+                                        <span>R$ {product.price.replace('.',',')}</span>
                                             :
                                         <>
-                                            <span>De <b style={{textDecoration: 'line-through'}}>R$ {Number(product.pro_precovenda).toFixed(2).replace('.',',')}</b></span>
-                                            <span>Por <b>R$ {Number((product.pro_precovenda - 5)).toFixed(2).replace('.',',')}</b></span>
+                                            <span>De <b style={{textDecoration: 'line-through'}}>R$ {product.price.replace('.',',')}</b></span>
+                                            <span>Por <b>R$ {(Number(product.price) - 5.00).toString().replace('.',',')}</b></span>
                                         </>
                                     }
                                 </span>
-                                <span>Em até 12x de <b>R$ {Number(product.pro_precovenda).toFixed(2).replace('.',',')}</b></span>
-                                <span>ou <span style={{textDecoration: 'underline'}}>R$ {Number((product.pro_precovenda - 5)).toFixed(2).replace('.',',')}</span> no pagamento pix</span>
+                                <span>Em até 12x de <b>R$ {product.price.replace('.',',')}</b></span>
+                                <span>ou <span style={{textDecoration: 'underline'}}>R$ {(Number(product.price) - 5.00).toString().replace('.',',')}</span> no pagamento pix</span>
                             </div>
                             <div className="button-buy col-lg-6 d-flex align-items-center justify-content-center">
                                 <button type='button'
@@ -398,7 +425,7 @@ const ProductPage = () => {
                             />
                         </div>
                         <div className="carrousel mt-4">
-                            {product.imagens.map((p) => (
+                            {product.images.map((p) => (
                                 <div className="img-carrousel">
                                     <Image
                                         key={p.id}
@@ -418,7 +445,7 @@ const ProductPage = () => {
                         <div className="content-title-prod">
                             <h1>{product.pro_descricao}</h1>
                             <div className="rating-infoprod">
-                                <div className="sku">SKU: {product.pro_modelo_com}</div>
+                                <div className="sku">SKU: {product.model}</div>
                                 <div className="label-stars">
                                     <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e8eaed">
                                         <path d="m233-120 65-281L80-590l288-25 112-265 112 265 288 25-218 189 65 281-247-149-247 149Z"/>
@@ -440,7 +467,7 @@ const ProductPage = () => {
                             </div>
                             <hr/>
                             <div className="content-product-info">
-                                <p>{product.pro_apresentacao}</p>
+                                <p>{product.description}</p>
                             </div>
                             {/* <div className='d-flex flex-direction-column align-items-center'>
                                 <p className="text-colors">Cores:</p>
@@ -515,13 +542,13 @@ const ProductPage = () => {
                                     }
                                 </div>
                                 <span className="price text-center">
-                                    R$ {Number(product.pro_precovenda).toFixed(2).replace('.',',')}
+                                    R$ {Number(product.price).toFixed(2).replace('.',',')}
                                 </span>
                                 <span className="card-info">
                                     Até 12x no cartão
                                 </span>
-                                <span>Em até 12x de <b>R$ {Number(product.pro_precovenda).toFixed(2).replace('.',',')}</b></span>
-                                <span>ou <span style={{textDecoration: 'underline'}}>R$ {Number((product.pro_precovenda - 5)).toFixed(2).replace('.',',')}</span> no pagamento pix</span>
+                                <span>Em até 12x de <b>R$ {Number(product.price).toFixed(2).replace('.',',')}</b></span>
+                                <span>ou <span style={{textDecoration: 'underline'}}>R$ {(Number(product.price) - 5).toString().replace('.',',')}</span> no pagamento pix</span>
                                 <button type='button'
                                     onClick={handleAddToCart}
                                     className='btn-buy-primary mt-3'
@@ -567,15 +594,15 @@ const ProductPage = () => {
                         <p>Especificações</p>
                     </div>
                     <div className="txt-espec-prods">
-                        <p><strong>Referência:</strong> {product.pro_referencia}</p>
-                        <p><strong>Descrição Técnica:</strong> {product.pro_desc_tecnica}</p>
-                        <p><strong>Modelo Comercial:</strong> {product.pro_modelo_com}</p>
-                        <p><strong>Marca:</strong> {product.fabricante.fab_descricao}</p>
-                        <p><strong>Apresentação:</strong> {product.pro_apresentacao}</p>
+                        <p><strong>Referência:</strong> {product.reference}</p>
+                        <p><strong>Descrição Técnica:</strong> {product.name}</p>
+                        <p><strong>Modelo Comercial:</strong> {product.model}</p>
+                        <p><strong>Marca:</strong> {product.brand.name}</p>
+                        <p><strong>Apresentação:</strong> {product.description}</p>
                         {/* <p><strong>Tipo Giro:</strong> {product.pro_descricao}</p> */}
-                        <p><strong>DUN14:</strong> {product.pro_codigobarra}</p>
+                        <p><strong>DUN14:</strong> {product.barcode}</p>
                         <p><strong>Prazo de Garantia:</strong> {product.pro_prazogarantia}</p>
-                        <p><strong>Conteúdo Embalagem:</strong> {product.pro_conteudo_emb}</p>
+                        <p><strong>Conteúdo Embalagem:</strong> {product.packagingContent}</p>
                     </div>
                 </div>
             </section>

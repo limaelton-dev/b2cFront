@@ -26,6 +26,11 @@ import NoImage from "../assets/img/noimage.png";
 const isClient = typeof window !== 'undefined';
 const backendUrl = isClient ? process.env.NEXT_PUBLIC_BACKEND_URL : 'http://localhost:3000';
 
+interface ProductResponse {
+  brand: any;
+  categories: any[];
+}
+
 const debugRequestToBackend = async (url) => {
     try {
         const response = await fetch(url, { 
@@ -153,13 +158,13 @@ const getProdutoCategory = async (limit: number) => {
     }
 };
 
-const getProdutoFabricante = async (limit: number) => {
+const getProdutoFabricante = async () => {
     try {
-        const resp = await getProdutosFabricante(limit);
+        const resp = await getProdutosFabricante();
         const prodFormatted = resp.data.map((produto: any) => ({
             id: produto.id,
-            fab_codigo: produto.fab_codigo,
-            fab_descricao: produto.fab_descricao,
+            brand: produto.brand,
+            categories: produto.categories,
         }));
         return prodFormatted;
     } catch (error) {
@@ -180,7 +185,7 @@ const ProductsPage = () => {
     const [isActiveColorId, setIsActiveColorId] = useState(null)
     const { codigo } = useParams();
     const [categories, setCategories] = useState<{id: number,tpo_codigo: number,tpo_descricao: string}[]>([]);
-    const [fabricantes, setFabricantes] = useState<{id: number,fab_codigo: number,fab_descricao: string}[]>([]);
+    const [fabricantes, setFabricantes] = useState<ProductResponse[]>(null);
     const [catSett, setCatSett] = useState([]);
     const [fabSett, setFabSett] = useState([]);
     const [product, setProduct] = useState({
@@ -293,7 +298,7 @@ const ProductsPage = () => {
         };
         
         const loadFabricantes = async () => {
-            const fabricantes = await getProdutoFabricante(10);
+            const fabricantes = await getProdutoFabricante();
             setFabricantes(fabricantes);
         };
         
@@ -516,17 +521,17 @@ const ProductsPage = () => {
                                     </AccordionSummary>
                                     <AccordionDetails>
                                         <FormGroup>
-                                            {fabricantes.map((f) => (
+                                            {fabricantes && fabricantes.map((f) => (
                                                 <FormControlLabel 
-                                                    key={f.fab_codigo} 
+                                                    key={f.brand.id} 
                                                     control={
                                                         <Checkbox 
-                                                            onChange={(event) => handleCheckboxChangeFab(event, f.fab_codigo)} 
-                                                            checked={fabSett.includes(f.fab_codigo)} 
+                                                            onChange={(event) => handleCheckboxChangeFab(event, f.brand.id)} 
+                                                            checked={fabSett.includes(f.brand.id)} 
                                                             size='small' 
                                                         />
                                                     } 
-                                                    label={f.fab_descricao} 
+                                                    label={f.brand.name} 
                                                 />
                                             ))}
                                         </FormGroup>
