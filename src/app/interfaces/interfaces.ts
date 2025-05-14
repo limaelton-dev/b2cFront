@@ -21,8 +21,8 @@ export interface CartContextType {
     cartItems: any[];
     cartData: any[];
     changeQtyItem: (product: any, newV: number) => void;
-    addToCart: (product: any, idCor: number) => boolean;
-    removeFromCart: (id: string, idCor?: number) => boolean;
+    addToCart: (product: any, idCor: number) => Promise<boolean>;
+    removeFromCart: (id: string, idCor?: number) => Promise<boolean>;
     removeItems: () => void;
 }
 
@@ -42,10 +42,62 @@ export interface ToastSideContextType {
 
 export interface User {
     id: number,
-    name: string,
+    name?: string,
     email: string,
     username?: string,
-    profile_id?: number
+    profile_id?: number,
+    profileId?: number,
+    profileType?: 'PF' | 'PJ',
+    profile?: ProfilePF | ProfilePJ,
+    address?: Address[],
+    phone?: Phone[],
+    card?: Card[]
+}
+
+export interface ProfilePF {
+    id?: number,
+    fullName?: string,
+    cpf?: string,
+    birthDate?: string,
+    gender?: string | null
+}
+
+export interface ProfilePJ {
+    id?: number,
+    companyName?: string,
+    cnpj?: string,
+    tradingName?: string,
+    stateRegistration?: string,
+    municipalRegistration?: string
+}
+
+export interface Address {
+    id: number,
+    street: string,
+    number: string,
+    complement?: string,
+    neighborhood: string,
+    city: string,
+    state: string,
+    zip_code: string,
+    is_default: boolean
+}
+
+export interface Phone {
+    id: number,
+    number: string,
+    ddd: string,
+    is_default: boolean,
+    verified: boolean
+}
+
+export interface Card {
+    id: number,
+    card_number: string,
+    holder_name: string,
+    expiration_date: string,
+    is_default: boolean,
+    brand: string
 }
 
 export interface CouponShow {
@@ -102,4 +154,18 @@ export interface AddItemDto {
   produto_id: number;
   quantity: number;
   price?: number;
+}
+
+// Interfaces para o novo carrinho
+export interface CartItem {
+  id: number;
+  productId: number;
+  quantity: number;
+}
+
+export interface Cart {
+  id: number;
+  subtotal: string;
+  total: string;
+  items: CartItem[];
 }

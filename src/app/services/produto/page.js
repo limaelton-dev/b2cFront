@@ -33,20 +33,50 @@ export const getProdsArr = async (arr) => {
         
         // Verificar se a resposta contém dados válidos
         if (response && response.data) {
-            console.log('Produtos recuperados:', response.data.length || 0);
+            console.log('Produtos recuperados:', Array.isArray(response.data) ? response.data.length : 1);
             
             // Se a resposta não for um array, converta para um array
             const products = Array.isArray(response.data) ? response.data : [response.data];
             
-            // Processar cada produto para adicionar a URL da imagem como pro_imagem
+            // Processar cada produto para adicionar a URL da imagem como pro_imagem e garantir IDs compatíveis
             const processedProducts = products.map(product => {
-                if (product.imagens && product.imagens.length > 0) {
-                    return {
-                        ...product,
-                        pro_imagem: product.imagens[0].url
-                    };
+                const newProduct = { ...product };
+                
+                // Garantir que temos um ID consistente
+                if (product.id && !product.pro_codigo) {
+                    newProduct.pro_codigo = product.id;
+                } else if (product.pro_codigo && !product.id) {
+                    newProduct.id = product.pro_codigo;
                 }
-                return product;
+                
+                // Processar imagens para compatibilidade
+                if (product.images && product.images.length > 0) {
+                    newProduct.pro_imagem = product.images[0].url;
+                    if (!newProduct.imagens) {
+                        newProduct.imagens = product.images;
+                    }
+                } else if (product.imagens && product.imagens.length > 0) {
+                    newProduct.pro_imagem = product.imagens[0].url;
+                    if (!newProduct.images) {
+                        newProduct.images = product.imagens;
+                    }
+                }
+                
+                // Adicionar name se não existir
+                if (product.pro_descricao && !product.name) {
+                    newProduct.name = product.pro_descricao;
+                } else if (product.name && !product.pro_descricao) {
+                    newProduct.pro_descricao = product.name;
+                }
+                
+                // Garantir consistência no preço
+                if (product.price && !product.pro_precovenda) {
+                    newProduct.pro_precovenda = Number(product.price);
+                } else if (product.pro_precovenda && !product.price) {
+                    newProduct.price = String(product.pro_precovenda);
+                }
+                
+                return newProduct;
             });
             
             return { data: processedProducts };

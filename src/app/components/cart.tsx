@@ -140,19 +140,24 @@ export default function Cart({ cartOpened, onCartToggle }) {
     useEffect(() => {
         console.log(cartItems)
         async function getAddress() {
-            if(user.name) {
-                const resp = await getAddressUser();
-                if(resp) {
-                    const freteVal = await valorFrete(resp[0].postal_code.replace(/\D/,''), user.profile_id);
-                    setFrete(freteVal.data.data.totalPreco);
-                    if(freteVal) {
-                        setFreteNome('PAC - até ' + freteVal.data.data.maiorPrazo + ' dias úteis');
+            if(user && user.name) {
+                try {
+                    const resp = await getAddressUser();
+                    if(resp && resp.length > 0 && resp[0] && resp[0].postal_code) {
+                        const freteVal = await valorFrete(resp[0].postal_code.replace(/\D/,''), user.profile_id);
+                        if(freteVal && freteVal.data && freteVal.data.data) {
+                            setFrete(freteVal.data.data.totalPreco);
+                            setFreteNome('PAC - até ' + freteVal.data.data.maiorPrazo + ' dias úteis');
+                        }
                     }
+                } catch (error) {
+                    console.error("Erro ao obter endereço ou calcular frete:", error);
+                    setFrete(0);
                 }
             }
         }
         getAddress()
-    }, [cartItems])
+    }, [cartItems, user])
 
     // Verifica se os dados do carrinho estão sincronizados
     const isCartDataValid = () => {
@@ -166,7 +171,9 @@ export default function Cart({ cartOpened, onCartToggle }) {
         
         // Verifica se todos os itens no cartData têm um produto correspondente em cartItems
         const allItemsValid = cartData.every(item => {
-            const itemId = item.id || item.produto_id;
+            if (!item) return false;
+            
+            const itemId = item.id || item.produto_id || item.productId;
             
             const hasMatchingProduct = cartItems.some(product => {
                 if (!product) {
@@ -176,7 +183,9 @@ export default function Cart({ cartOpened, onCartToggle }) {
                 // Verificar correspondência pelo ID do produto ou pelo pro_codigo
                 const matchById = product.id == itemId;
                 const matchByProCodigo = product.pro_codigo == itemId;
-                const match = matchById || matchByProCodigo;
+                const matchByProductId = product.id == item.productId;
+                
+                const match = matchById || matchByProCodigo || matchByProductId;
                 
                 return match;
             });
@@ -196,9 +205,14 @@ export default function Cart({ cartOpened, onCartToggle }) {
             return 0;
         }
         
-        const quantity = item.qty || item.quantity || 1;
+        const quantity = item.quantity || item.qty || 1;
         
-        // Sempre usar o preço de venda do produto
+        // Nova API - campo price
+        if (product.price && !isNaN(parseFloat(product.price))) {
+            return parseFloat(product.price) * quantity;
+        }
+        
+        // API antiga - campo pro_precovenda
         if (product.pro_precovenda && !isNaN(product.pro_precovenda)) {
             return product.pro_precovenda * quantity;
         }
@@ -208,6 +222,7 @@ export default function Cart({ cartOpened, onCartToggle }) {
             return product.pro_valorultimacompra * quantity;
         }
         
+        console.error('Produto sem preço válido:', product);
         // Se nenhum preço válido for encontrado, retornar 0
         return 0;
     };
@@ -218,10 +233,12 @@ export default function Cart({ cartOpened, onCartToggle }) {
             return 0;
         }
         
-        
         return cartData.reduce((total, item) => {
-            const itemId = item.id || item.produto_id;
-            const product = cartItems.find(p => p && (p.id == itemId || p.pro_codigo == itemId));
+            const itemId = item.productId || item.produto_id || item.id;
+            const product = cartItems.find(p => {
+                if (!p) return false;
+                return p.id == itemId || p.pro_codigo == itemId;
+            });
             
             if (product) {
                 const price = getProductPrice(product, item);
@@ -234,7 +251,12 @@ export default function Cart({ cartOpened, onCartToggle }) {
 
     // Função para obter a imagem do produto
     const getProductImage = (product) => {
-        // Verificar se o produto tem imagens
+        // Nova API - campo images
+        if (product.images && product.images.length > 0) {
+            return product.images[0].url;
+        }
+        
+        // API antiga - campo imagens
         if (product.imagens && product.imagens.length > 0) {
             return product.imagens[0].url;
         }
@@ -271,14 +293,34 @@ export default function Cart({ cartOpened, onCartToggle }) {
                 ) : (
                     <>
                         {cartData.map((item, index) => {
-                            const itemId = item.id || item.produto_id;
+                            if (!item) return null;
+                            
+                            const itemId = item.productId || item.produto_id || item.id;
+                            
                             // Encontra o produto correspondente ao item do carrinho
-                            const product = cartItems.find(r => r && (r.id == itemId || r.pro_codigo == itemId));
+                            const product = cartItems.find(r => {
+                                if (!r) return false;
+                                
+                                // Comparação mais robusta
+                                if (r.id == itemId) return true;
+                                if (r.pro_codigo == itemId) return true;
+                                if (r.id == item.productId) return true;
+                                
+                                // Exibir log para debug se nenhuma correspondência
+                                return false;
+                            });
+                            
                             // Se não encontrar o produto, pula este item
-                            if (!product) return <React.Fragment key={itemId}></React.Fragment>;
+                            if (!product) {
+                                console.error(`Produto com ID ${itemId} não encontrado no carrinho!`);
+                                return <React.Fragment key={index}></React.Fragment>;
+                            }
+                            
+                            // Obter nome do produto
+                            const productName = product.name || product.pro_descricao || "Produto";
                             
                             return (
-                                <div className="product" data-test={itemId} key={itemId}>
+                                <div className="product" data-test={itemId} key={itemId || index}>
                                     <div style={{ display: 'flex', justifyContent: 'flex-end'}}>
                                         <IconButton style={{padding: '0px'}} aria-label="delete" onClick={() => handleAlertRemoveItem(itemId)}>
                                             <DeleteOutlineIcon />
@@ -286,17 +328,22 @@ export default function Cart({ cartOpened, onCartToggle }) {
                                     </div>
                                     <Image
                                         src={getProductImage(product)}
-                                        alt={product.pro_descricao || "Produto"}
+                                        alt={productName}
                                         width={100}
                                         height={100}
                                     />
                                     <div className="name-qty">
-                                        <Tooltip title={product.pro_descricao}>
-                                            <span>{limitaTexto(product.pro_descricao, 36)}</span>
+                                        <Tooltip title={productName}>
+                                            <span>{limitaTexto(productName, 36)}</span>
                                         </Tooltip>
                                         {product.tipo && (
                                             <Typography variant="caption" color="text.secondary">
                                                 Categoria: {product.tipo.tpo_descricao}
+                                            </Typography>
+                                        )}
+                                        {product.categoryLevel2 && (
+                                            <Typography variant="caption" color="text.secondary">
+                                                Categoria: {product.categoryLevel2.name}
                                             </Typography>
                                         )}
                                         <div className="quantity">
@@ -304,7 +351,7 @@ export default function Cart({ cartOpened, onCartToggle }) {
                                                 type='button'
                                                 onClick={() => handleDec(index, itemId)}
                                                 className="btn-qty decrement">-</button>
-                                            <input value={item.qty || item.quantity} min={min} max={max} onChange={(e) => handleInputChange(item, e)} type="number"/>
+                                            <input value={item.quantity || item.qty || 1} min={min} max={max} onChange={(e) => handleInputChange(item, e)} type="number"/>
                                             <button 
                                                 type='button'
                                                 onClick={() => handleInc(index, itemId)}

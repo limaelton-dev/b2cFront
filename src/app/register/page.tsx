@@ -14,34 +14,54 @@ import svgF from '../assets/img/svg/facebook.svg';
 import { useAuth } from '../context/auth';
 import KeyIcon from '@mui/icons-material/Key';
 import PersonIcon from '@mui/icons-material/Person';
-import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
-import AccountBoxIcon from '@mui/icons-material/AccountBox';
+import BusinessIcon from '@mui/icons-material/Business';
+import BadgeIcon from '@mui/icons-material/Badge';
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
+import WcIcon from '@mui/icons-material/Wc';
 import { useToastSide } from '../context/toastSide';
 
-export default function LoginPage() {
+export default function RegisterPage() {
     const router = useRouter();
     const { setUserFn } = useAuth();
     const [cookies, setCookie] = useCookies(['jwt','user']);
     const [isLoading, setIsLoading] = useState(false);
     const [textError, setTextError] = useState('');
     const { showToast } = useToastSide();
+    const [profileType, setProfileType] = useState('PF');
 
     const [formData, setFormData] = useState({
-        name: '',
-        lastname: '',
-        username: '',
+        // Campos comuns
         email: '',
         password: '',
-        repassword: ''
+        repassword: '',
+        profileType: 'PF',
+        
+        // Campos PF
+        fullName: '',
+        cpf: '',
+        birthDate: '',
+        gender: '',
+        
+        // Campos PJ
+        companyName: '',
+        cnpj: '',
+        tradingName: '',
+        stateRegistration: '',
+        municipalRegistration: ''
     });
 
     const [errors, setErrors] = useState({
-        name: false,
-        lastname: false,
-        username: false,
         email: false,
         password: false,
-        repassword: false
+        repassword: false,
+        
+        // Campos PF
+        fullName: false,
+        cpf: false,
+        
+        // Campos PJ
+        companyName: false,
+        cnpj: false
     });
 
     const handleChange = (e: any) => {
@@ -50,19 +70,26 @@ export default function LoginPage() {
             ...prevData,
             [name]: value
         }));
+        
+        if (name === 'profileType') {
+            setProfileType(value);
+        }
     };
 
     const submit = async (e: any) => {
         e.preventDefault();
         setIsLoading(true);
-        const newErrors = {
-            name: !formData.name.trim(),
-            lastname: !formData.lastname.trim(),
-            username: !formData.lastname.trim(),
+        
+        let newErrors = {
             email: !formData.email.trim(),
             password: !formData.password.trim(),
             repassword: !formData.repassword.trim(),
+            fullName: profileType === 'PF' && !formData.fullName.trim(),
+            cpf: profileType === 'PF' && !formData.cpf.trim(),
+            companyName: profileType === 'PJ' && !formData.companyName.trim(),
+            cnpj: profileType === 'PJ' && !formData.cnpj.trim()
         };
+        
         setErrors(newErrors);
 
         if (Object.values(newErrors).some((error) => error)) {
@@ -70,7 +97,8 @@ export default function LoginPage() {
             setTextError('Por favor, preencha os campos obrigatórios!');
             return;
         }
-        if(formData.repassword != formData.password) {
+        
+        if(formData.repassword !== formData.password) {
             setIsLoading(false);
             setTextError('As senhas não condizem.\nPor favor, preencha corretamente.');
             return;
@@ -78,28 +106,31 @@ export default function LoginPage() {
 
         try {
             const response = await register(formData)
-            if(response.status == 200) {
-                setUserFn(response.user);
-                setCookie('jwt', response.token);
+            
+            if (response && response.access_token) {
+                // O token e usuário já são salvos no serviço de registro
                 router.push('/');
                 showToast('Você se cadastrou com sucesso!', 'success');
-            }
-            else {
+            } else {
                 setIsLoading(false);
-                if(response.code == 'ERR_NETWORK')
+                
+                if (response.response && response.response.data && response.response.data.message) {
+                    setTextError(response.response.data.message);
+                } else if (response.code === 'ERR_NETWORK') {
                     setTextError('Erro de conexão com o servidor.\nPor favor, tente novamente mais tarde');
-                    
-                if(response.code == 'ERR_BAD_REQUEST')
-                    setTextError('Email ou senha incorretos');
+                } else if (response.code === 'ERR_BAD_REQUEST') {
+                    setTextError('Erro nos dados enviados. Verifique os campos e tente novamente.');
+                } else {
+                    setTextError('Houve um erro ao criar usuário');
+                }
             }
         }
         catch(error) {
-            if(error.status == 401) {
-                setIsLoading(false);
-                setTextError('Houve um erro ao criar usuário');
-            }
-            else {
-                setIsLoading(false);
+            setIsLoading(false);
+            
+            if (error.response && error.response.data && error.response.data.message) {
+                setTextError(error.response.data.message);
+            } else {
                 setTextError('Houve um erro ao criar usuário');
             }
         }
@@ -126,48 +157,29 @@ export default function LoginPage() {
                             <div id="content-login" className="content-forms active-content d-flex align-items">
                                 <div style={{width: '100%',display: 'flex', alignItems: 'center'}}>
                                     <form id="form-login" action="" style={{width: '100%'}} method="POST">
-                                        <div className="form-group d-flex">
-                                            <a href="#" className="login-social google">
-                                                <Image
-                                                    src={svgG}
-                                                    alt=""
-                                                    width={25}
-                                                    height={25}
-                                                />
-                                                <span style={{marginLeft: '7px'}}>Logar com o Google</span>
-                                            </a>
-                                        </div>
-                                        <div className="form-group d-flex">
-                                            <a href="#" className="login-social facebook">
-                                                <Image
-                                                    src={svgF}
-                                                    alt=""
-                                                    width={25}
-                                                    height={25}
-                                                />
-                                                <span>Logar com o Facebook</span>
-                                            </a>
-                                        </div>
-                                        <div className="separator-social d-flex">
-                                            <div className="separator"></div>
-                                            <span>ou</span>
-                                            <div className="separator"></div>
-                                        </div>
                                         <p style={{textAlign: 'center', color: 'red'}} dangerouslySetInnerHTML={{ __html: textError.replace(/\n/g, '<br />') }} />
-                                        <div className={`form-group icons-inputs ${errors.email ? 'error' : ''}`}>
-                                            <AccountBoxIcon style={{position: 'absolute', top: '50%', left: '15px', transform: 'translateY(-50%)'}}/>
-                                            <input type="text" name="username" required placeholder="Nome de usuário*" value={formData.username} onChange={handleChange} className="form-control"/>
-                                        </div>
-                                        <div className="form-group icons-inputs d-flex">
-                                            <div className={`position-relative ${errors.name ? 'error' : ''}`}>
-                                                <PersonIcon style={{position: 'absolute', top: '50%', left: '15px', transform: 'translateY(-50%)'}}/>
-                                                <input type="text" name="name" required placeholder="Nome*" value={formData.name} onChange={handleChange} className="form-control"/>
+                                        
+                                        {/* Escolha do tipo de perfil */}
+                                        <div className="form-group text-center mb-4">
+                                            <div className="btn-group" role="group">
+                                                <button
+                                                    type="button"
+                                                    className={`btn ${profileType === 'PF' ? 'btn-primary' : 'btn-outline-primary'}`}
+                                                    onClick={() => handleChange({ target: { name: 'profileType', value: 'PF' } })}
+                                                >
+                                                    Pessoa Física
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    className={`btn ${profileType === 'PJ' ? 'btn-primary' : 'btn-outline-primary'}`}
+                                                    onClick={() => handleChange({ target: { name: 'profileType', value: 'PJ' } })}
+                                                >
+                                                    Pessoa Jurídica
+                                                </button>
                                             </div>
-                                            <div className={`position-relative ${errors.lastname ? 'error' : ''}`}>
-                                                <PersonOutlineIcon style={{position: 'absolute', top: '50%', left: '15px', transform: 'translateY(-50%)'}}/>
-                                                <input type="text" name="lastname" required placeholder="Sobrenome*" value={formData.lastname} onChange={handleChange} className="form-control"/>
-                                            </div>
                                         </div>
+                                        
+                                        {/* Campos de email e senha (comuns) */}
                                         <div className={`form-group icons-inputs ${errors.email ? 'error' : ''}`}>
                                             <AlternateEmailIcon style={{position: 'absolute', top: '50%', left: '15px', transform: 'translateY(-50%)'}}/>
                                             <input type="text" name="email" required placeholder="Email*" value={formData.email} onChange={handleChange} className="form-control"/>
@@ -180,6 +192,61 @@ export default function LoginPage() {
                                             <KeyIcon style={{position: 'absolute', top: '50%', left: '15px', transform: 'translateY(-50%)'}}/>
                                             <input type="password" name="repassword" required value={formData.repassword} onChange={handleChange} placeholder="Repita novamente a senha*"  className="form-control"/>
                                         </div>
+                                        
+                                        {/* Campos para Pessoa Física */}
+                                        {profileType === 'PF' && (
+                                            <>
+                                                <div className={`form-group icons-inputs ${errors.fullName ? 'error' : ''}`}>
+                                                    <PersonIcon style={{position: 'absolute', top: '50%', left: '15px', transform: 'translateY(-50%)'}}/>
+                                                    <input type="text" name="fullName" required placeholder="Nome completo*" value={formData.fullName} onChange={handleChange} className="form-control"/>
+                                                </div>
+                                                <div className={`form-group icons-inputs ${errors.cpf ? 'error' : ''}`}>
+                                                    <BadgeIcon style={{position: 'absolute', top: '50%', left: '15px', transform: 'translateY(-50%)'}}/>
+                                                    <input type="text" name="cpf" required placeholder="CPF*" value={formData.cpf} onChange={handleChange} className="form-control"/>
+                                                </div>
+                                                <div className="form-group icons-inputs">
+                                                    <CalendarTodayIcon style={{position: 'absolute', top: '50%', left: '15px', transform: 'translateY(-50%)'}}/>
+                                                    <input type="date" name="birthDate" placeholder="Data de Nascimento" value={formData.birthDate} onChange={handleChange} className="form-control"/>
+                                                </div>
+                                                <div className="form-group icons-inputs">
+                                                    <WcIcon style={{position: 'absolute', top: '50%', left: '15px', transform: 'translateY(-50%)'}}/>
+                                                    <select name="gender" value={formData.gender} onChange={handleChange} className="form-control" style={{ paddingLeft: '45px' }}>
+                                                        <option value="">Selecione o gênero</option>
+                                                        <option value="Masculino">Masculino</option>
+                                                        <option value="Feminino">Feminino</option>
+                                                        <option value="Outro">Outro</option>
+                                                        <option value="Prefiro não informar">Prefiro não informar</option>
+                                                    </select>
+                                                </div>
+                                            </>
+                                        )}
+                                        
+                                        {/* Campos para Pessoa Jurídica */}
+                                        {profileType === 'PJ' && (
+                                            <>
+                                                <div className={`form-group icons-inputs ${errors.companyName ? 'error' : ''}`}>
+                                                    <BusinessIcon style={{position: 'absolute', top: '50%', left: '15px', transform: 'translateY(-50%)'}}/>
+                                                    <input type="text" name="companyName" required placeholder="Razão Social*" value={formData.companyName} onChange={handleChange} className="form-control"/>
+                                                </div>
+                                                <div className={`form-group icons-inputs ${errors.cnpj ? 'error' : ''}`}>
+                                                    <BadgeIcon style={{position: 'absolute', top: '50%', left: '15px', transform: 'translateY(-50%)'}}/>
+                                                    <input type="text" name="cnpj" required placeholder="CNPJ*" value={formData.cnpj} onChange={handleChange} className="form-control"/>
+                                                </div>
+                                                <div className="form-group icons-inputs">
+                                                    <BusinessIcon style={{position: 'absolute', top: '50%', left: '15px', transform: 'translateY(-50%)'}}/>
+                                                    <input type="text" name="tradingName" placeholder="Nome Fantasia" value={formData.tradingName} onChange={handleChange} className="form-control"/>
+                                                </div>
+                                                <div className="form-group icons-inputs">
+                                                    <BadgeIcon style={{position: 'absolute', top: '50%', left: '15px', transform: 'translateY(-50%)'}}/>
+                                                    <input type="text" name="stateRegistration" placeholder="Inscrição Estadual" value={formData.stateRegistration} onChange={handleChange} className="form-control"/>
+                                                </div>
+                                                <div className="form-group icons-inputs">
+                                                    <BadgeIcon style={{position: 'absolute', top: '50%', left: '15px', transform: 'translateY(-50%)'}}/>
+                                                    <input type="text" name="municipalRegistration" placeholder="Inscrição Municipal" value={formData.municipalRegistration} onChange={handleChange} className="form-control"/>
+                                                </div>
+                                            </>
+                                        )}
+                                        
                                         <button type="submit" style={{backgroundColor: isLoading ? '#8cad8b' : '#349131', pointerEvents: isLoading ? 'none': 'all'}} onClick={submit} className="btn btn-primary btn-auth d-flex">
                                             {isLoading ? 
                                                 <div className="spinner-border text-light" style={{fontSize: '8px',width: '24px',height: '24px'}} role="status"><span className="visually-hidden"></span></div>
@@ -187,7 +254,7 @@ export default function LoginPage() {
                                                 <p style={{marginBottom: '0px', padding: '0px 0px'}}>Cadastrar</p>
                                             }
                                         </button>
-                                        <a href="" id="change-login">Já tem uma conta? Logue aqui</a>
+                                        <a href="/login" id="change-login">Já tem uma conta? Logue aqui</a>
                                     </form>
                                 </div>
                             </div>

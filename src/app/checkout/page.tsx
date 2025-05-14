@@ -20,9 +20,8 @@ import axios from 'axios';
 import { PaymentIcon } from 'react-svg-credit-card-payment-icons';
 import { useToastSide } from '../context/toastSide';
 import { getProfileUser, getUserPersonalData } from '../services/profile';
-import { processPayment, validatePayment } from '../services/payment';
+import { processCreditCardPayment, validatePayment, formatCreditCardData, detectCardBrand, processPixPayment } from '../services/payment';
 import { cpfValidation, emailVerify, addPhone, valorFrete, valorFreteDeslogado } from '../services/checkout';
-import { generateCardToken, prepareCardData, preparePaymentData } from '../services/mercadoPago';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import LocalAtmIcon from '@mui/icons-material/LocalAtm';
 import { login, register } from '../services/auth';
@@ -589,87 +588,96 @@ const CheckoutPage = () => {
                         return;
                     }
                     
-                    // Determinar qual CVV usar (do cartão cadastrado ou do recém inserido)
-                    const cvvToUse = hasCard ? CVVFinal : CVV;
+                    // Montar o endereço completo formatado
+                    const formattedAddress = `${endereco}, ${numero}${complemento ? ', ' + complemento : ''}, ${bairro}, ${cidade} - ${estado}, ${cepNumber}`;
                     
-                    // Passo 3: Preparar os dados do cartão para pagamento
-                    let cardData;
-                    try {
-                        // Garantir que há um objeto de perfil válido
-                        if (!profileResponse || typeof profileResponse !== 'object') {
-                            profileResponse = { 
-                                id: 1,
-                                user: { email: emailUser || 'test@example.com' },
-                                profilePF: { cpf: cpf?.replace(/\D/g, '') || '12345678909' }
-                            };
+                    // Preparar os dados do pagamento
+                    const paymentData = {
+                        cardNumber: hasCard ? numberCCFinal : cardNumber.replace(/\s/g, ''),
+                        holder: nameUser,
+                        expirationDate: hasCard ? expireCCFinal : expireCC,
+                        securityCode: hasCard ? CVVFinal : CVV,
+                        brand: detectCardBrand(hasCard ? numberCCFinal : cardNumber),
+                        description: "Compra online",
+                        Installments: 1, // Alterar se implementar parcelamento
+                        address: formattedAddress,
+                        customerData: {
+                            name: nameUser,
+                            email: emailUser
                         }
+                    };
+                    
+                    // Processar o pagamento
+                    const paymentResponse = await processCreditCardPayment(paymentData);
+                    
+                    if (paymentResponse && paymentResponse.success) {
+                        // Pagamento bem-sucedido
+                        showToast('Pagamento processado com sucesso!', 'success');
                         
-                        cardData = prepareCardData(profileResponse, cvvToUse);
-                    } catch (error) {
-                        console.error('Erro ao preparar dados do cartão:', error);
-                        showToast('Erro ao preparar dados do cartão', 'error');
-                        setLoadBtn(false);
-                        return;
-                    }
-                    
-                    // Passo 4: Gerar o token do cartão no Mercado Pago
-                    const cardTokenResponse = await generateCardToken(cardData);
-                    
-                    if (!cardTokenResponse || !cardTokenResponse.id) {
-                        showToast('Erro ao gerar token do cartão', 'error');
-                        setLoadBtn(false);
-                        return;
-                    }
-                    
-                    // Passo 5: Preparar os dados do pagamento
-                    const paymentData = preparePaymentData(
-                        profileResponse, 
-                        cardTokenResponse.id, 
-                        Number(calculateSubtotal()), 
-                        1 // Número de parcelas
-                    );
-                    
-                    // Passo 6: Processar o pagamento no backend
-                    const paymentResponse = await processPayment(paymentData, cardTokenResponse.public_key);
-                    
-                    if (paymentResponse && paymentResponse.success == true) {
-                        showToast('Pagamento aprovado com sucesso!', 'success');
-                        // Redirecionar para página de sucesso ou pedidos
-                        router.push('/minhaconta');
-                        removeItems();
+                        // Limpar o carrinho
+                        await removeItems();
+                        
+                        // Redirecionar para a página de confirmação
+                        router.push(`/pagamento-sucesso?pedido=${paymentResponse.order?.orderId || paymentResponse.transactionId}`);
                     } else {
-                        showToast(`Erro no pagamento: ${paymentResponse.status_detail || 'Verifique os dados do cartão'}`, 'error');
+                        // Erro no pagamento
+                        const errorMessage = paymentResponse?.message || 'Erro no processamento do pagamento';
+                        showToast(`Erro no pagamento: ${errorMessage}`, 'error');
                         setLoadBtn(false);
                     }
                 } catch (error) {
-                    console.error('Erro no processamento do cartão:', error);
-                    showToast('Erro ao processar pagamento com cartão', 'error');
+                    console.error('Erro no processamento do pagamento:', error);
+                    showToast(`Erro no pagamento: ${error.message || 'Verifique os dados do cartão'}`, 'error');
                     setLoadBtn(false);
-                    return;
                 }
             } else {
                 // Pagamento com PIX
                 try {
-                    // Implementar lógica para pagamento com PIX
-                    showToast('Pagamento via PIX será implementado em breve', 'info');
-                    // Redirecionar para página de sucesso ou pedidos
-                    router.push('/minhaconta');
-                    removeItems();
-                } catch (pixError) {
-                    console.error('Erro ao processar pagamento PIX:', pixError);
-                    showToast('Erro ao processar pagamento PIX', 'error');
+                    // Montar o endereço completo formatado
+                    const formattedAddress = `${endereco}, ${numero}${complemento ? ', ' + complemento : ''}, ${bairro}, ${cidade} - ${estado}, ${cepNumber}`;
+                    
+                    // Calcular o valor com desconto PIX
+                    const subtotal = calculateSubtotal();
+                    const pixAmount = applyPixDiscount(parseFloat(subtotal));
+                    
+                    // Preparar os dados do pagamento PIX
+                    const pixPaymentData = {
+                        amount: pixAmount,
+                        description: "Pagamento via PIX",
+                        address: formattedAddress,
+                        customerData: {
+                            name: nameUser,
+                            email: emailUser
+                        }
+                    };
+                    
+                    // Processar o pagamento PIX
+                    const pixResponse = await processPixPayment(pixPaymentData);
+                    
+                    if (pixResponse && pixResponse.success) {
+                        // Pagamento PIX gerado com sucesso
+                        showToast('PIX gerado com sucesso!', 'success');
+                        
+                        // Redirecionar para a página de confirmação com dados do PIX
+                        router.push(`/pix-checkout?pedido=${pixResponse.order?.orderId || pixResponse.transactionId}&qrcode=${encodeURIComponent(pixResponse.qrCode || '')}&key=${encodeURIComponent(pixResponse.pixKey || '')}`);
+                    } else {
+                        // Erro ao gerar PIX
+                        const errorMessage = pixResponse?.message || 'Erro ao gerar PIX';
+                        showToast(`Erro: ${errorMessage}`, 'error');
+                        setLoadBtn(false);
+                    }
+                } catch (error) {
+                    console.error('Erro ao gerar PIX:', error);
+                    showToast(`Erro ao gerar PIX: ${error.message || 'Tente novamente mais tarde'}`, 'error');
                     setLoadBtn(false);
-                    return;
                 }
             }
         } catch (error) {
-            console.error('Erro ao processar pagamento:', error);
-            showToast('Erro ao processar pagamento', 'error');
-            setLoadBtn(false);
-        } finally {
+            console.error('Erro geral no processamento do pagamento:', error);
+            showToast('Ocorreu um erro no processamento do pagamento', 'error');
             setLoadBtn(false);
         }
-    }
+    };
 
     const changeRazaoSocial = (e) => {
         setRazaoSocial(e.target.value);
@@ -718,35 +726,70 @@ const CheckoutPage = () => {
                         alert('CEP não encontrado!');
                         setLoadingCep(false);
                     } else {
-                        if(user.name) {
-                            const frete = await valorFrete(cep, profileId);
-                            if(frete) {
-                                setFreteNome('PAC');
-                                setFretePreco(frete.data.data.totalPreco);
-                                setPrazo(frete.data.data.maiorPrazo);
-                            }
-                        }
-                        else {
-                            // Formatar os dados conforme o formato esperado pela API
-                            const dadosProdutos = cartData.map(r => ({
-                                produto_id: r.id || r.produto_id,
-                                quantity: r.qty || r.quantity || 1
+                        try {
+                            // Preparar dados para API de frete
+                            const cleanZipCode = cep.replace(/-/g, '');
+                            const products = cartData.map(item => ({
+                                productId: Number(item.id || item.produto_id),
+                                quantity: Number(item.qty || item.quantity || 1)
                             }));
-                            const frete = await valorFreteDeslogado(cep, dadosProdutos);
-                            if(frete) {
-                                setFreteNome('PAC');
-                                setFretePreco(frete.data.data.totalPreco);
-                                setPrazo(frete.data.data.maiorPrazo);
+                            
+                            // Configurar headers com autorização para usuários autenticados
+                            const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+                            if (user.name) {
+                                const token = typeof window !== 'undefined' ? localStorage.getItem('token') || '' : '';
+                                if (token) {
+                                    headers['Authorization'] = `Bearer ${token}`;
+                                }
                             }
+                            
+                            // Chamar a API de frete usando a URL base correta
+                            const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+                            const freteResponse = await axios.get(
+                                `${API_URL}/cart/shipping?zipCode=${cleanZipCode}`,
+                                {
+                                    headers,
+                                    data: {
+                                        originZipCode: "01001000",
+                                        destinationZipCode: cleanZipCode,
+                                        products
+                                    }
+                                }
+                            );
+                            
+                            // Processar resposta da API
+                            if (freteResponse.data && freteResponse.data.success) {
+                                const { data: freteData } = freteResponse.data;
+                                
+                                // Verificar se existem serviços disponíveis
+                                if (freteData.availableServices && freteData.availableServices.length > 0) {
+                                    const firstService = freteData.availableServices[0];
+                                    setFreteNome(firstService.serviceName);
+                                    setFretePreco(firstService.price);
+                                    setPrazo(firstService.deliveryTime);
+                                } else {
+                                    // Valores padrão para caso não haja serviços
+                                    setFreteNome('');
+                                    setFretePreco(0);
+                                    setPrazo(0);
+                                }
+                            }
+                        } catch (freteError) {
+                            console.error('Erro ao calcular frete:', freteError);
+                            // Valores padrão em caso de erro
+                            setFreteNome('');
+                            setFretePreco(0);
+                            setPrazo(0);
                         }
+                        
+                        // Preencher o endereço com os dados do ViaCEP
                         setEndereco(data.logradouro || '');
                         setBairro(data.bairro || '');
                         setCidade(data.localidade || '');
                         setEstado(data.uf || '');
-
                     }
                     setLoadingCep(false);
-                },800)
+                }, 800);
             } catch (error) {
                 alert('Erro ao buscar o endereço.');
                 setLoadingCep(false);
@@ -861,6 +904,13 @@ const CheckoutPage = () => {
     };
 
     const validaTelefone = (telefone: string) => {
+        // Se o telefone estiver vazio ou com menos de 3 caracteres, não validar ainda
+        if (!telefone || telefone.length < 3) {
+            setErrorTelefone(false);
+            setErrorTelefoneMessage('');
+            return true;
+        }
+        
         const phoneDigits = telefone.replace(/\D/g, '');
         
         // Validação básica - telefone precisa ter ao menos 8 dígitos (fixo) ou 10/11 dígitos (celular)
@@ -881,12 +931,12 @@ const CheckoutPage = () => {
 
     const changeCelular = (event: React.ChangeEvent<HTMLInputElement>) => {
         const phoneValue = event.target.value;
+        console.log("entrous: ", phoneValue)
         setTelCelular(phoneValue);
         
-        // Validar o formato do telefone quando o usuário inserir o número completo
-        if (phoneValue.length === 15) { // Formato completo (99) 99999-9999
-            validaTelefone(phoneValue);
-        }
+        // Remover validação durante digitação, deixar apenas no onBlur
+        setErrorTelefone(false);
+        setErrorTelefoneMessage('');
     };
 
     const changeName = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -1206,7 +1256,6 @@ const CheckoutPage = () => {
                                     onChange={changeCelular}
                                     onBlur={() => validaTelefone(telCelular)}
                                     maskChar=""
-                                    disabled={isAuthenticated}
                                 >
                                     {(inputProps) => (
                                         <TextField
@@ -1367,8 +1416,10 @@ const CheckoutPage = () => {
                                                     <div className="frete">
                                                         <Checkbox sx={{'& .MuiSvgIcon-root': {background: 'gray', borderRadius: '4px'}, '& .MuiCheckbox-label': {zIndex: '55'}}} label={
                                                             <div className='text-frete'>
-                                                                <span>{freteNome} {'(até '+prazo+' dias úteis)'} </span>
-                                                                <span className="price">R$ {fretePreco.toFixed(2).replace('.',',')}</span>
+                                                                <span>{freteNome} {prazo ? `(até ${prazo} dias úteis)` : ''} </span>
+                                                                <span className="price">
+                                                                    R$ {fretePreco !== undefined ? fretePreco.toFixed(2).replace('.',',') : '0,00'}
+                                                                </span>
                                                             </div>
                                                         } />
                                                     </div>

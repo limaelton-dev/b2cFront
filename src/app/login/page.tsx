@@ -4,7 +4,7 @@ import '../assets/css/login.css';
 import AlternateEmailIcon from '@mui/icons-material/AlternateEmail';
 import LockIcon from '@mui/icons-material/Lock';
 import { useEffect, useState } from 'react';
-import { login } from '../services/auth';
+import { login, getUserProfile } from '../services/auth';
 import { loginWithGoogle } from '../services/googleAuth';
 import { CookiesProvider, useCookies } from 'react-cookie';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -37,24 +37,64 @@ export default function LoginPage() {
         }));
     };
 
+    // Função para carregar o perfil completo após login
+    const loadCompleteProfile = async () => {
+        try {
+            const profileData = await getUserProfile();
+            
+            if (profileData) {
+                // Montando o objeto de usuário com os dados do perfil
+                const userData = {
+                    id: profileData.id,
+                    email: profileData.email,
+                    profileId: profileData.profile?.id,
+                    profileType: profileData.profileType,
+                    name: profileData.profileType === 'PF' 
+                        ? profileData.profile?.fullName 
+                        : profileData.profile?.companyName,
+                    profile: profileData.profile,
+                    address: profileData.address,
+                    phone: profileData.phone,
+                    card: profileData.card
+                };
+                
+                setUserFn(userData);
+            }
+        } catch (error) {
+            console.error("Erro ao carregar perfil completo:", error);
+        }
+    };
+
     const handleGoogleSuccess = async (credentialResponse: any) => {
         setIsLoading(true);
-        const response = await loginWithGoogle(credentialResponse.credential);
-        if(response.status == 200) {
-            setUserFn(response.user);
-            setCookie('jwt', response.token);
+        try {
+            const response = await loginWithGoogle(credentialResponse.credential);
             
-            if (redirect === 'checkout') {
-                router.push('/checkout');
+            // Verificar se a resposta contém o token de acesso
+            if (response && response.access_token) {
+                // O usuário já é definido no serviço de loginWithGoogle
+                // O token já é salvo no serviço de loginWithGoogle
+                setCookie('jwt', response.access_token);
+                
+                // Carregar o perfil completo do usuário
+                await loadCompleteProfile();
+                
+                if (redirect === 'checkout') {
+                    router.push('/checkout');
+                } else {
+                    router.push('/');
+                }
             } else {
-                router.push('/');
-            }
-        } else {
-            setIsLoading(false);
-            if(response.code == 'ERR_NETWORK')
-                setTextError('Erro de conexão com o servidor.\nPor favor, tente novamente mais tarde');
-            else
+                setIsLoading(false);
                 setTextError('Erro ao fazer login com Google');
+            }
+        } catch (error: any) {
+            setIsLoading(false);
+            if (error.code === 'ERR_NETWORK') {
+                setTextError('Erro de conexão com o servidor.\nPor favor, tente novamente mais tarde');
+            } else {
+                setTextError('Erro ao fazer login com Google');
+            }
         }
     };
 
@@ -65,24 +105,36 @@ export default function LoginPage() {
     const submit = async (e: any) => {
         e.preventDefault();
         setIsLoading(true);
-        const response = await login(formData.email, formData.password)
-        if(response.status == 200) {
-            setUserFn(response.user);
-            setCookie('jwt', response.token);
+        try {
+            const response = await login(formData.email, formData.password);
             
-            if (redirect === 'checkout') {
-                router.push('/checkout');
-            } else {
-                router.push('/');
-            }
-        }
-        else {
-            setIsLoading(false);
-            if(response.code == 'ERR_NETWORK')
-                setTextError('Erro de conexão com o servidor.\nPor favor, tente novamente mais tarde');
+            // Verificar se a resposta contém o token de acesso
+            if (response && response.access_token) {
+                // O usuário já é definido no serviço de login
+                // O token já é salvo no serviço de login
+                setCookie('jwt', response.access_token);
                 
-            if(response.code == 'ERR_BAD_REQUEST')
+                // Carregar o perfil completo do usuário
+                await loadCompleteProfile();
+                
+                if (redirect === 'checkout') {
+                    router.push('/checkout');
+                } else {
+                    router.push('/');
+                }
+            } else {
+                setIsLoading(false);
                 setTextError('Email ou senha incorretos');
+            }
+        } catch (error: any) {
+            setIsLoading(false);
+            if (error.code === 'ERR_NETWORK') {
+                setTextError('Erro de conexão com o servidor.\nPor favor, tente novamente mais tarde');
+            } else if (error.code === 'ERR_BAD_REQUEST') {
+                setTextError('Email ou senha incorretos');
+            } else {
+                setTextError('Ocorreu um erro ao tentar fazer login');
+            }
         }
     }
 
