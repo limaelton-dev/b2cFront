@@ -72,23 +72,19 @@ const getProdutos = async (limit: number, category, fabricante, page = 1) => {
         const resp = await getProdsLimit(limit, category, fabricante, page, timestamp);
         
         // Se a resposta já estiver no formato de array de itens
-        if (Array.isArray(resp.data)) {
-            const prodFormatted = resp.data.map((produto: any) => ({
+        if (Array.isArray(resp.data.data)) {
+            const prodFormatted = resp.data.data.map((produto: any) => ({
                 id: produto.id,
-                pro_codigo: produto.id,
-                name: produto.pro_desc_tecnica || produto.pro_descricao,
-                pro_desc_tecnica: produto.pro_desc_tecnica || produto.pro_descricao,
-                pro_descricao: produto.pro_descricao || produto.pro_desc_tecnica || '',
-                pro_url_amigavel: produto.pro_url_amigavel || '',
-                img: produto.imagens && produto.imagens.length > 0 ? produto.imagens[0].url : NoImage,
-                imagens: produto.imagens || [],
-                pro_imagem: produto.imagens && produto.imagens.length > 0 ? produto.imagens[0].url : NoImage,
-                price: 'R$ '+(produto.pro_precovenda || 0).toFixed(2).replace('.', ','),
-                pro_precovenda: produto.pro_precovenda || 0,
-                pro_valorultimacompra: produto.pro_valorultimacompra || produto.pro_precovenda || 0,
-                sku: produto.pro_partnum_sku || '',
-                pro_partnum_sku: produto.pro_partnum_sku || '',
-                cores: produto.cores || []
+                pro_codigo: produto.reference,
+                pro_descricao: produto.name,
+                pro_desc_tecnica: produto.techDescription,
+                pro_precovenda: produto.price,
+                pro_url_amigavel: produto.slug,
+                imagens: produto.images,
+                name: produto.name,
+                img: produto.images && produto.images.length > 0 ? produto.images[0].url : "",
+                price: produto.price ? `R$ ${produto.price.replace('.', ',')}` : 'Preço indisponível',
+                sku: produto.model,
             }));
             
             return {
@@ -100,23 +96,19 @@ const getProdutos = async (limit: number, category, fabricante, page = 1) => {
         }
         
         // Se a resposta estiver no formato paginado com items
-        if (resp.data && resp.data.items) {
-            const prodFormatted = resp.data.items.map((produto: any) => ({
+        if (resp.data && resp.data.data) {
+            const prodFormatted = resp.data.data.map((produto: any) => ({
                 id: produto.id,
-                pro_codigo: produto.id,
-                name: produto.pro_desc_tecnica || produto.pro_descricao,
-                pro_desc_tecnica: produto.pro_desc_tecnica || produto.pro_descricao,
-                pro_descricao: produto.pro_descricao || produto.pro_desc_tecnica || '',
-                img: produto.imagens && produto.imagens.length > 0 ? produto.imagens[0].url : NoImage,
-                pro_url_amigavel: produto.pro_url_amigavel || '',
-                imagens: produto.imagens || [],
-                pro_imagem: produto.imagens && produto.imagens.length > 0 ? produto.imagens[0].url : NoImage,
-                price: 'R$ '+(produto.pro_precovenda || 0).toFixed(2).replace('.', ','),
-                pro_precovenda: produto.pro_precovenda || 0,
-                pro_valorultimacompra: produto.pro_valorultimacompra || produto.pro_precovenda || 0,
-                sku: produto.pro_partnum_sku || '',
-                pro_partnum_sku: produto.pro_partnum_sku || '',
-                cores: produto.cores || []
+                pro_codigo: produto.reference,
+                pro_descricao: produto.name,
+                pro_desc_tecnica: produto.techDescription,
+                pro_precovenda: produto.price,
+                pro_url_amigavel: produto.slug,
+                imagens: produto.images,
+                name: produto.name,
+                img: produto.images && produto.images.length > 0 ? produto.images[0].url : "",
+                price: produto.price ? `R$ ${produto.price.replace('.', ',')}` : 'Preço indisponível',
+                sku: produto.model,
             }));
             
             return {
@@ -148,8 +140,7 @@ const getProdutoCategory = async (limit: number) => {
         const resp = await getProdutosCategoria(limit);
         const prodFormatted = resp.data.map((produto: any) => ({
             id: produto.id,
-            tpo_codigo: produto.tpo_codigo,
-            tpo_descricao: produto.tpo_descricao,
+            name: produto.name,
         }));
         return prodFormatted;
     } catch (error) {
@@ -184,7 +175,7 @@ const ProductsPage = () => {
     const [products, setProducts] = useState<{id: number, name: string; pro_url_amigavel: string; img: string; price: string; sku: string }[]>([]);
     const [isActiveColorId, setIsActiveColorId] = useState(null)
     const { codigo } = useParams();
-    const [categories, setCategories] = useState<{id: number,tpo_codigo: number,tpo_descricao: string}[]>([]);
+    const [categories, setCategories] = useState<{id: number,tpo_codigo: number,name: string}[]>([]);
     const [fabricantes, setFabricantes] = useState<ProductResponse[]>(null);
     const [catSett, setCatSett] = useState([]);
     const [fabSett, setFabSett] = useState([]);
@@ -238,7 +229,7 @@ const ProductsPage = () => {
             try {
                 // Função para carregar produtos diretamente do backend
                 const timestamp = new Date().getTime();
-                const backendQueryUrl = `${backendUrl}/produtos?limit=${itemsPerPage}&page=${page}&_nocache=${timestamp}${category ? '&categoria='+category : ''}${buscaParams ? '&s='+buscaParams : ''}${fabricante ? '&fabricante='+fabricante : ''}`;
+                const backendQueryUrl = `${backendUrl}/product?limit=${itemsPerPage}&page=${page}&_nocache=${timestamp}${category ? '&categoria='+category : ''}${buscaParams ? '&s='+buscaParams : ''}${fabricante ? '&fabricante='+fabricante : ''}`;
                 
                 const response = await fetch(backendQueryUrl, {
                     method: 'GET',
@@ -256,23 +247,19 @@ const ProductsPage = () => {
                 
                 const data = await response.json();
                 
-                if (data && data.items && data.items.length > 0) {
-                    const formattedProducts = data.items.map((produto) => ({
+                if (data && data.data && data.data.length > 0) {
+                    const formattedProducts = data.data.map((produto) => ({
                         id: produto.id,
-                        pro_codigo: produto.id,
-                        name: produto.pro_desc_tecnica || produto.pro_descricao,
-                        pro_desc_tecnica: produto.pro_desc_tecnica || produto.pro_descricao,
-                        pro_descricao: produto.pro_descricao || produto.pro_desc_tecnica || '',
-                        pro_url_amigavel: produto.pro_url_amigavel || '',
-                        img: produto.imagens && produto.imagens.length > 0 ? produto.imagens[0].url : NoImage,
-                        imagens: produto.imagens || [],
-                        pro_imagem: produto.imagens && produto.imagens.length > 0 ? produto.imagens[0].url : NoImage,
-                        price: 'R$ '+(produto.pro_precovenda || 0).toFixed(2).replace('.', ','),
-                        pro_precovenda: produto.pro_precovenda || 0,
-                        pro_valorultimacompra: produto.pro_valorultimacompra || produto.pro_precovenda || 0,
-                        sku: produto.pro_partnum_sku || '',
-                        pro_partnum_sku: produto.pro_partnum_sku || '',
-                        cores: produto.cores || []
+                        pro_codigo: produto.reference,
+                        pro_descricao: produto.name,
+                        pro_desc_tecnica: produto.techDescription,
+                        pro_precovenda: produto.price,
+                        pro_url_amigavel: produto.slug,
+                        imagens: produto.images,
+                        name: produto.name,
+                        img: produto.images && produto.images.length > 0 ? produto.images[0].url : "",
+                        price: produto.price ? `R$ ${produto.price.replace('.', ',')}` : 'Preço indisponível',
+                        sku: produto.model,
                     }));
                     
                     setProducts(formattedProducts);
@@ -293,7 +280,7 @@ const ProductsPage = () => {
         
         // Carregar categorias e fabricantes
         const loadCategories = async () => {
-            const categories = await getProdutoCategory(10);
+            const categories = await getProdutoCategory(25);
             setCategories(categories);
         };
         
@@ -384,7 +371,7 @@ const ProductsPage = () => {
             
             // Fazer requisição direta ao backend com opções anti-cache
             const timestamp = new Date().getTime();
-            const backendQueryUrl = `${backendUrl}/produtos?limit=${itemsPerPage}&page=${value}&_nocache=${timestamp}${buscaParams ? '&s='+buscaParams : ''}${categoriaParam ? '&categoria='+categoriaParam : ''}${fabricanteParam ? '&fabricante='+fabricanteParam : ''}`;
+            const backendQueryUrl = `${backendUrl}/product?limit=${itemsPerPage}&page=${value}&_nocache=${timestamp}${buscaParams ? '&s='+buscaParams : ''}${categoriaParam ? '&categoria='+categoriaParam : ''}${fabricanteParam ? '&fabricante='+fabricanteParam : ''}`;
             
             const response = await fetch(backendQueryUrl, {
                 method: 'GET',
@@ -405,26 +392,22 @@ const ProductsPage = () => {
             // Debug: Verificar se os dados são diferentes para página 1 e 2
             if (value === 2) {
                 // Fazer requisição para a página 1 para comparar
-                const page1Data = await debugRequestToBackend(`${backendUrl}/produtos?limit=${itemsPerPage}&page=1&_t=${timestamp}${categoriaParam ? '&categoria='+categoriaParam : ''}${fabricanteParam ? '&fabricante='+fabricanteParam : ''}`);
+                const page1Data = await debugRequestToBackend(`${backendUrl}/product?limit=${itemsPerPage}&page=1&_t=${timestamp}${categoriaParam ? '&categoria='+categoriaParam : ''}${fabricanteParam ? '&fabricante='+fabricanteParam : ''}`);
             }
             
-            if (data && data.items && data.items.length > 0) {
-                const formattedProducts = data.items.map((produto) => ({
+            if (data && data.data && data.data.length > 0) {
+                const formattedProducts = data.data.map((produto) => ({
                     id: produto.id,
-                    pro_codigo: produto.id,
-                    name: produto.pro_desc_tecnica || produto.pro_descricao,
-                    pro_desc_tecnica: produto.pro_desc_tecnica || produto.pro_descricao,
-                    pro_descricao: produto.pro_descricao || produto.pro_desc_tecnica || '',
-                    pro_url_amigavel: produto.pro_url_amigavel || '',
-                    img: produto.imagens && produto.imagens.length > 0 ? produto.imagens[0].url : NoImage,
-                    imagens: produto.imagens || [],
-                    pro_imagem: produto.imagens && produto.imagens.length > 0 ? produto.imagens[0].url : NoImage,
-                    price: 'R$ '+(produto.pro_precovenda || 0).toFixed(2).replace('.', ','),
-                    pro_precovenda: produto.pro_precovenda || 0,
-                    pro_valorultimacompra: produto.pro_valorultimacompra || produto.pro_precovenda || 0,
-                    sku: produto.pro_partnum_sku || '',
-                    pro_partnum_sku: produto.pro_partnum_sku || '',
-                    cores: produto.cores || []
+                    pro_codigo: produto.reference,
+                    pro_descricao: produto.name,
+                    pro_desc_tecnica: produto.techDescription,
+                    pro_precovenda: produto.price,
+                    pro_url_amigavel: produto.slug,
+                    imagens: produto.images,
+                    name: produto.name,
+                    img: produto.images && produto.images.length > 0 ? produto.images[0].url : "",
+                    price: produto.price ? `R$ ${produto.price.replace('.', ',')}` : 'Preço indisponível',
+                    sku: produto.model,
                 }));
                 
                 // Forçar a atualização do estado imediatamente
@@ -505,7 +488,7 @@ const ProductsPage = () => {
                                                             size='small' 
                                                         />
                                                     } 
-                                                    label={c.tpo_descricao} 
+                                                    label={c.name} 
                                                 />
                                             ))}
                                         </FormGroup>

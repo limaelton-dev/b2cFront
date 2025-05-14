@@ -89,7 +89,7 @@ export const getProdsLimit = async (limit = 12, category = '', fabricante = '', 
 
 export const getProdutosCategoria = async (limit) => {
     try {
-        const response = await axios.get(`${API_URL}/produtotipo?limit=${limit}`);
+        const response = await axios.get(`${API_URL}/category/products?limit=${limit}`);
         return response;
     }
     catch (err) {
