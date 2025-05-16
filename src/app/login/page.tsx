@@ -67,8 +67,8 @@ export default function LoginPage() {
         setIsLoading(true);
         const response = await login(formData.email, formData.password)
         if(response.status == 200) {
-            setUserFn(response.user);
-            setCookie('jwt', response.token);
+            setUserFn(response.data.user);
+            setCookie('jwt', response.data.access_token);
             
             if (redirect === 'checkout') {
                 router.push('/checkout');

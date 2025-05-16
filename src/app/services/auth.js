@@ -10,13 +10,13 @@ const isBrowser = () => typeof window !== 'undefined';
 
 export const login = async (email, password) => {
     try {
-        const response = await axios.post(`${API_URL}/user/login`, { email, password });
+        const response = await axios.post(`${API_URL}/auth/signin`, { email, password });
         
-        if (response.data && response.data.token) {
-            saveToken(response.data.token);
+        if (response.data && response.data.access_token) {
+            saveToken(response.data.access_token);
         }
         
-        return response.data;
+        return response;
     }
     catch (err) {
         console.error('Erro ao fazer login:', err);
@@ -30,8 +30,8 @@ export const logout = () => {
 
 export const register = async (userData) => {
     try {
-        const response = await axios.post(`${API_URL}/user/register`, userData);
-        return response.data;
+        const response = await axios.post(`${API_URL}/auth/signup`, userData);
+        return response;
     } catch (err) {
         console.error('Erro ao registrar usuário:', err);
         return err;

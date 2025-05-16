@@ -68,18 +68,17 @@ export interface CouponShowAdm {
 
 // Novas interfaces para o carrinho
 export interface CartItemDto {
-  produto_id: number;
+  productId: number;
   quantity: number;
   price?: number;
   colorId?: number; // Mantido para compatibilidade com o frontend atual
   product?: {
-    pro_codigo: number;
-    pro_descricao: string;
-    pro_precovenda: number;
+    id: number;
+    description: string;
+    price: number;
     pro_ativo: boolean;
     imagens?: Array<{
       id: number;
-      pro_codigo: number;
       url: string;
     }>;
     // Outros campos do produto que possam existir

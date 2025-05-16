@@ -130,15 +130,15 @@ export const getCart = async () => {
         console.log('Dados do carrinho recebidos:', JSON.stringify(response.data));
         
         // Verificar se a resposta contém a estrutura esperada
-        if (!response.data || !response.data.cart_data) {
+        if (!response.data || !response.data.items) {
             console.log('Resposta da API não contém a estrutura esperada de cart_data');
             return { data: { cart_data: [] } };
         }
         
         // Verificar se cart_data é um array
-        if (!Array.isArray(response.data.cart_data)) {
+        if (!Array.isArray(response.data.items)) {
             console.log('cart_data não é um array, convertendo para array vazio');
-            response.data.cart_data = [];
+            response.data.items = [];
         }
         
         return response;

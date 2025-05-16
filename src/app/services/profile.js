@@ -14,16 +14,16 @@ const getAuthConfig = () => {
 };
 
 // Função para obter o perfil do usuário usando a mesma convenção do minhaconta
-export const getProfileUser = async () => {
+export const getProfileUser = async (profileId) => {
     try {
         // Usar o endpoint do my-account para manter a mesma convenção
-        const response = await axios.get(`${API_URL}/my-account/personal-data`, getAuthConfig());
+        const response = await axios.get(`${API_URL}/user/profile/details`, getAuthConfig());
         
         // Obter os endereços do usuário
         const addressesResponse = await axios.get(`${API_URL}/address`, getAuthConfig());
         
         // Obter os cartões do usuário
-        const cardsResponse = await axios.get(`${API_URL}/my-account/cards`, getAuthConfig());
+        const cardsResponse = await axios.get(`${API_URL}/card`, getAuthConfig());
         
         // Combinar os dados para retornar no formato esperado pelo checkout
         const profileData = {
@@ -54,7 +54,7 @@ export const getAddressUser = async () => {
 // Função para obter apenas os dados pessoais do usuário
 export const getUserPersonalData = async () => {
     try {
-        const response = await axios.get(`${API_URL}/my-account/personal-data`, getAuthConfig());
+        const response = await axios.get(`${API_URL}/user/profile/details`, getAuthConfig());
         return response.data;
     }
     catch (err) {

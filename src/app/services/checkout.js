@@ -92,7 +92,7 @@ export const addPhone = async (phoneData) => {
         // Garantir que o objeto tenha o campo 'number' em vez de 'phone'
         const formattedData = {
             number: phoneData.phone ? phoneData.phone.replace(/\D/g, '') : '',
-            profile_id: phoneData.profile_id,
+            profileId: phoneData.profile_id,
             type: phoneData.type || 'celular',
             is_primary: phoneData.is_primary || true
         };
@@ -106,7 +106,7 @@ export const addPhone = async (phoneData) => {
     }
 }
 
-export const valorFrete = async (cep, profileId) => {
+export const valorFrete = async (cep) => {
     try {
         const headers = {
             Authorization: `Bearer ${getToken()}`,
@@ -119,13 +119,13 @@ export const valorFrete = async (cep, profileId) => {
         
         // Formatando os dados do carrinho para a API
         const cart_data = cartData.map(item => ({
-            produto_id: item.id || item.produto_id,
+            productId: item.id || item.productId,
             quantity: item.qty || item.quantity || 1
         }));
         
         const response = await axios.post(
-            `${API_URL}/api/logistica/carrinho/frete?cepDestino=${cep.replace(/\D/g, '')}&profileId=${profileId}`,
-            { cart_data },
+            `${API_URL}/cart/shipping`,
+            { zipCode: cep.replace(/\D/g, ''), products: cart_data },
             { headers }
         );
         return response;

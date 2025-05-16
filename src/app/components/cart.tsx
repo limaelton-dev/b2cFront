@@ -35,7 +35,7 @@ export default function Cart({ cartOpened, onCartToggle }) {
     }
 
     const handleInc = (i, id) => {
-        const d = cartData.find(item => item.id == id || item.produto_id == id);
+        const d = cartData.find(item => item.id == id);
         if (d) {
             const currentQty = d.qty || d.quantity;
             if (currentQty < max)
@@ -44,7 +44,7 @@ export default function Cart({ cartOpened, onCartToggle }) {
     };
     
     const handleDec = (i, id) => {
-        const d = cartData.find(item => item.id == id || item.produto_id == id);
+        const d = cartData.find(item => item.id == id);
         if (d) {
             const currentQty = d.qty || d.quantity;
             if (currentQty > min)
@@ -54,7 +54,7 @@ export default function Cart({ cartOpened, onCartToggle }) {
 
     const handleInputChange = (item, e) => {
         const newV = Number(e.target.value);
-        const itemId = item.id || item.produto_id;
+        const itemId = item.id;
         
         if(newV < min || newV > max) {
             if(newV < min) {
@@ -143,7 +143,7 @@ export default function Cart({ cartOpened, onCartToggle }) {
             if(user.name) {
                 const resp = await getAddressUser();
                 if(resp) {
-                    const freteVal = await valorFrete(resp[0].postal_code.replace(/\D/,''), user.profile_id);
+                    const freteVal = await valorFrete(resp[0].postal_code.replace(/\D/,''));
                     setFrete(freteVal.data.data.totalPreco);
                     if(freteVal) {
                         setFreteNome('PAC - até ' + freteVal.data.data.maiorPrazo + ' dias úteis');
@@ -173,10 +173,7 @@ export default function Cart({ cartOpened, onCartToggle }) {
                     return false;
                 }
                 
-                // Verificar correspondência pelo ID do produto ou pelo pro_codigo
-                const matchById = product.id == itemId;
-                const matchByProCodigo = product.pro_codigo == itemId;
-                const match = matchById || matchByProCodigo;
+                const match = product.id == itemId;
                 
                 return match;
             });
@@ -199,16 +196,10 @@ export default function Cart({ cartOpened, onCartToggle }) {
         const quantity = item.qty || item.quantity || 1;
         
         // Sempre usar o preço de venda do produto
-        if (product.pro_precovenda && !isNaN(product.pro_precovenda)) {
-            return product.pro_precovenda * quantity;
+        if (product.price && !isNaN(product.price)) {
+            return product.price * quantity;
         }
         
-        // Se não tiver preço de venda, verificar se tem preço de última compra
-        if (product.pro_valorultimacompra && !isNaN(product.pro_valorultimacompra)) {
-            return product.pro_valorultimacompra * quantity;
-        }
-        
-        // Se nenhum preço válido for encontrado, retornar 0
         return 0;
     };
 
@@ -220,8 +211,8 @@ export default function Cart({ cartOpened, onCartToggle }) {
         
         
         return cartData.reduce((total, item) => {
-            const itemId = item.id || item.produto_id;
-            const product = cartItems.find(p => p && (p.id == itemId || p.pro_codigo == itemId));
+            const itemId = item.id || item.productId;
+            const product = cartItems.find(p => p && (p.id == itemId));
             
             if (product) {
                 const price = getProductPrice(product, item);
@@ -235,16 +226,10 @@ export default function Cart({ cartOpened, onCartToggle }) {
     // Função para obter a imagem do produto
     const getProductImage = (product) => {
         // Verificar se o produto tem imagens
-        if (product.imagens && product.imagens.length > 0) {
-            return product.imagens[0].url;
+        if (product.imagens && product.images.length > 0) {
+            return product.images[0].url;
         }
         
-        // Se não tiver imagens, verificar se tem pro_imagem
-        if (product.pro_imagem) {
-            return product.pro_imagem;
-        }
-        
-        // Se não tiver nenhuma imagem, retornar a imagem padrão
         return HeadphoneImg;
     };
 
@@ -273,7 +258,7 @@ export default function Cart({ cartOpened, onCartToggle }) {
                         {cartData.map((item, index) => {
                             const itemId = item.id || item.produto_id;
                             // Encontra o produto correspondente ao item do carrinho
-                            const product = cartItems.find(r => r && (r.id == itemId || r.pro_codigo == itemId));
+                            const product = cartItems.find(r => r && (r.id == itemId));
                             // Se não encontrar o produto, pula este item
                             if (!product) return <React.Fragment key={itemId}></React.Fragment>;
                             
@@ -286,17 +271,17 @@ export default function Cart({ cartOpened, onCartToggle }) {
                                     </div>
                                     <Image
                                         src={getProductImage(product)}
-                                        alt={product.pro_descricao || "Produto"}
+                                        alt={product.name || "Produto"}
                                         width={100}
                                         height={100}
                                     />
                                     <div className="name-qty">
-                                        <Tooltip title={product.pro_descricao}>
-                                            <span>{limitaTexto(product.pro_descricao, 36)}</span>
+                                        <Tooltip title={product.name}>
+                                            <span>{limitaTexto(product.name, 36)}</span>
                                         </Tooltip>
-                                        {product.tipo && (
+                                        {product.brand && (
                                             <Typography variant="caption" color="text.secondary">
-                                                Categoria: {product.tipo.tpo_descricao}
+                                                Categoria: {product.brand.name}
                                             </Typography>
                                         )}
                                         <div className="quantity">

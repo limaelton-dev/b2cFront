@@ -23,7 +23,7 @@ const getAuthConfig = () => {
 export const getUserPersonalData = async (): Promise<DadosPessoaisType> => {
   try {
     // Obter dados pessoais do endpoint específico
-    const response = await axios.get(`${API_URL}/my-account/personal-data`, getAuthConfig());
+    const response = await axios.get(`${API_URL}/user/profile/details`, getAuthConfig());
     const personalData = response.data;
     
     // Obter dados do usuário através do endpoint de perfil para email e username
@@ -56,7 +56,7 @@ export const getUserPersonalData = async (): Promise<DadosPessoaisType> => {
 export const updateUserPersonalData = async (field: keyof DadosPessoaisType, value: string): Promise<void> => {
   try {
     // Obter dados atuais para determinar o tipo de perfil
-    const personalDataResponse = await axios.get(`${API_URL}/my-account/personal-data`, getAuthConfig());
+    const personalDataResponse = await axios.get(`${API_URL}/user/profile/details`, getAuthConfig());
     const personalData = personalDataResponse.data;
     
     // Mapear o campo do frontend para o campo correspondente na API
@@ -85,7 +85,7 @@ export const updateUserPersonalData = async (field: keyof DadosPessoaisType, val
     } else if (field === 'phone') {
       endpoint = `${API_URL}/my-account/phones`;
     } else {
-      endpoint = `${API_URL}/my-account/personal-data`;
+      endpoint = `${API_URL}/user/profile/details`;
     }
     
     // Enviar a atualização
@@ -184,7 +184,7 @@ export const deleteCard = async (cardId: number): Promise<void> => {
 export const addCard = async (cardData: Partial<CartaoType>): Promise<CartaoType> => {
   try {
     // Obter o perfil do usuário para pegar o profile_id
-    const profileResponse = await axios.get(`${API_URL}/my-account/personal-data`, getAuthConfig());
+    const profileResponse = await axios.get(`${API_URL}/user/profile/details`, getAuthConfig());
     const profileData = profileResponse.data;
     
     // Criar uma cópia dos dados para não modificar o objeto original
@@ -374,16 +374,14 @@ export const setPrimaryPhone = async (phoneId: number): Promise<void> => {
 export const addAddress = async (addressData: Partial<EnderecoType>): Promise<EnderecoType> => {
   try {
     // Obter o perfil do usuário para pegar o profile_id
-    const profileResponse = await axios.get(`${API_URL}/my-account/personal-data`, getAuthConfig());
-    const profileData = profileResponse.data;
+    const profileResponse = await axios.get(`${API_URL}/user/profile/details`, getAuthConfig());
     
     // Adicionar o profile_id aos dados do endereço
     const addressWithProfileId = {
       ...addressData,
-      profile_id: profileData.id
     };
     
-    const response = await axios.post(`${API_URL}/my-account/add-address`, addressWithProfileId, getAuthConfig());
+    const response = await axios.post(`${API_URL}/address`, addressWithProfileId, getAuthConfig());
     return response.data;
   } catch (error) {
     console.error('Erro ao adicionar endereço:', error);
@@ -402,7 +400,7 @@ export const updateAddress = async (addressId: number, addressData: Partial<Ende
     let dataToUpdate = { ...addressData };
     
     if (!dataToUpdate.profile_id) {
-      const profileResponse = await axios.get(`${API_URL}/my-account/personal-data`, getAuthConfig());
+      const profileResponse = await axios.get(`${API_URL}/user/profile/details`, getAuthConfig());
       const profileData = profileResponse.data;
       
       // Adicionar o profile_id aos dados do endereço

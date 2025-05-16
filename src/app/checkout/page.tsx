@@ -38,41 +38,43 @@ async function buscaTipoPessoa() {
         if (resp) {
             return {
                 id: resp.id || 0,
-                profile_type: resp.profile_type || '',
+                profileType: resp.profileType || '',
                 birth_date: resp.birth_date || '',
-                cpf: resp.cpf || '',
-                trading_name: resp.trading_name || '',
-                cnpj: resp.cnpj || '',
-                state_registration: resp.state_registration || '',
-                addresses: Array.isArray(resp.addresses) && resp.addresses.length > 0 ? resp.addresses : [],
-                cards: Array.isArray(resp.cards) && resp.cards.length > 0 ? resp.cards : []
+                profile: {
+                    tradingName: resp.tradingName || '',
+                    cpf: resp.cpf || '',
+                    cnpj: resp.cnpj || '',
+                    stateRegistration: resp.stateRegistration || '',
+                },
+                address: Array.isArray(resp.address) && resp.address.length > 0 ? resp.address : [],
+                card: Array.isArray(resp.card) && resp.cards.length > 0 ? resp.card : []
             };
         }
 
         return { 
             id: 0, 
-            profile_type: '', 
+            profileType: '', 
             birth_date: '', 
             cpf: '', 
-            trading_name: '', 
+            tradingName: '', 
             cnpj: '', 
-            state_registration: '', 
-            addresses: [], 
-            cards: []
+            stateRegistration: '', 
+            address: [], 
+            card: []
         };
 
     } catch (error) {
         console.error('Erro: ', error);
         return { 
             id: 0, 
-            profile_type: '', 
+            profileType: '', 
             birth_date: '', 
             cpf: '', 
-            trading_name: '', 
+            tradingName: '', 
             cnpj: '', 
-            state_registration: '', 
-            addresses: [], 
-            cards: []
+            stateRegistration: '', 
+            address: [], 
+            card: []
         };
     }
 }
@@ -264,26 +266,26 @@ const CheckoutPage = () => {
                         }
                     }
     
-                    if (resultPessoa.profile_type === 'PF') {
-                        setCpf(resultPessoa.cpf);
-                        setDisabledUserPF(resultPessoa.cpf && resultPessoa.cpf.length > 0); // Campo CPF só será desabilitado se existir
+                    if (resultPessoa.profileType === 'PF') {
+                        setCpf(resultPessoa.profile.cpf);
+                        setDisabledUserPF(resultPessoa.profile.cpf && resultPessoa.profile.cpf.length > 0); // Campo CPF só será desabilitado se existir
                         setTipoPessoa('1');
                     } 
-                    if (resultPessoa.profile_type === 'PJ') {
-                        setCnpj(resultPessoa.cnpj);
-                        setRazaoSocial(resultPessoa.trading_name);
-                        setInscEstadual(resultPessoa.state_registration);
+                    if (resultPessoa.profileType === 'PJ') {
+                        setCnpj(resultPessoa.profile.cnpj);
+                        setRazaoSocial(resultPessoa.profile.tradingName);
+                        setInscEstadual(resultPessoa.profile.stateRegistration);
                         // Desabilitar campos apenas se todos os dados de PJ estiverem preenchidos
-                        const temDadosPJCompletos = resultPessoa.cnpj && resultPessoa.trading_name && resultPessoa.state_registration;
+                        const temDadosPJCompletos = resultPessoa.profile.cnpj && resultPessoa.profile.tradingName && resultPessoa.profile.stateRegistration;
                         setDisabledUserPJ(temDadosPJCompletos);
                         setTipoPessoa('2');
                     }
 
                     // Verificar se há endereços antes de acessar e se estão completos
-                    if (resultPessoa.addresses && resultPessoa.addresses.length > 0) {
-                        const endereco = resultPessoa.addresses[0];
+                    if (resultPessoa.address && resultPessoa.address.length > 0) {
+                        const endereco = resultPessoa.address[0];
                         setBairro(endereco.neighborhood || '');
-                        setCepNumber(endereco.postal_code || '');
+                        setCepNumber(endereco.zipCode || '');
                         setNumero(endereco.number || '');
                         setComplemento(endereco.complement || '');
                         setEndereco(endereco.street || '');
@@ -293,9 +295,9 @@ const CheckoutPage = () => {
                         // Verificar se o endereço está completo antes de desabilitar
                         const enderecoCompleto = endereco.street && endereco.neighborhood && 
                                                endereco.city && endereco.state && 
-                                               endereco.postal_code && endereco.number;
+                                               endereco.zipCode && endereco.number;
                         setDisabledAddress(enderecoCompleto);
-                        const frete = await valorFrete(endereco.postal_code, user.profile_id);
+                        const frete = await valorFrete(endereco.zipCode);
                         if(frete) {
                             setFreteNome('PAC');
                             setFretePreco(frete.data.data.totalPreco);
@@ -304,8 +306,8 @@ const CheckoutPage = () => {
                     }
 
                     // Verificar se há cartões antes de acessar
-                    if (resultPessoa.cards && resultPessoa.cards.length > 0) {
-                        const cartao = resultPessoa.cards[0];
+                    if (resultPessoa.card && resultPessoa.card.length > 0) {
+                        const cartao = resultPessoa.card[0];
                         setCVVFinal(cartao.last_four_digits || '');
                         setNumberCCFinal(cartao.card_number || '');
                         setFlagCard(detectCardFlag(cartao.card_number || ''));
@@ -417,7 +419,7 @@ const CheckoutPage = () => {
                 try {
                     // Criar objeto para dados do perfil
                     let profileUpdateData: any = {
-                        profile_type: tipoPessoa === '1' ? 'PF' : 'PJ'
+                        profileType: tipoPessoa === '1' ? 'PF' : 'PJ'
                     };
                     
                     // Adicionar dados específicos com base no tipo de pessoa
@@ -445,7 +447,7 @@ const CheckoutPage = () => {
                 // Primeiro obter os dados pessoais para ter o profile_id
                 try {
                     profileResponse = await getUserPersonalData();
-                    if (!profileResponse || !profileResponse.id) {
+                    if (!profileResponse || !profileResponse.profile.id) {
                         throw new Error('Não foi possível obter o profile_id');
                     }
                 } catch (personalDataError) {
@@ -467,7 +469,7 @@ const CheckoutPage = () => {
                         // Criar objeto com os dados necessários para o telefone
                         const phoneData = {
                             phone: phoneNumber,
-                            profile_id: profileResponse.id,
+                            profile_id: profileResponse.profile.id,
                             type: "celular",
                             is_primary: true
                         };
@@ -490,9 +492,8 @@ const CheckoutPage = () => {
                         neighborhood: bairro,
                         city: cidade,
                         state: estado,
-                        postal_code: cepNumber,
-                        is_default: true,
-                        profile_id: profileResponse.id
+                        zipCode: cepNumber,
+                        isDefault: true,
                     };
                     
                     await addAddress(addressData);
@@ -719,7 +720,7 @@ const CheckoutPage = () => {
                         setLoadingCep(false);
                     } else {
                         if(user.name) {
-                            const frete = await valorFrete(cep, profileId);
+                            const frete = await valorFrete(cep);
                             if(frete) {
                                 setFreteNome('PAC');
                                 setFretePreco(frete.data.data.totalPreco);
@@ -729,7 +730,7 @@ const CheckoutPage = () => {
                         else {
                             // Formatar os dados conforme o formato esperado pela API
                             const dadosProdutos = cartData.map(r => ({
-                                produto_id: r.id || r.produto_id,
+                                productId: r.id || r.productId,
                                 quantity: r.qty || r.quantity || 1
                             }));
                             const frete = await valorFreteDeslogado(cep, dadosProdutos);
@@ -1074,9 +1075,9 @@ const CheckoutPage = () => {
                                             <td>R$</td>
                                             <td>{cartItems
                                             .reduce((total, item) => {
-                                                const index = cartData.findIndex(i => i.id === item.id || i.produto_id === item.pro_codigo);
+                                                const index = cartData.findIndex(i => i.id === item.id || i.productId === item.id);
                                                 const qty = index >= 0 ? (cartData[index].qty || cartData[index].quantity || 1) : 1;
-                                                const price = item.pro_precovenda || 0;
+                                                const price = item.price || 0;
                                                 return total + (price * qty);
                                             }, 0)
                                             .toFixed(2).replace('.',',')
@@ -1092,9 +1093,9 @@ const CheckoutPage = () => {
                                             <td>R$</td>
                                             <td>{applyPixDiscount(cartItems
                                             .reduce((total, item) => {
-                                                const index = cartData.findIndex(i => i.id === item.id || i.produto_id === item.pro_codigo);
+                                                const index = cartData.findIndex(i => i.id === item.id || i.productId === item.id);
                                                 const qty = index >= 0 ? (cartData[index].qty || cartData[index].quantity || 1) : 1;
-                                                const price = item.pro_precovenda || 0;
+                                                const price = item.price || 0;
                                                 return total + (price * qty);
                                             }, 0))
                                             .toFixed(2).replace('.',',')
@@ -1110,9 +1111,9 @@ const CheckoutPage = () => {
                                             <td>R$</td>
                                             <td>{(Number((applyDiscounts(cartItems
                                             .reduce((total, item) => {
-                                                const index = cartData.findIndex(i => i.id === item.id || i.produto_id === item.pro_codigo);
+                                                const index = cartData.findIndex(i => i.id === item.id || i.productId === item.id);
                                                 const qty = index >= 0 ? (cartData[index].qty || cartData[index].quantity || 1) : 1;
-                                                const price = item.pro_precovenda || 0;
+                                                const price = item.price || 0;
                                                 return total + (price * qty);
                                             }, 0) + fretePreco)
                                             .toFixed(2))) + (shippingCost)).toFixed(2).toString().replace('.',',')

@@ -40,7 +40,6 @@ export const CartProvider = ({ children }) => {
 
     const addToCart = (product, idCor) => {
         const itemExists = cartItems.some(item => 
-            item.pro_codigo === product.pro_codigo || 
             item.id === product.id
         );
 
@@ -48,14 +47,14 @@ export const CartProvider = ({ children }) => {
             return false;
         }
 
-        const productId = product.id || product.pro_codigo;
+        const productId = product.id;
         
         if (!productId) {
             return false;
         }
 
         // Verificar se o produto tem preço válido
-        if (!product.pro_precovenda && !product.pro_valorultimacompra) {
+        if (!product.price) {
             return false;
         }
 
@@ -63,12 +62,12 @@ export const CartProvider = ({ children }) => {
         setCartData((prevItems) => {
             if (!Array.isArray(prevItems)) {
                 return [{
-                    produto_id: productId,
+                    productId: productId,
                     quantity: 1,
                 }];
             }
             return [...prevItems, {
-                produto_id: productId,
+                productId: productId,
                 quantity: 1,
                 idCart: prevItems.length + 1
             }];
@@ -84,15 +83,15 @@ export const CartProvider = ({ children }) => {
 
     const removeFromCart = (id, idCor) => {
         const updatedCartData = cartData.filter(
-            item => !((item.id === id || item.produto_id === id))
+            item => !((item.id === id || item.productId === id))
         );
         setCartData(updatedCartData);
     
         const hasOtherItemsWithSameId = updatedCartData.some(
-            item => item.id === id || item.produto_id === id
+            item => item.id === id || item.productId === id
         );
         if (!hasOtherItemsWithSameId) {
-            setCartItems(cartItems.filter(item => !(item.id === id || item.pro_codigo === id)));
+            setCartItems(cartItems.filter(item => !(item.id === id || item.id === id)));
         }
     
         debouncedSendCartToServer();
@@ -107,12 +106,12 @@ export const CartProvider = ({ children }) => {
 
     const changeQtyItem = (id, newQty) => {
         const updatedItems = cartData.map((item) => {
-            if (item.id === id || item.produto_id === id) {
+            if (item.id === id || item.productId === id) {
                 if (item.id !== undefined) {
                     return { ...item, qty: newQty };
                 }
                 // Se o item tem o formato novo (produto_id, quantity)
-                else if (item.produto_id !== undefined) {
+                else if (item.productId !== undefined) {
                     return { ...item, quantity: newQty };
                 }
             }
@@ -134,7 +133,7 @@ export const CartProvider = ({ children }) => {
                     
                     try {
                         // Extrair os IDs dos produtos para buscar detalhes completos
-                        const productIds = cartdata.cart_data.map(item => item.produto_id);
+                        const productIds = cartdata.cart_data.map(item => item.productId);
 
                         if (productIds.length === 0) {
                             return false;
@@ -154,10 +153,10 @@ export const CartProvider = ({ children }) => {
                             // Converter os itens do carrinho para o formato antigo para manter compatibilidade
                             const convertedCartData = cartdata.cart_data.map(item => {
                                 // Encontrar o produto correspondente
-                                const product = processedProducts.find(p => p.id == item.produto_id || p.pro_codigo == item.produto_id);
+                                const product = processedProducts.find(p => p.id == item.productId || p.id == item.productId);
                                 
                                 return {
-                                    id: product ? product.id : item.produto_id, // Usar o ID do produto, não o pro_codigo
+                                    id: product ? product.id : item.productId, // Usar o ID do produto, não o pro_codigo
                                     qty: item.quantity,
                                     // Não usamos mais o preço do carrinho, apenas a quantidade
                                 };
@@ -209,7 +208,7 @@ export const CartProvider = ({ children }) => {
             if (data && Array.isArray(data) && data.length > 0) {
                 try {
                     // Mapeia os IDs dos produtos, considerando tanto o formato antigo quanto o novo
-                    const productIds = data.map(item => item.id || item.produto_id);
+                    const productIds = data.map(item => item.id || item.productId);
                     
                     const cart = await getProdsArr(productIds);
                     
@@ -223,7 +222,7 @@ export const CartProvider = ({ children }) => {
                         // Filtra os itens do carrinho para incluir apenas aqueles que têm produtos correspondentes
                         const validCartData = data.filter(item => {
                             const itemId = item.id || item.produto_id;
-                            const hasMatch = processedProducts.some(product => product.id == itemId || product.pro_codigo == itemId);
+                            const hasMatch = processedProducts.some(product => product.id == itemId || product.id == itemId);
                             return hasMatch;
                         });
                         
@@ -297,8 +296,8 @@ export const CartProvider = ({ children }) => {
             }
             
             const validCartData = cartData.filter(item => {
-                const itemId = item.id || item.produto_id;
-                return cartItems.some(product => product && (product.id == itemId || product.pro_codigo == itemId));
+                const itemId = item.id || item.productId;
+                return cartItems.some(product => product && (product.id == itemId || product.id == itemId));
             });
             
             if (validCartData.length === 0) {
@@ -307,18 +306,18 @@ export const CartProvider = ({ children }) => {
 
             const convertedCartData = validCartData.map(item => {
                 const itemId = item.id || item.produto_id;
-                const product = cartItems.find(p => p && (p.id == itemId || p.pro_codigo == itemId));
+                const product = cartItems.find(p => p && (p.id == itemId || p.id == itemId));
                 
-                if (item.produto_id !== undefined) {
+                if (item.productId !== undefined) {
                     return {
-                        produto_id: product ? product.id : item.produto_id,
+                        productId: product ? product.id : item.productId,
                         quantity: item.quantity || 1,
                         price: getProductPrice(item)
                     };
                 }
 
                 return {
-                    produto_id: product ? product.id : item.id,
+                    productId: product ? product.id : item.id,
                     quantity: item.qty || 1,
                     price: getProductPrice(item)
                 };
@@ -337,15 +336,11 @@ export const CartProvider = ({ children }) => {
 
     // Função auxiliar para obter o preço do produto correspondente ao item do carrinho
     const getProductPrice = (item) => {
-        const itemId = item.id || item.produto_id;
-        const product = cartItems.find(p => p && (p.id == itemId || p.pro_codigo == itemId));
+        const itemId = item.id || item.productId;
+        const product = cartItems.find(p => p && (p.id == itemId || p.id == itemId));
         
-        if (product && product.pro_precovenda) {
-            return product.pro_precovenda;
-        }
-        
-        if (product && product.pro_valorultimacompra) {
-            return product.pro_valorultimacompra;
+        if (product && product.price) {
+            return product.price;
         }
         
         return 0;
