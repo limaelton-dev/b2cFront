@@ -14,8 +14,6 @@ export const login = async (email, password) => {
         
         if (response.data && response.data.access_token) {
             saveToken(response.data.access_token);
-<<<<<<< HEAD
-=======
             
             const userData = response.data.user;
             
@@ -27,7 +25,6 @@ export const login = async (email, password) => {
                     profile_type: userData.profileType
                 }));
             }
->>>>>>> d8c94ef1bc49d58313fb674d62c0f69919165e6c
         }
         
         return response;
@@ -44,10 +41,6 @@ export const logout = () => {
 
 export const register = async (userData) => {
     try {
-<<<<<<< HEAD
-        const response = await axios.post(`${API_URL}/auth/signup`, userData);
-        return response;
-=======
         const requestData = {
             email: userData.email,
             password: userData.password,
@@ -88,7 +81,6 @@ export const register = async (userData) => {
         }
         
         return response.data;
->>>>>>> d8c94ef1bc49d58313fb674d62c0f69919165e6c
     } catch (err) {
         console.error('Erro ao registrar usuário:', err);
         return err;
