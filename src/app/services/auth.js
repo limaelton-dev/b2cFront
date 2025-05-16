@@ -1,7 +1,7 @@
 'use strict';
 import axios from 'axios';
 import { jwtVerify } from 'jose';
-import { getToken, saveToken, removeToken } from '../utils/auth';
+import { getToken, saveToken, removeToken, getAuthHeader } from '../utils/auth';
 
 const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 const JWT_SECRET = process.env.NEXT_PUBLIC_JWT_SECRET || '';
@@ -14,6 +14,20 @@ export const login = async (email, password) => {
         
         if (response.data && response.data.access_token) {
             saveToken(response.data.access_token);
+<<<<<<< HEAD
+=======
+            
+            const userData = response.data.user;
+            
+            if (isBrowser()) {
+                localStorage.setItem('user', JSON.stringify({
+                    id: userData.id,
+                    email: userData.email,
+                    profile_id: userData.profileId,
+                    profile_type: userData.profileType
+                }));
+            }
+>>>>>>> d8c94ef1bc49d58313fb674d62c0f69919165e6c
         }
         
         return response;
@@ -30,8 +44,51 @@ export const logout = () => {
 
 export const register = async (userData) => {
     try {
+<<<<<<< HEAD
         const response = await axios.post(`${API_URL}/auth/signup`, userData);
         return response;
+=======
+        const requestData = {
+            email: userData.email,
+            password: userData.password,
+            profileType: 'PF',
+            profile: {
+                fullName: `${userData.name} ${userData.lastname}`.trim(),
+                cpf: userData.cpf || '',
+                birthDate: userData.birthDate || new Date().toISOString().split('T')[0],
+                gender: userData.gender || null
+            }
+        };
+        
+        if (userData.profileType === 'PJ') {
+            requestData.profileType = 'PJ';
+            requestData.profile = {
+                companyName: userData.companyName || '',
+                cnpj: userData.cnpj || '',
+                tradingName: userData.tradingName || '',
+                stateRegistration: userData.stateRegistration || '',
+                municipalRegistration: userData.municipalRegistration || ''
+            };
+        }
+        
+        const response = await axios.post(`${API_URL}/auth/signup`, requestData);
+        
+        if (response.data && response.data.access_token) {
+            saveToken(response.data.access_token);
+            
+            if (isBrowser() && response.data.user) {
+                localStorage.setItem('user', JSON.stringify({
+                    id: response.data.user.id,
+                    email: response.data.user.email,
+                    profile_id: response.data.user.profileId,
+                    profile_type: response.data.user.profileType,
+                    profile: response.data.user.profile
+                }));
+            }
+        }
+        
+        return response.data;
+>>>>>>> d8c94ef1bc49d58313fb674d62c0f69919165e6c
     } catch (err) {
         console.error('Erro ao registrar usuário:', err);
         return err;
@@ -46,7 +103,6 @@ export async function checkAuth() {
             return false;
         }
         
-        // Verificar se o token tem formato válido antes de tentar verificá-lo
         const tokenParts = token.split('.');
         if (tokenParts.length !== 3) {
             removeToken();
@@ -61,10 +117,8 @@ export async function checkAuth() {
                 (typeof CryptoKey === 'undefined' || typeof window.crypto?.subtle === 'undefined')) {
                 
                 try {
-                    // Decodificar a parte de payload do token (segunda parte)
                     const payload = JSON.parse(atob(tokenParts[1]));
                     
-                    // Verificar se o token está expirado
                     if (payload.exp && payload.exp * 1000 < Date.now()) {
                         removeToken();
                         if (isBrowser()) {
@@ -83,7 +137,6 @@ export async function checkAuth() {
                 }
             }
             
-            // Se a API CryptoKey estiver disponível, continua com a verificação completa
             const secret = new TextEncoder().encode(JWT_SECRET);
             
             const { payload } = await jwtVerify(token, secret);
@@ -112,3 +165,19 @@ export async function checkAuth() {
         return false;
     }
 }
+
+export const getUserProfile = async () => {
+    try {
+        const headers = getAuthHeader();
+        
+        if (!headers.Authorization) {
+            return null;
+        }
+        
+        const response = await axios.get(`${API_URL}/user/profile/details`, { headers });
+        return response.data;
+    } catch (error) {
+        console.error('Erro ao buscar perfil do usuário:', error);
+        return null;
+    }
+};

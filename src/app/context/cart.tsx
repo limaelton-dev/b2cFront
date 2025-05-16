@@ -38,7 +38,7 @@ export const CartProvider = ({ children }) => {
 
     const isLoggedIn = !!user && !!user.id;
 
-    const addToCart = (product, idCor) => {
+    const addToCart = (product) => {
         const itemExists = cartItems.some(item => 
             item.id === product.id
         );

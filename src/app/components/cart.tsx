@@ -140,19 +140,24 @@ export default function Cart({ cartOpened, onCartToggle }) {
     useEffect(() => {
         console.log(cartItems)
         async function getAddress() {
-            if(user.name) {
-                const resp = await getAddressUser();
-                if(resp) {
-                    const freteVal = await valorFrete(resp[0].postal_code.replace(/\D/,''));
-                    setFrete(freteVal.data.data.totalPreco);
-                    if(freteVal) {
-                        setFreteNome('PAC - até ' + freteVal.data.data.maiorPrazo + ' dias úteis');
+            if(user && user.name) {
+                try {
+                    const resp = await getAddressUser();
+                    if(resp && resp.length > 0 && resp[0] && resp[0].postal_code) {
+                        const freteVal = await valorFrete(resp[0].postal_code.replace(/\D/,''));
+                        if(freteVal && freteVal.data && freteVal.data.data) {
+                            setFrete(freteVal.data.data.totalPreco);
+                            setFreteNome('PAC - até ' + freteVal.data.data.maiorPrazo + ' dias úteis');
+                        }
                     }
+                } catch (error) {
+                    console.error("Erro ao obter endereço ou calcular frete:", error);
+                    setFrete(0);
                 }
             }
         }
         getAddress()
-    }, [cartItems])
+    }, [cartItems, user])
 
     // Verifica se os dados do carrinho estão sincronizados
     const isCartDataValid = () => {
@@ -166,7 +171,9 @@ export default function Cart({ cartOpened, onCartToggle }) {
         
         // Verifica se todos os itens no cartData têm um produto correspondente em cartItems
         const allItemsValid = cartData.every(item => {
-            const itemId = item.id || item.produto_id;
+            if (!item) return false;
+            
+            const itemId = item.id || item.produto_id || item.productId;
             
             const hasMatchingProduct = cartItems.some(product => {
                 if (!product) {
@@ -193,7 +200,7 @@ export default function Cart({ cartOpened, onCartToggle }) {
             return 0;
         }
         
-        const quantity = item.qty || item.quantity || 1;
+        const quantity = item.quantity || item.qty || 1;
         
         // Sempre usar o preço de venda do produto
         if (product.price && !isNaN(product.price)) {
@@ -208,7 +215,6 @@ export default function Cart({ cartOpened, onCartToggle }) {
         if (!cartData || !cartItems || cartData.length === 0 || cartItems.length === 0) {
             return 0;
         }
-        
         
         return cartData.reduce((total, item) => {
             const itemId = item.id || item.productId;
@@ -256,14 +262,23 @@ export default function Cart({ cartOpened, onCartToggle }) {
                 ) : (
                     <>
                         {cartData.map((item, index) => {
-                            const itemId = item.id || item.produto_id;
+                            if (!item) return null;
+                            
+                            const itemId = item.productId || item.produto_id || item.id;
+                            
                             // Encontra o produto correspondente ao item do carrinho
                             const product = cartItems.find(r => r && (r.id == itemId));
                             // Se não encontrar o produto, pula este item
-                            if (!product) return <React.Fragment key={itemId}></React.Fragment>;
+                            if (!product) {
+                                console.error(`Produto com ID ${itemId} não encontrado no carrinho!`);
+                                return <React.Fragment key={index}></React.Fragment>;
+                            }
+                            
+                            // Obter nome do produto
+                            const productName = product.name || product.pro_descricao || "Produto";
                             
                             return (
-                                <div className="product" data-test={itemId} key={itemId}>
+                                <div className="product" data-test={itemId} key={itemId || index}>
                                     <div style={{ display: 'flex', justifyContent: 'flex-end'}}>
                                         <IconButton style={{padding: '0px'}} aria-label="delete" onClick={() => handleAlertRemoveItem(itemId)}>
                                             <DeleteOutlineIcon />
@@ -284,12 +299,17 @@ export default function Cart({ cartOpened, onCartToggle }) {
                                                 Categoria: {product.brand.name}
                                             </Typography>
                                         )}
+                                        {product.categoryLevel2 && (
+                                            <Typography variant="caption" color="text.secondary">
+                                                Categoria: {product.categoryLevel2.name}
+                                            </Typography>
+                                        )}
                                         <div className="quantity">
                                             <button 
                                                 type='button'
                                                 onClick={() => handleDec(index, itemId)}
                                                 className="btn-qty decrement">-</button>
-                                            <input value={item.qty || item.quantity} min={min} max={max} onChange={(e) => handleInputChange(item, e)} type="number"/>
+                                            <input value={item.quantity || item.qty || 1} min={min} max={max} onChange={(e) => handleInputChange(item, e)} type="number"/>
                                             <button 
                                                 type='button'
                                                 onClick={() => handleInc(index, itemId)}

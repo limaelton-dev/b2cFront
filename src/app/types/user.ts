@@ -7,7 +7,7 @@ export type ProfileTypeEnum = 'PF' | 'PJ';
 export interface User {
     id: number;
     email: string;
-    password: string;
+    password?: string;
     profile_type?: ProfileTypeEnum;
     profile?: ProfilePF | ProfilePJ;
     address?: Address[];

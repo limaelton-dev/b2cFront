@@ -9,7 +9,6 @@ import { Phone } from "../types/phones";
 const mockUser: User = {
   id: 1,
   email: "johndoe@example.com",
-  password: "hashedpassword",
   profile_type: "PF",
   profile: {
     profile_id: 101,
@@ -141,7 +140,7 @@ export const updateUser = async (userData: Partial<User>): Promise<User> => {
 
 
 // export const fetchUser = async (): Promise<User> => {
-//     const response = await axios.get(`${API_URL}/user`, {
+//     const response = await axios.get(`${API_URL}/users`, {
 //         headers: {
 //             'Authorization': `Bearer ${token}`,
 //             'Content-Type': 'application/json'
@@ -151,7 +150,7 @@ export const updateUser = async (userData: Partial<User>): Promise<User> => {
 // };
 
 // export const fetchWithDetails = async (): Promise<User> => {
-//     const response = await axios.get(`${API_URL}/user/details`, {
+//     const response = await axios.get(`${API_URL}/users/details`, {
 //         headers: {
 //             'Authorization': `Bearer ${token}`,
 //             'Content-Type': 'application/json'
@@ -161,7 +160,7 @@ export const updateUser = async (userData: Partial<User>): Promise<User> => {
 // };
 
 // export const fetchUserCards = async (): Promise<Card[]> => {
-//     const response = await axios.get(`${API_URL}/user/cards`, {
+//     const response = await axios.get(`${API_URL}/users/cards`, {
 //         headers: {
 //             'Authorization': `Bearer ${token}`,
 //             'Content-Type': 'application/json'
@@ -171,7 +170,7 @@ export const updateUser = async (userData: Partial<User>): Promise<User> => {
 // };
 
 // export const fetchUserAddresses = async (): Promise<Address[]> => {
-//     const response = await axios.get(`${API_URL}/user/addresses`, {
+//     const response = await axios.get(`${API_URL}/users/addresses`, {
 //         headers: {
 //             'Authorization': `Bearer ${token}`,
 //             'Content-Type': 'application/json'
@@ -181,7 +180,7 @@ export const updateUser = async (userData: Partial<User>): Promise<User> => {
 // };
 
 // export const fetchUserPhones = async (): Promise<Phone[]> => {
-//     const response = await axios.get(`${API_URL}/user/phones`, {
+//     const response = await axios.get(`${API_URL}/users/phones`, {
 //         headers: {
 //             'Authorization': `Bearer ${token}`,
 //             'Content-Type': 'application/json'

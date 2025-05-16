@@ -131,7 +131,7 @@ export const valorFrete = async (cep) => {
         return response;
     }
     catch (err) {
-        console.error('Erro:', err);
+        console.error('Erro ao calcular frete:', err);
         return err;
     }
 }
@@ -139,27 +139,43 @@ export const valorFrete = async (cep) => {
 export const valorFreteDeslogado = async (cep, dados) => {
     try {
         const headers = {
-            Authorization: `Bearer ${getToken()}`,
             'Content-Type': 'application/json'
         };
         
-        // Se dados já estiver formatado corretamente, use-o. Caso contrário, construa o cart_data
-        const cart_data = Array.isArray(dados) 
-            ? dados.map(item => ({
-                produto_id: item.id || item.produto_id,
-                quantity: item.qty || item.quantity || 1
-              }))
-            : dados;
+        // CEP de origem padrão
+        const originZipCode = "01001000";
         
-        const response = await axios.post(
-            `${API_URL}/api/logistica/carrinho/frete?cepDestino=${cep.replace(/\D/g, '')}`,
-            { cart_data },
-            { headers }
+        // Formatando os produtos para o novo formato da API
+        const products = Array.isArray(dados) 
+            ? dados.map(item => ({
+                productId: Number(item.id || item.produto_id),
+                quantity: Number(item.qty || item.quantity || 1)
+              }))
+            : dados.map(item => ({
+                productId: Number(item.produto_id),
+                quantity: Number(item.quantity || 1)
+              }));
+        
+        // Nova API: usando método GET no endpoint /cart/shipping
+        const cleanZipCode = cep.replace(/\D/g, '');
+        
+        // Usando método GET com zipCode como parâmetro de consulta
+        const response = await axios.get(
+            `${API_URL}/cart/shipping?zipCode=${cleanZipCode}`,
+            {
+                headers,
+                // Dados no corpo da requisição mesmo com método GET
+                data: {
+                    originZipCode,
+                    destinationZipCode: cleanZipCode,
+                    products
+                }
+            }
         );
         return response;
     }
     catch (err) {
-        console.error('Erro:', err);
+        console.error('Erro ao calcular frete:', err);
         return err;
     }
 }
