@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { AuthContextType, User } from '../interfaces/interfaces';
 import { checkAuth, logout as logoutService, getUserProfile } from '../services/auth';
-import { removeToken } from '../utils/auth';
+import { removeToken, getToken } from '../utils/auth';
 
 const AuthContext = createContext<AuthContextType>({
     user: {
@@ -82,6 +82,19 @@ export const AuthProvider = ({ children }) => {
         validateAuth();
     }, []);
     
+    // Adicionar um efeito para observar alterações no token JWT
+    useEffect(() => {
+        // Verificação periódica do token a cada 5 segundos
+        const intervalId = setInterval(() => {
+            const token = getToken();
+            if (token && (!user || user.id === 0)) {
+                loadUserProfile();
+            }
+        }, 5000);
+        
+        return () => clearInterval(intervalId);
+    }, [user]);
+
     const setUserFn = (user: User) => {
         setUser(user);
         if (isBrowser()) {

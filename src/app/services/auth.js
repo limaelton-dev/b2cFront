@@ -52,17 +52,11 @@ export const register = async (userData) => {
         const requestData = {
             email: userData.email,
             password: userData.password,
-            profileType: 'PF',
-            profile: {
-                fullName: `${userData.name} ${userData.lastname}`.trim(),
-                cpf: userData.cpf || '',
-                birthDate: userData.birthDate || new Date().toISOString().split('T')[0],
-                gender: userData.gender || null
-            }
+            profileType: userData.profileType || 'PF',
+            profile: {}
         };
         
         if (userData.profileType === 'PJ') {
-            requestData.profileType = 'PJ';
             requestData.profile = {
                 companyName: userData.companyName || '',
                 cnpj: userData.cnpj || '',
@@ -70,28 +64,25 @@ export const register = async (userData) => {
                 stateRegistration: userData.stateRegistration || '',
                 municipalRegistration: userData.municipalRegistration || ''
             };
+        } else {
+            // Caso seja PF - dividindo o nome completo em firstName e lastName
+            const fullNameParts = userData.fullName ? userData.fullName.trim().split(' ') : ['', ''];
+            const firstName = fullNameParts[0] || '';
+            const lastName = fullNameParts.slice(1).join(' ') || '';
+            
+            requestData.profile = {
+                firstName: firstName,
+                lastName: lastName,
+                cpf: userData.cpf || '',
+                birthDate: userData.birthDate || new Date().toISOString().split('T')[0],
+                gender: userData.gender || null
+            };
         }
         
         const response = await axios.post(`${API_URL}/auth/signup`, requestData);
         
         if (response.data && response.data.access_token) {
             saveToken(response.data.access_token);
-            
-            if (isBrowser() && response.data.user) {
-                const user = response.data.user;
-                localStorage.setItem('user', JSON.stringify({
-                    id: user.id,
-                    email: user.email,
-                    profileId: user.profileId,
-                    profileType: user.profileType,
-                    name: user.profileType === 'PF' 
-                        ? (user.profile?.firstName && user.profile?.lastName)
-                            ? `${user.profile.firstName} ${user.profile.lastName}`
-                            : user.profile?.fullName || ''
-                        : user.profile?.companyName || '',
-                    profile: user.profile
-                }));
-            }
         }
         
         return response.data;

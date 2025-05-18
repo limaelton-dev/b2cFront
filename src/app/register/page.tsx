@@ -103,12 +103,40 @@ export default function RegisterPage() {
             setTextError('As senhas não condizem.\nPor favor, preencha corretamente.');
             return;
         }
+        
+        // Verificação adicional para garantir que o nome completo tenha pelo menos um espaço (nome e sobrenome)
+        if (profileType === 'PF' && !formData.fullName.trim().includes(' ')) {
+            setIsLoading(false);
+            setTextError('Por favor, informe nome e sobrenome.');
+            return;
+        }
 
         try {
-            const response = await register(formData)
+            const response = await register(formData);
             
             if (response && response.access_token) {
-                // O token e usuário já são salvos no serviço de registro
+                // Configurar o usuário no contexto de autenticação
+                const user = response.user;
+                const userData = {
+                    id: user.id,
+                    email: user.email,
+                    profileId: user.profileId,
+                    profileType: user.profileType,
+                    name: user.profileType === 'PF' 
+                        ? (user.profile?.firstName && user.profile?.lastName)
+                            ? `${user.profile.firstName} ${user.profile.lastName}`
+                            : user.profile?.fullName || ''
+                        : user.profile?.companyName || '',
+                    profile: user.profile
+                };
+                
+                // Atualizar o usuário no contexto de autenticação
+                setUserFn(userData);
+                
+                // Configurar o cookie JWT
+                setCookie('jwt', response.access_token);
+                
+                // Redirecionar para a página inicial
                 router.push('/');
                 showToast('Você se cadastrou com sucesso!', 'success');
             } else {
@@ -198,7 +226,7 @@ export default function RegisterPage() {
                                             <>
                                                 <div className={`form-group icons-inputs ${errors.fullName ? 'error' : ''}`}>
                                                     <PersonIcon style={{position: 'absolute', top: '50%', left: '15px', transform: 'translateY(-50%)'}}/>
-                                                    <input type="text" name="fullName" required placeholder="Nome completo*" value={formData.fullName} onChange={handleChange} className="form-control"/>
+                                                    <input type="text" name="fullName" required placeholder="Nome e sobrenome*" value={formData.fullName} onChange={handleChange} className="form-control"/>
                                                 </div>
                                                 <div className={`form-group icons-inputs ${errors.cpf ? 'error' : ''}`}>
                                                     <BadgeIcon style={{position: 'absolute', top: '50%', left: '15px', transform: 'translateY(-50%)'}}/>
