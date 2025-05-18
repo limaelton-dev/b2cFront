@@ -37,11 +37,13 @@ export const AuthProvider = ({ children }) => {
                 const userData = {
                     id: profileData.id,
                     email: profileData.email,
-                    profileId: profileData.profile?.id,
+                    profileId: profileData.profileId,
                     profileType: profileData.profileType,
                     name: profileData.profileType === 'PF' 
-                        ? profileData.profile?.fullName 
-                        : profileData.profile?.companyName,
+                        ? (profileData.profile?.firstName && profileData.profile?.lastName)
+                            ? `${profileData.profile.firstName} ${profileData.profile.lastName}`
+                            : profileData.profile?.fullName || ''
+                        : profileData.profile?.companyName || '',
                     profile: profileData.profile,
                     address: profileData.address,
                     phone: profileData.phone,
@@ -79,12 +81,6 @@ export const AuthProvider = ({ children }) => {
         
         validateAuth();
     }, []);
-    
-    useEffect(() => {
-        if (auth && isBrowser() && localStorage.getItem("user")) {
-            setUser(JSON.parse(localStorage.getItem("user")));
-        }
-    }, [auth]);
     
     const setUserFn = (user: User) => {
         setUser(user);

@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { applyDiscounts, applyPixDiscount, formatPrice } from '../utils/pricing';
 import axios from 'axios';
+import { valorFrete, valorFreteDeslogado } from '../../services/checkout';
 
 /**
  * Hook para gerenciar cálculos de preço e frete no checkout
@@ -63,6 +64,10 @@ export const useCheckoutPricing = (cartItems: any[], cartData: any[]) => {
      * Calcula o frete com base no CEP usando a nova API
      * @param postalCode CEP para cálculo do frete
      * @param isAuthenticated Flag indicando se o usuário está autenticado
+     * 
+     * Para usuários autenticados, usa a função valorFrete que inclui o token de autenticação.
+     * Para usuários não autenticados, usa a função valorFreteDeslogado que não requer autenticação.
+     * Ambas funções usam o mesmo endpoint /cart/shipping, mas com headers diferentes.
      */
     const calculateShipping = async (postalCode: string, isAuthenticated: boolean) => {
         if (!postalCode || postalCode.length !== 9) return;
@@ -71,51 +76,31 @@ export const useCheckoutPricing = (cartItems: any[], cartData: any[]) => {
         const cleanPostalCode = postalCode.replace('-', '');
         
         try {
-            // Preparar os dados para a API
-            const products = cartData.map(item => ({
-                productId: Number(item.id || item.produto_id),
-                quantity: Number(item.qty || item.quantity || 1)
-            }));
+            let response;
             
-            // CEP de origem padrão
-            const originZipCode = "01001000";
-            
-            // Construir os headers com o token se o usuário estiver autenticado
-            const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-            
+            // Usar funções específicas com base no status de autenticação
             if (isAuthenticated) {
-                // Obter o token JWT dos cookies ou localStorage
-                const token = typeof window !== 'undefined' ? localStorage.getItem('token') || '' : '';
-                if (token) {
-                    headers['Authorization'] = `Bearer ${token}`;
-                }
+                // Usuário autenticado - usa valorFrete
+                console.log('Calculando frete para usuário autenticado');
+                response = await valorFrete(cleanPostalCode);
+            } else {
+                // Usuário não autenticado - usa valorFreteDeslogado
+                console.log('Calculando frete para usuário não autenticado');
+                
+                // Formatar os dados dos produtos para o serviço
+                const formattedProducts = cartData.map(item => ({
+                    id: item.id || item.produto_id,
+                    produto_id: item.produto_id || item.id,
+                    quantity: item.qty || item.quantity || 1
+                }));
+                
+                response = await valorFreteDeslogado(cleanPostalCode, formattedProducts);
             }
             
-            // Fazer a requisição para a nova API
-            const payload = {
-                originZipCode,
-                destinationZipCode: cleanPostalCode,
-                products
-            };
-            
-            console.log('Enviando requisição para API de frete:', payload);
-            
-            // Obter a URL base correta da variável de ambiente
-            const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
-            
-            // Usar a URL completa com o endpoint de frete
-            const response = await axios.get(
-                `${API_URL}/cart/shipping?zipCode=${cleanPostalCode}`,
-                {
-                    headers,
-                    data: payload
-                }
-            );
-            
-            console.log('Resposta da API de frete:', response.data);
+            console.log('Resposta da API de frete:', response?.data);
             
             // Processar a resposta no novo formato
-            if (response.data && response.data.success) {
+            if (response?.data && response?.data.success) {
                 const { data } = response.data;
                 
                 // Definir o serviço de frete selecionado - pegamos o primeiro disponível

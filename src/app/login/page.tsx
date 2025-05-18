@@ -47,10 +47,12 @@ export default function LoginPage() {
                 const userData = {
                     id: profileData.id,
                     email: profileData.email,
-                    profileId: profileData.profile?.id,
+                    profileId: profileData.profileId,
                     profileType: profileData.profileType,
                     name: profileData.profileType === 'PF' 
-                        ? profileData.profile?.fullName 
+                        ? (profileData.profile?.firstName && profileData.profile?.lastName 
+                           ? profileData.profile.firstName + ' ' + profileData.profile.lastName
+                           : profileData.profile?.fullName) 
                         : profileData.profile?.companyName,
                     profile: profileData.profile,
                     address: profileData.address,
@@ -105,19 +107,23 @@ export default function LoginPage() {
     const submit = async (e: any) => {
         e.preventDefault();
         setIsLoading(true);
-<<<<<<< HEAD
-        const response = await login(formData.email, formData.password)
-        if(response.status == 200) {
-            setUserFn(response.data.user);
-            setCookie('jwt', response.data.access_token);
-=======
         try {
             const response = await login(formData.email, formData.password);
->>>>>>> d8c94ef1bc49d58313fb674d62c0f69919165e6c
             
             // Verificar se a resposta contém o token de acesso
             if (response && response.access_token) {
-                // O usuário já é definido no serviço de login
+                // Configurar o usuário no contexto de autenticação
+                setUserFn({
+                    id: response.user.id,
+                    email: response.user.email,
+                    profileId: response.user.profileId,
+                    profileType: response.user.profileType,
+                    name: response.user.profileType === 'PF' 
+                        ? response.user.profile?.firstName + ' ' + response.user.profile?.lastName 
+                        : response.user.profile?.companyName,
+                    profile: response.user.profile
+                });
+                
                 // O token já é salvo no serviço de login
                 setCookie('jwt', response.access_token);
                 

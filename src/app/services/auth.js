@@ -18,20 +18,28 @@ export const login = async (email, password) => {
             const userData = response.data.user;
             
             if (isBrowser()) {
-                localStorage.setItem('user', JSON.stringify({
+                const userDataToStore = {
                     id: userData.id,
                     email: userData.email,
-                    profile_id: userData.profileId,
-                    profile_type: userData.profileType
-                }));
+                    profileId: userData.profileId,
+                    profileType: userData.profileType,
+                    name: userData.profileType === 'PF' 
+                        ? (userData.profile?.firstName && userData.profile?.lastName)
+                            ? `${userData.profile.firstName} ${userData.profile.lastName}`
+                            : userData.profile?.fullName || ''
+                        : userData.profile?.companyName || '',
+                    profile: userData.profile
+                };
+                
+                localStorage.setItem('user', JSON.stringify(userDataToStore));
             }
         }
         
-        return response;
+        return response.data;
     }
     catch (err) {
         console.error('Erro ao fazer login:', err);
-        return err;
+        throw err;
     }
 };
 
@@ -70,12 +78,18 @@ export const register = async (userData) => {
             saveToken(response.data.access_token);
             
             if (isBrowser() && response.data.user) {
+                const user = response.data.user;
                 localStorage.setItem('user', JSON.stringify({
-                    id: response.data.user.id,
-                    email: response.data.user.email,
-                    profile_id: response.data.user.profileId,
-                    profile_type: response.data.user.profileType,
-                    profile: response.data.user.profile
+                    id: user.id,
+                    email: user.email,
+                    profileId: user.profileId,
+                    profileType: user.profileType,
+                    name: user.profileType === 'PF' 
+                        ? (user.profile?.firstName && user.profile?.lastName)
+                            ? `${user.profile.firstName} ${user.profile.lastName}`
+                            : user.profile?.fullName || ''
+                        : user.profile?.companyName || '',
+                    profile: user.profile
                 }));
             }
         }
@@ -83,7 +97,7 @@ export const register = async (userData) => {
         return response.data;
     } catch (err) {
         console.error('Erro ao registrar usuário:', err);
-        return err;
+        throw err;
     }
 };
 
@@ -167,6 +181,7 @@ export const getUserProfile = async () => {
         }
         
         const response = await axios.get(`${API_URL}/user/profile/details`, { headers });
+        
         return response.data;
     } catch (error) {
         console.error('Erro ao buscar perfil do usuário:', error);
