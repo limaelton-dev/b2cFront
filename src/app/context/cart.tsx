@@ -42,26 +42,29 @@ export const CartProvider = ({ children }) => {
     const isLoggedIn = !!user && !!user.id;
 
     const addToCart = (product) => {
+        console.log(`Adicionando produto ao carrinho: ${JSON.stringify(product)}`);
+        
         const itemExists = cartItems.some(item => 
             item.id === product.id
         );
 
         if(itemExists) {
+            console.log(`Produto ${product.id} já existe no carrinho`);
             return false;
         }
 
         const productId = product.id;
         
         if (!productId) {
+            console.log(`Produto sem ID válido`);
             return false;
         }
 
         // Verificar se o produto tem preço válido
         if (!product.price) {
+            console.log(`Produto sem preço válido`);
             return false;
         }
-
-        console.log(product)
 
         // Criar dados do item para o carrinho
         const cartItem = {
@@ -79,13 +82,23 @@ export const CartProvider = ({ children }) => {
         localStorage.setItem('cart', JSON.stringify(updatedCartData));
         Cookies.set('cart', JSON.stringify(updatedCartData), { expires: 7 });
         
-        // Enviar o carrinho para o servidor
-        debouncedSendCartToServer(1, productId);
+        // Se o usuário estiver logado, adicionar o produto diretamente ao servidor
+        if (isLoggedIn) {
+            addProductToServer({
+                productId: productId,
+                quantity: 1
+            });
+        } else {
+            // Usar o método debounced para usuários não logados
+            debouncedSendCartToServer(1, productId);
+        }
         
         return true;
     };
 
     const removeFromCart = (id) => {
+        console.log(`Removendo produto do carrinho: ${id}`);
+        
         const updatedCartData = cartData.filter(
             item => !((item.id === id || item.productId === id))
         );
@@ -107,7 +120,13 @@ export const CartProvider = ({ children }) => {
             Cookies.remove('cart');
         }
     
-        debouncedSendCartToServer(2, id);
+        // Se o usuário estiver logado, remover o produto diretamente do servidor
+        if (isLoggedIn) {
+            removeProductFromServer(id);
+        } else {
+            // Usar o método debounced para usuários não logados
+            debouncedSendCartToServer(2, id);
+        }
     
         return true;
     };
@@ -664,6 +683,89 @@ export const CartProvider = ({ children }) => {
         return 0;
     };
 
+    // Nova função para adicionar um produto diretamente ao servidor
+    const addProductToServer = async (item) => {
+        // Verificar se o usuário está autenticado
+        if (!isAuthenticated()) {
+            console.log("Usuário não autenticado, não adicionando produto ao servidor");
+            return;
+        }
+        
+        try {
+            console.log(`Enviando produto para o servidor: ${JSON.stringify(item)}`);
+            
+            // Evitar atualizações durante sincronização
+            if (syncInProgress) {
+                console.log("Processo de sincronização em andamento, adiando adição");
+                setTimeout(() => addProductToServer(item), 1000);
+                return;
+            }
+            
+            const response = await addToCartServer(item);
+            
+            console.log("Resposta da adição ao carrinho:", response);
+            
+            // Verificar se a adição foi bem-sucedida
+            if (response && (response.status >= 200 && response.status < 300)) {
+                console.log(`Produto ${item.productId} adicionado ao servidor com sucesso`);
+                return true;
+            } else {
+                console.error(`Erro ao adicionar produto ao servidor: ${response?.status || 'Desconhecido'}`);
+                return false;
+            }
+        } catch (error) {
+            console.error('Erro ao adicionar produto ao servidor:', error);
+            
+            // Tentar novamente se for um erro temporário (429, 500, etc.)
+            if (error.response && (error.response.status >= 429 || error.response.status >= 500)) {
+                console.log("Erro temporário, tentando novamente em 2 segundos...");
+                setTimeout(() => addProductToServer(item), 2000);
+            }
+            return false;
+        }
+    }
+
+    // Nova função para remover um produto diretamente do servidor
+    const removeProductFromServer = async (productId) => {
+        // Verificar se o usuário está autenticado
+        if (!isAuthenticated()) {
+            console.log("Usuário não autenticado, não removendo produto do servidor");
+            return;
+        }
+        
+        try {
+            console.log(`Removendo produto do servidor: ${productId}`);
+            
+            // Evitar atualizações durante sincronização
+            if (syncInProgress) {
+                console.log("Processo de sincronização em andamento, adiando remoção");
+                setTimeout(() => removeProductFromServer(productId), 1000);
+                return;
+            }
+            
+            const response = await removeFromCartServer(productId);
+            
+            console.log("Resposta da remoção do carrinho:", response);
+            
+            // Verificar se a remoção foi bem-sucedida
+            if (response && (response.status >= 200 && response.status < 300)) {
+                console.log(`Produto ${productId} removido do servidor com sucesso`);
+                return true;
+            } else {
+                console.error(`Erro ao remover produto do servidor: ${response?.status || 'Desconhecido'}`);
+                return false;
+            }
+        } catch (error) {
+            console.error('Erro ao remover produto do servidor:', error);
+            
+            // Tentar novamente se for um erro temporário (429, 500, etc.)
+            if (error.response && (error.response.status >= 429 || error.response.status >= 500)) {
+                console.log("Erro temporário, tentando novamente em 2 segundos...");
+                setTimeout(() => removeProductFromServer(productId), 2000);
+            }
+            return false;
+        }
+    }
 
     // Carrega o carrinho inicial
     useEffect(() => {
