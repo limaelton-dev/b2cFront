@@ -209,7 +209,7 @@ export const addCard = async (cardData: Partial<CartaoType>): Promise<CartaoType
       }
     }
     
-    const response = await axios.post(`${API_URL}/my-account/add-card`, cardWithProfileId, getAuthConfig());
+    const response = await axios.post(`${API_URL}/card`, cardWithProfileId, getAuthConfig());
     return response.data;
   } catch (error) {
     console.error('Erro ao adicionar cartão:', error);

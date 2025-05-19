@@ -555,12 +555,13 @@ const CheckoutPage = () => {
                         try {
                             // Preparar dados do cartão incluindo o profile_id
                             const cardData = {
-                                card_number: cardNumber.replace(/\s/g, ''),
-                                holder_name: nameUser,
-                                expiration_date: expireCC,
+                                cardNumber: cardNumber.replace(/\s/g, ''),
+                                holderName: nameUser,
+                                expirationDate: expireCC,
                                 cvv: CVV,
-                                is_default: true,
-                                profile_id: profileResponse.id
+                                isDefault: true,
+                                profileId: profileResponse.id,
+                                brand: detectCardBrand(hasCard ? numberCCFinal : cardNumber)
                             };
                             
                             // Cadastrar o cartão
