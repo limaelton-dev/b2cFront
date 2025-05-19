@@ -151,10 +151,9 @@ export default function LoginPage() {
             // Usar Promise.race para garantir que o login não trave
             const response = await Promise.race([loginPromise, timeoutPromise]);
             
-            if(response.status == 200) {
-                setUserFn(response.data.user);
-                setCookie('jwt', response.data.access_token);
-                
+            if(response) {
+                setUserFn(response.user);
+                setCookie('jwt', response.access_token);
                 // Verificar se a resposta contém o token de acesso
                 if (response && response.access_token) {
                     // Configurar o usuário no contexto de autenticação
