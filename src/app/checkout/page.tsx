@@ -375,7 +375,7 @@ const CheckoutPage = () => {
                 try {
                     registerResponse = await register(userData);
                     
-                    if (!registerResponse || !registerResponse.token) {
+                    if (!registerResponse || !registerResponse.access_token) {
                         showToast('Erro ao criar usuário', 'error');
                         setLoadBtn(false);
                         return;
