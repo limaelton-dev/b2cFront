@@ -33,11 +33,30 @@ export const useCart = () => {
     
 export const CartProvider = ({ children }) => {
     const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-    const [cartItems, setCartItems] = useState([]); // Produtos
-    const [cartData, setCartData] = useState([]); // Quantidade, Cor
+    const [cartItems, setCartItems] = useState(() => {
+        // Inicializar cartItems com um array vazio
+        return [];
+    });
+    const [cartData, setCartData] = useState(() => {
+        // Tentar carregar do localStorage durante a inicialização
+        if (typeof window !== 'undefined') {
+            try {
+                const savedCart = localStorage.getItem('cart');
+                if (savedCart) {
+                    const parsedCart = JSON.parse(savedCart);
+                    console.log('Carregado estado inicial do carrinho do localStorage:', parsedCart);
+                    return parsedCart;
+                }
+            } catch (e) {
+                console.error('Erro ao carregar estado inicial do carrinho:', e);
+            }
+        }
+        return [];
+    });
     const { user } = useAuth();
     const [previousLoginState, setPreviousLoginState] = useState(false);
     const [syncInProgress, setSyncInProgress] = useState(false);
+    const [initialized, setInitialized] = useState(false);
 
     const isLoggedIn = !!user && !!user.id;
 
@@ -75,12 +94,33 @@ export const CartProvider = ({ children }) => {
 
         // Adicionar o produto ao carrinho
         const updatedCartData = [...cartData, cartItem];
+        
+        console.log(`Atualizando estado do carrinho com novo item: ${JSON.stringify(cartItem)}`);
         setCartData(updatedCartData);
         setCartItems((prevItems) => [...prevItems, product]);
         
-        // Salvar os dados no localStorage
+        // Salvar os dados no localStorage imediatamente
+        console.log(`Salvando carrinho no localStorage: ${JSON.stringify(updatedCartData)}`);
         localStorage.setItem('cart', JSON.stringify(updatedCartData));
         Cookies.set('cart', JSON.stringify(updatedCartData), { expires: 7 });
+        
+        // Verificar se os dados foram salvos corretamente
+        const savedCart = localStorage.getItem('cart');
+        console.log(`Verificando se o carrinho foi salvo no localStorage: ${savedCart ? 'Sim' : 'Não'}`);
+        if (savedCart) {
+            try {
+                const parsedCart = JSON.parse(savedCart);
+                console.log(`Carrinho salvo: ${JSON.stringify(parsedCart)}`);
+                
+                // Verificar se o produto foi adicionado corretamente
+                const productAdded = parsedCart.some(item => 
+                    (item.id === productId || item.productId === productId)
+                );
+                console.log(`Produto ${productId} encontrado no carrinho salvo: ${productAdded ? 'Sim' : 'Não'}`);
+            } catch (e) {
+                console.error(`Erro ao analisar carrinho salvo: ${e.message}`);
+            }
+        }
         
         // Se o usuário estiver logado, adicionar o produto diretamente ao servidor
         if (isLoggedIn) {
@@ -89,8 +129,9 @@ export const CartProvider = ({ children }) => {
                 quantity: 1
             });
         } else {
-            // Usar o método debounced para usuários não logados
-            debouncedSendCartToServer(1, productId);
+            console.log(`Usuário não está logado. Carrinho salvo apenas localmente.`);
+            // Não usamos mais o debouncedSendCartToServer para usuários não logados
+            // pois já salvamos no localStorage acima
         }
         
         return true;
@@ -372,20 +413,27 @@ export const CartProvider = ({ children }) => {
             setSyncInProgress(true);
             let data;
             const storedData = localStorage.getItem('cart');
+            console.log(`Carregando carrinho do localStorage: ${storedData || 'Vazio'}`);
+            
             if (storedData) {
                 try {
                     data = JSON.parse(storedData);
+                    console.log(`Carrinho carregado do localStorage: ${JSON.stringify(data)}`);
                 } catch (e) {
+                    console.error(`Erro ao analisar o carrinho do localStorage: ${e.message}`);
                     localStorage.removeItem('cart');
                     setSyncInProgress(false);
                     return false;
                 }
             } else {
                 const cookieData = Cookies.get('cart');
+                console.log(`Carregando carrinho dos cookies: ${cookieData || 'Vazio'}`);
                 if (cookieData) {
                     try {
                         data = JSON.parse(cookieData);
+                        console.log(`Carrinho carregado dos cookies: ${JSON.stringify(data)}`);
                     } catch (e) {
+                        console.error(`Erro ao analisar o carrinho dos cookies: ${e.message}`);
                         Cookies.remove('cart');
                         setSyncInProgress(false);
                         return false;
@@ -770,22 +818,47 @@ export const CartProvider = ({ children }) => {
     // Carrega o carrinho inicial
     useEffect(() => {
         const loadInitialCart = async () => {
+            if (initialized) return; // Evitar inicialização múltipla
             
-            if (isLoggedIn) {
-                const serverCartLoaded = await loadServerCart();
-                
-                if (!serverCartLoaded || cartItems.length === 0) {
-                    const localCartLoaded = await loadLocalCart();
+            console.log('Iniciando carregamento do carrinho...');
+            
+            // Verificar se há dados no localStorage antes de tudo
+            const localStorageCart = localStorage.getItem('cart');
+            console.log(`Verificando localStorage na inicialização: ${localStorageCart || 'Vazio'}`);
+            
+            try {
+                if (isLoggedIn) {
+                    console.log('Usuário está logado, tentando carregar carrinho do servidor...');
+                    const serverCartLoaded = await loadServerCart();
                     
+                    if (!serverCartLoaded || cartItems.length === 0) {
+                        console.log('Carrinho do servidor vazio ou falha no carregamento, tentando carregar do localStorage...');
+                        const localCartLoaded = await loadLocalCart();
+                        
+                        if (localCartLoaded) {
+                            console.log('Carrinho local carregado com sucesso, enviando para o servidor...');
+                            // Se carregou localmente com sucesso, sincronizar com o servidor
+                            if (cartData.length > 0) {
+                                await sendCartLocalServer();
+                            }
+                        }
+                    }
+                } else {
+                    console.log('Usuário não está logado, carregando apenas do localStorage...');
+                    await loadLocalCart();
+                    
+                    // Verificar se o carregamento foi bem-sucedido
+                    console.log(`Estado do carrinho após carregamento local: ${cartData.length} itens, ${cartItems.length} produtos`);
                 }
-            } else {
-                await loadLocalCart();
+                
+                setInitialized(true);
+            } catch (error) {
+                console.error('Erro durante a inicialização do carrinho:', error);
             }
-            
         };
         
         loadInitialCart();
-    }, []);
+    }, [isLoggedIn]);
 
     return (
         <CartContext.Provider value={{ cartItems, cartData, changeQtyItem, addToCart, removeFromCart, removeItems }}>
