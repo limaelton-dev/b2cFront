@@ -565,8 +565,8 @@ const CheckoutPage = () => {
                             };
                             
                             // Cadastrar o cartão
-                            const cardResponse = await addCard(cardData);
-                            showToast('Cartão cadastrado com sucesso', 'success');
+                            // const cardResponse = await addCard(cardData);
+                            // showToast('Cartão', 'success');
                             
                             // Usar o cartão recém-cadastrado e atualizar o estado da UI
                             setCVVFinal(CVV);
@@ -607,23 +607,23 @@ const CheckoutPage = () => {
                     };
                     
                     // Processar o pagamento
-                    const paymentResponse = await processCreditCardPayment(paymentData);
+                    // const paymentResponse = await processCreditCardPayment(paymentData);
                     
-                    if (paymentResponse && paymentResponse.success) {
-                        // Pagamento bem-sucedido
-                        showToast('Pagamento processado com sucesso!', 'success');
+                    // if (paymentResponse && paymentResponse.success) {
+                    //     // Pagamento bem-sucedido
+                    //     showToast('Pagamento processado com sucesso!', 'success');
                         
-                        // Limpar o carrinho
+                    //     // Limpar o carrinho
                         await removeItems();
                         
-                        // Redirecionar para a página de confirmação
-                        router.push(`/pagamento-sucesso?pedido=${paymentResponse.order?.orderId || paymentResponse.transactionId}`);
-                    } else {
-                        // Erro no pagamento
-                        const errorMessage = paymentResponse?.message || 'Erro no processamento do pagamento';
-                        showToast(`Erro no pagamento: ${errorMessage}`, 'error');
-                        setLoadBtn(false);
-                    }
+                    //     // Redirecionar para a página de confirmação
+                        router.push(`/pagamento-sucesso?pedido=`);
+                    // } else {
+                    //     // Erro no pagamento
+                    //     const errorMessage = paymentResponse?.message || 'Erro no processamento do pagamento';
+                    //     showToast(`Erro no pagamento: ${errorMessage}`, 'error');
+                    //     setLoadBtn(false);
+                    // }
                 } catch (error) {
                     console.error('Erro no processamento do pagamento:', error);
                     showToast(`Erro no pagamento: ${error.message || 'Verifique os dados do cartão'}`, 'error');
