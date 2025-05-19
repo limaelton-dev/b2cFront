@@ -367,7 +367,7 @@ const CheckoutPage = () => {
                                 const product = cartItems.find(r => r && (r.id === itemId || r.pro_codigo === itemId));
                                 if (!product) return null;
                                 return (
-                                <div className="prod" key={itemId || index}>
+                                <div className="prod" key={`${itemId}-${index}`}>
                                     <Image
                                         src={product.imagens && product.imagens[0] ? product.imagens[0].url : HeadphoneImg}
                                         alt={product.pro_descricao || "Produto"}

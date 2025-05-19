@@ -255,7 +255,7 @@ export const addToCartServer = async (data,productId) => {
 
     try {
         console.log('\n\n\nEnviando dados para o servidor:', JSON.stringify(data));
-        const response = await axios.post(`${API_URL}/cart/items/product/${productId}`, data, {
+        const response = await axios.post(`${API_URL}/cart/items`, data, {
             headers: getAuthHeader()
         });
         return response;
@@ -275,11 +275,11 @@ export const removeFromCartServer = async (productId) => {
 
     if (!isAuthenticated()) {
         console.log('Usuário não autenticado, não enviando atualização do carrinho para o servidor');
-        return { status: 200, data: data };
+        return { status: 200 };
     }
 
     try {
-        console.log('\n\n\nEnviando dados para o servidor');
+        console.log('\n\n\nRemovendo produto do carrinho no servidor:', productId);
         const response = await axios.delete(`${API_URL}/cart/items/${productId}`, {
             headers: getAuthHeader()
         });
@@ -290,7 +290,7 @@ export const removeFromCartServer = async (productId) => {
         // Em caso de erro de autenticação (401) ou não encontrado (404), retornamos um objeto simulando sucesso
         if (err.response && (err.response.status === 401 || err.response.status === 404)) {
             console.log('Erro de autenticação ou carrinho não encontrado, simulando sucesso');
-            return { status: 200, data: data };
+            return { status: 200 };
         }
         return err;
     }
@@ -306,7 +306,10 @@ export const cartUpdate = async (data,productId) => {
 
     try {
         console.log('\n\n\nEnviando dados para o servidor:', JSON.stringify(data));
-        const response = await axios.put(`${API_URL}/cart/items/product/${productId}`, data, {
+        // Atualizar quantidade do item - o endpoint correto é PUT /cart/items/{productId} 
+        // com o payload { quantity: x }
+        const payload = { quantity: data.item.quantity };
+        const response = await axios.put(`${API_URL}/cart/items/${productId}`, payload, {
             headers: getAuthHeader()
         });
         return response;

@@ -5,6 +5,7 @@ import { getProdsArr, cartUpdate, getCart, addToCartServer, removeFromCartServer
 import { CartContextType, CartItemDto, CartDataDto } from '../interfaces/interfaces';
 import { useAuth } from './auth';
 import axios from 'axios';
+import { getToken, isAuthenticated } from '../utils/auth';
 
 const CartContext = createContext<CartContextType>({
     cartItems: [],
@@ -36,6 +37,7 @@ export const CartProvider = ({ children }) => {
     const [cartData, setCartData] = useState([]); // Quantidade, Cor
     const { user } = useAuth();
     const [previousLoginState, setPreviousLoginState] = useState(false);
+    const [syncInProgress, setSyncInProgress] = useState(false);
 
     const isLoggedIn = !!user && !!user.id;
 
@@ -132,6 +134,11 @@ export const CartProvider = ({ children }) => {
     }
 
     const changeQtyItem = (id, newQty) => {
+        console.log(`Alterando quantidade do item ${id} para ${newQty}`);
+        
+        // Garantir que a quantidade seja um número positivo
+        newQty = Math.max(1, parseInt(newQty) || 1);
+        
         const updatedItems = cartData.map((item) => {
             if (item.id === id || item.productId === id) {
                 if (item.id !== undefined) {
@@ -150,25 +157,113 @@ export const CartProvider = ({ children }) => {
         localStorage.setItem('cart', JSON.stringify(updatedItems));
         Cookies.set('cart', JSON.stringify(updatedItems), { expires: 7 });
         
-        debouncedSendCartToServer(3, id)
+        // Se o usuário estiver logado, atualizar diretamente no servidor em vez de usar debounce
+        if (isLoggedIn) {
+            const item = updatedItems.find(item => (item.id === id || item.productId === id));
+            if (item) {
+                updateQuantityOnServer(id, newQty);
+            }
+        } else {
+            debouncedSendCartToServer(3, id);
+        }
+    }
+
+    // Nova função para atualizar a quantidade diretamente no servidor
+    const updateQuantityOnServer = async (productId, quantity) => {
+        // Verificar se o usuário está autenticado
+        if (!isAuthenticated()) {
+            console.log("Usuário não autenticado, não atualizando quantidade no servidor");
+            return;
+        }
+        
+        try {
+            console.log(`Enviando atualização de quantidade para o servidor: Produto ${productId}, Quantidade ${quantity}`);
+            
+            // Evitar atualizações durante sincronização
+            if (syncInProgress) {
+                console.log("Processo de sincronização em andamento, adiando atualização");
+                setTimeout(() => updateQuantityOnServer(productId, quantity), 1000);
+                return;
+            }
+            
+            // Usar a função cartUpdate existente que já implementa toda a lógica necessária
+            // incluindo o gerenciamento de tokens, tratamento de erros, etc.
+            const itemData = { 
+                item: { 
+                    productId, 
+                    quantity 
+                } 
+            };
+            
+            console.log(`Chamando cartUpdate com: ${JSON.stringify(itemData)}`);
+            
+            const response = await cartUpdate(itemData, productId);
+            
+            console.log("Resposta da atualização de quantidade:", response);
+            
+            // Verificar se a atualização foi bem-sucedida
+            if (response && (response.status >= 200 && response.status < 300)) {
+                console.log(`Quantidade do produto ${productId} atualizada para ${quantity} com sucesso`);
+                return true;
+            } else {
+                console.error(`Erro ao atualizar quantidade: ${response?.status || 'Desconhecido'}`);
+                return false;
+            }
+        } catch (error) {
+            console.error('Erro ao atualizar quantidade no servidor:', error);
+            
+            // Tentar novamente se for um erro temporário (429, 500, etc.)
+            if (error.response && (error.response.status >= 429 || error.response.status >= 500)) {
+                console.log("Erro temporário, tentando novamente em 2 segundos...");
+                setTimeout(() => updateQuantityOnServer(productId, quantity), 2000);
+            }
+            return false;
+        }
     }
 
     // Função para carregar o carrinho do servidor
     const loadServerCart = async () => {
         try {
+            setSyncInProgress(true);
             const cart = await getCart();
             
             if (cart && cart.data) {
                 
-                // Verificar se cart.data.cart_data existe e tem itens
+                // Verificar se cart.data.items existe e tem itens
                 if (cart.data.items && Array.isArray(cart.data.items) && cart.data.items.length > 0) {
                     const cartdata = cart.data;
                     
                     try {
-                        // Extrair os IDs dos produtos para buscar detalhes completos
-                        const productIds = cartdata.items.map(item => item.productId);
-
+                        // Log para debug - mostrar os itens recebidos do servidor
+                        console.log('Itens recebidos do servidor:', JSON.stringify(cartdata.items));
+                        
+                        // Verificar se há itens duplicados no carrinho do servidor
+                        const itemsGrouped: { [key: string]: { productId: number | string, quantity: number } } = {};
+                        let hasDuplicates = false;
+                        
+                        cartdata.items.forEach(item => {
+                            const key = item.productId.toString();
+                            if (itemsGrouped[key]) {
+                                hasDuplicates = true;
+                                itemsGrouped[key].quantity += item.quantity;
+                            } else {
+                                itemsGrouped[key] = {
+                                    productId: item.productId,
+                                    quantity: item.quantity
+                                };
+                            }
+                        });
+                        
+                        // Log para debug
+                        if (hasDuplicates) {
+                            console.log('Detectados itens duplicados no carrinho do servidor. Items consolidados:', JSON.stringify(Object.values(itemsGrouped)));
+                        }
+                        
+                        // Usar os itens já consolidados em vez de fazer isso novamente depois
+                        const productIds = Object.keys(itemsGrouped).map(key => parseInt(key));
+                        
                         if (productIds.length === 0) {
+                            setSyncInProgress(false);
                             return false;
                         }
                         
@@ -182,9 +277,9 @@ export const CartProvider = ({ children }) => {
                                 return product;
                             });
                             
-                            
-                            // Converter os itens do carrinho para o formato antigo para manter compatibilidade
-                            const convertedCartData = cartdata.items.map(item => {
+                            // Converter para array no formato esperado pelo componente
+                            // Usamos os itens já consolidados do itemsGrouped
+                            const convertedCartData = Object.values(itemsGrouped).map(item => {
                                 // Encontrar o produto correspondente
                                 const product = processedProducts.find(p => p.id == item.productId);
                                 
@@ -198,18 +293,56 @@ export const CartProvider = ({ children }) => {
                             setCartItems(processedProducts);
                             setCartData(convertedCartData);
                             localStorage.setItem('cart', JSON.stringify(convertedCartData));
+                            
+                            // Se houve duplicados no carrinho do servidor, considere remover e reenviar os itens
+                            // para limpar as duplicações no servidor
+                            if (hasDuplicates && isLoggedIn) {
+                                console.log('Consolidando itens duplicados no carrinho do servidor...');
+                                
+                                try {
+                                    // Limpar itens do carrinho no servidor
+                                    await removeItems();
+                                    
+                                    // Aguardar um tempo para garantir que o servidor processou a remoção
+                                    await new Promise(resolve => setTimeout(resolve, 1000));
+                                    
+                                    // Restaurar os itens no estado para que não sejam perdidos após a limpeza
+                                    setCartItems(processedProducts);
+                                    setCartData(convertedCartData);
+                                    
+                                    // Reenviar os itens consolidados
+                                    const consolidatedItems = Object.values(itemsGrouped);
+                                    
+                                    for (const item of consolidatedItems) {
+                                        try {
+                                            const response = await addToCartServer(item);
+                                            console.log('Item consolidado enviado ao servidor:', response);
+                                        } catch (error) {
+                                            console.error('Erro ao consolidar item no servidor:', error);
+                                        }
+                                    }
+                                } catch (error) {
+                                    console.error('Erro ao consolidar carrinho no servidor:', error);
+                                }
+                            }
+                            
+                            setSyncInProgress(false);
                             return true;
                         } else {
+                            setSyncInProgress(false);
                             return false;
                         }
                     } catch (error) {
                         console.error('Erro ao processar produtos do carrinho:', error);
+                        setSyncInProgress(false);
                     }
                 }
             }
+            setSyncInProgress(false);
             return false;
         } catch (error) {
             console.error('Erro ao buscar dados do carrinho:', error);
+            setSyncInProgress(false);
             return false;
         }
     };
@@ -217,6 +350,7 @@ export const CartProvider = ({ children }) => {
     // Função para carregar o carrinho local
     const loadLocalCart = async () => {
         try {
+            setSyncInProgress(true);
             let data;
             const storedData = localStorage.getItem('cart');
             if (storedData) {
@@ -224,6 +358,7 @@ export const CartProvider = ({ children }) => {
                     data = JSON.parse(storedData);
                 } catch (e) {
                     localStorage.removeItem('cart');
+                    setSyncInProgress(false);
                     return false;
                 }
             } else {
@@ -233,6 +368,7 @@ export const CartProvider = ({ children }) => {
                         data = JSON.parse(cookieData);
                     } catch (e) {
                         Cookies.remove('cart');
+                        setSyncInProgress(false);
                         return false;
                     }
                 }
@@ -261,15 +397,19 @@ export const CartProvider = ({ children }) => {
                         
                         setCartData(validCartData);
                         setCartItems(processedProducts);
+                        setSyncInProgress(false);
                         return true;
                     }
                 } catch (error) {
                     console.error('Erro ao buscar produtos do carrinho:', error);
+                    setSyncInProgress(false);
                 }
             }
+            setSyncInProgress(false);
             return false;
         } catch (error) {
             console.error('Erro ao processar dados do carrinho:', error);
+            setSyncInProgress(false);
             return false;
         }
     };
@@ -280,19 +420,73 @@ export const CartProvider = ({ children }) => {
             
             // Se o usuário acabou de fazer login
             if (isLoggedIn && !previousLoginState) {
+                // Quando o usuário acabou de fazer login, devemos sincronizar o carrinho local com o servidor
+                console.log('Usuário acabou de fazer login. Sincronizando carrinhos...');
                 
-                const serverCartLoaded = await loadServerCart();
-                
-                if (!serverCartLoaded) {
-                    const hasLocalCart = await loadLocalCart();
+                try {
+                    // Primeiro tentamos carregar o carrinho do servidor
+                    const serverCartLoaded = await loadServerCart();
                     
-                    if (hasLocalCart && cartData.length > 0) {
-                        await sendCartLocalServer();
+                    // Verifica se há itens no carrinho local
+                    const storedData = localStorage.getItem('cart');
+                    const hasLocalItems = storedData && JSON.parse(storedData).length > 0;
+                    
+                    // Se há itens no carrinho local, enviamos para o servidor
+                    if (hasLocalItems) {
+                        console.log('Enviando itens do carrinho local para o servidor após login...');
+                        
+                        // Se há itens no carrinho do servidor, limpar o carrinho do servidor antes
+                        // para evitar duplicidades quando enviarmos o carrinho local
+                        if (serverCartLoaded && cartItems.length > 0) {
+                            console.log('Limpando carrinho do servidor antes de enviar itens locais...');
+                            
+                            // Primeiro salvar os itens locais em variáveis temporárias
+                            const localCartItems = [...cartItems];
+                            const localCartData = [...cartData];
+                            
+                            // Limpar o carrinho do servidor
+                            try {
+                                const headers = {
+                                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                                };
+                                await axios.delete(`${process.env.NEXT_PUBLIC_BACKEND_URL}/cart`, { headers });
+                                
+                                // Restaurar os itens locais depois de limpar o servidor
+                                setCartItems(localCartItems);
+                                setCartData(localCartData);
+                                
+                                // Aguardar um pouco para garantir que o servidor processou a limpeza
+                                await new Promise(resolve => setTimeout(resolve, 1000));
+                                
+                                // Agora enviar o carrinho local para o servidor
+                                await sendCartLocalServer();
+                            } catch (error) {
+                                console.error('Erro ao limpar carrinho no servidor:', error);
+                            }
+                        } else {
+                            // Se o servidor não tem itens ou não conseguimos carregar, enviamos o carrinho local diretamente
+                            await loadLocalCart(); // Certifique-se de que o local está carregado
+                            await sendCartLocalServer();
+                        }
+                    } else if (serverCartLoaded) {
+                        // Se não há itens locais mas há no servidor, mantenha os do servidor
+                        console.log('Mantendo itens do carrinho do servidor após login...');
+                    } else {
+                        // Nem servidor nem local têm itens
+                        console.log('Nenhum item no carrinho local ou do servidor após login...');
+                        await loadLocalCart();
                     }
+                } catch (error) {
+                    console.error('Erro ao sincronizar carrinho após login:', error);
+                    // Tentar pelo menos carregar o que tiver localmente
+                    await loadLocalCart();
                 }
+                
             } else if (isLoggedIn) {
+                // Usuário já estava logado, apenas carregar do servidor
                 await loadServerCart();
             } else {
+                // Usuário não está logado, carregar do local
                 await loadLocalCart();
             }
             
@@ -302,10 +496,6 @@ export const CartProvider = ({ children }) => {
         
         syncCart();
     }, [isLoggedIn]);
-
-    useEffect(() => {
-        sendCartLocalServer();
-    }, [cartData]);
 
     const debouncedSendCartToServer = (option, id) => {
         if (timeoutRef.current) {
@@ -318,26 +508,64 @@ export const CartProvider = ({ children }) => {
     };
 
     const sendCartLocalServer = () => {
-        const dataItems = cartItems.map(item => {
-            const produto = cartData.find(p => (p.productId || p.id) === item.id);
-            return {
-                id: item.id,
-                price: item.pro_precovenda,
-                quantity: produto.quantity,
-            };
-        });
-        addToCartServer({ dataItems })
-        .then(response => {
-            console.log('Resposta da atualização do carrinho:', response);
-        })
-        .catch(error => {
-            console.error('Erro ao atualizar carrinho no servidor:', error);
-        });
+        // Não enviar dados ao servidor se estiver em processo de sincronização ou não estiver logado
+        if (syncInProgress || !isLoggedIn || cartItems.length === 0 || cartData.length === 0) {
+            return;
+        }
 
+        console.log('Enviando carrinho local para o servidor...');
+
+        // Primeiro, remover itens duplicados do carrinho local
+        const uniqueCartItems: { [key: string]: { productId: number | string, quantity: number } } = {};
+        
+        cartData.forEach(item => {
+            const produto = cartItems.find(p => p.id === (item.productId || item.id));
+            if (!produto) return;
+            
+            const productId = produto.id.toString();
+            
+            if (!uniqueCartItems[productId]) {
+                uniqueCartItems[productId] = {
+                    productId: produto.id,
+                    quantity: item.quantity || item.qty || 1
+                };
+            } else {
+                // Se já existe um item com este productId, atualizar com a maior quantidade
+                uniqueCartItems[productId].quantity = Math.max(
+                    uniqueCartItems[productId].quantity,
+                    item.quantity || item.qty || 1
+                );
+            }
+        });
+        
+        const items = Object.values(uniqueCartItems);
+
+        if (items.length === 0) {
+            return;
+        }
+
+        // Enviar cada item individualmente para o endpoint correto
+        const promises = items.map(cartItem => {
+            return addToCartServer(cartItem)
+            .then(response => {
+                console.log('Resposta da atualização do carrinho:', response);
+                return response;
+            })
+            .catch(error => {
+                console.error('Erro ao atualizar carrinho no servidor:', error);
+                throw error;
+            });
+        });
+        
+        // Aguardar todas as operações terminarem
+        Promise.all(promises)
+            .then(() => console.log('Todos os itens do carrinho foram enviados para o servidor com sucesso'))
+            .catch(err => console.error('Erro ao enviar alguns itens para o servidor:', err));
     }
 
     const sendCartToServer = (option, id) => {
-        
+        // Não enviar dados ao servidor se estiver em processo de sincronização
+        if (syncInProgress) return;
 
         if (cartData.length > 0) {
             localStorage.setItem('cart', JSON.stringify(cartData));
@@ -382,35 +610,45 @@ export const CartProvider = ({ children }) => {
 
             switch (option) {
                 case 1:
-                    addToCartServer({ convertedCartData }, id)
-                    .then(response => {
-                        console.log('Resposta da atualização do carrinho:', response);
-                    })
-                    .catch(error => {
-                        console.error('Erro ao atualizar carrinho no servidor:', error);
-                    });
+                    // Enviar produto individual para a API
+                    const productToAdd = convertedCartData.find(item => item.productId == id);
+                    if (productToAdd) {
+                        addToCartServer(productToAdd)
+                        .then(response => {
+                            console.log('Resposta da adição ao carrinho:', response);
+                        })
+                        .catch(error => {
+                            console.error('Erro ao adicionar ao carrinho no servidor:', error);
+                        });
+                    }
                     break;
                 case 2:
                     removeFromCartServer(id)
                     .then(response => {
-                        console.log('Resposta da atualização do carrinho:', response);
+                        console.log('Resposta da remoção do carrinho:', response);
                     })
                     .catch(error => {
-                        console.error('Erro ao atualizar carrinho no servidor:', error);
+                        console.error('Erro ao remover do carrinho no servidor:', error);
                     });
                     break;
                 case 3:
-                    cartUpdate({ convertedCartData }, id)
-                    .then(response => {
-                        console.log('Resposta da atualização do carrinho:', response);
-                    })
-                    .catch(error => {
-                        console.error('Erro ao atualizar carrinho no servidor:', error);
-                    });
+                    // Este caso não é mais necessário para atualizações de quantidade,
+                    // pois agora estamos usando updateQuantityOnServer diretamente
+                    // Mantemos apenas para compatibilidade com código existente
+                    if (!isLoggedIn) {
+                        const productToUpdate = convertedCartData.find(item => item.productId == id);
+                        if (productToUpdate) {
+                            cartUpdate({ item: productToUpdate }, id)
+                            .then(response => {
+                                console.log('Resposta da atualização de quantidade (método antigo):', response);
+                            })
+                            .catch(error => {
+                                console.error('Erro ao atualizar quantidade no servidor:', error);
+                            });
+                        }
+                    }
                     break;
             }
-                
-            
         }
     };
 
