@@ -105,15 +105,10 @@ export default function LoginPage() {
     const submit = async (e: any) => {
         e.preventDefault();
         setIsLoading(true);
-<<<<<<< HEAD
         const response = await login(formData.email, formData.password)
         if(response.status == 200) {
             setUserFn(response.data.user);
             setCookie('jwt', response.data.access_token);
-=======
-        try {
-            const response = await login(formData.email, formData.password);
->>>>>>> d8c94ef1bc49d58313fb674d62c0f69919165e6c
             
             // Verificar se a resposta contém o token de acesso
             if (response && response.access_token) {
@@ -132,15 +127,6 @@ export default function LoginPage() {
             } else {
                 setIsLoading(false);
                 setTextError('Email ou senha incorretos');
-            }
-        } catch (error: any) {
-            setIsLoading(false);
-            if (error.code === 'ERR_NETWORK') {
-                setTextError('Erro de conexão com o servidor.\nPor favor, tente novamente mais tarde');
-            } else if (error.code === 'ERR_BAD_REQUEST') {
-                setTextError('Email ou senha incorretos');
-            } else {
-                setTextError('Ocorreu um erro ao tentar fazer login');
             }
         }
     }

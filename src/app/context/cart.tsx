@@ -1,7 +1,7 @@
 "use client"
 import { createContext, useContext, useState, useEffect, useRef } from 'react';
 import Cookies from 'js-cookie';
-import { getProdsArr, cartUpdate, getCart } from '../services/produto/page';
+import { getProdsArr, cartUpdate, getCart, addToCartServer, removeFromCartServer } from '../services/produto/page';
 import { CartContextType, CartItemDto, CartDataDto } from '../interfaces/interfaces';
 import { useAuth } from './auth';
 
@@ -58,30 +58,33 @@ export const CartProvider = ({ children }) => {
             return false;
         }
 
+        console.log(product)
+
         // Adicionar o produto ao carrinho
         setCartData((prevItems) => {
             if (!Array.isArray(prevItems)) {
                 return [{
                     productId: productId,
                     quantity: 1,
+                    id: productId
                 }];
             }
             return [...prevItems, {
                 productId: productId,
                 quantity: 1,
-                idCart: prevItems.length + 1
+                id: productId
             }];
         });
         
         setCartItems((prevItems) => [...prevItems, product]);
         
         // Enviar o carrinho para o servidor
-        debouncedSendCartToServer();
+        debouncedSendCartToServer(1, productId);
         
         return true;
     };
 
-    const removeFromCart = (id, idCor) => {
+    const removeFromCart = (id) => {
         const updatedCartData = cartData.filter(
             item => !((item.id === id || item.productId === id))
         );
@@ -94,7 +97,7 @@ export const CartProvider = ({ children }) => {
             setCartItems(cartItems.filter(item => !(item.id === id || item.id === id)));
         }
     
-        debouncedSendCartToServer();
+        debouncedSendCartToServer(2, id);
     
         return true;
     };
@@ -108,7 +111,7 @@ export const CartProvider = ({ children }) => {
         const updatedItems = cartData.map((item) => {
             if (item.id === id || item.productId === id) {
                 if (item.id !== undefined) {
-                    return { ...item, qty: newQty };
+                    return { ...item, quantity: newQty };
                 }
                 // Se o item tem o formato novo (produto_id, quantity)
                 else if (item.productId !== undefined) {
@@ -118,6 +121,7 @@ export const CartProvider = ({ children }) => {
             return item;
         });
         setCartData(updatedItems);
+        debouncedSendCartToServer(3, id)
     }
 
     // Função para carregar o carrinho do servidor
@@ -128,12 +132,12 @@ export const CartProvider = ({ children }) => {
             if (cart && cart.data) {
                 
                 // Verificar se cart.data.cart_data existe e tem itens
-                if (cart.data.cart_data && Array.isArray(cart.data.cart_data) && cart.data.cart_data.length > 0) {
-                    const cartdata = cart.data as CartDataDto;
+                if (cart.data.items && Array.isArray(cart.data.items) && cart.data.items.length > 0) {
+                    const cartdata = cart.data;
                     
                     try {
                         // Extrair os IDs dos produtos para buscar detalhes completos
-                        const productIds = cartdata.cart_data.map(item => item.productId);
+                        const productIds = cartdata.items.map(item => item.productId);
 
                         if (productIds.length === 0) {
                             return false;
@@ -151,13 +155,13 @@ export const CartProvider = ({ children }) => {
                             
                             
                             // Converter os itens do carrinho para o formato antigo para manter compatibilidade
-                            const convertedCartData = cartdata.cart_data.map(item => {
+                            const convertedCartData = cartdata.items.map(item => {
                                 // Encontrar o produto correspondente
-                                const product = processedProducts.find(p => p.id == item.productId || p.id == item.productId);
+                                const product = processedProducts.find(p => p.id == item.productId);
                                 
                                 return {
                                     id: product ? product.id : item.productId, // Usar o ID do produto, não o pro_codigo
-                                    qty: item.quantity,
+                                    quantity: item.quantity,
                                     // Não usamos mais o preço do carrinho, apenas a quantidade
                                 };
                             });
@@ -254,7 +258,7 @@ export const CartProvider = ({ children }) => {
                     const hasLocalCart = await loadLocalCart();
                     
                     if (hasLocalCart && cartData.length > 0) {
-                        await sendCartToServer();
+                        await sendCartLocalServer();
                     }
                 }
             } else if (isLoggedIn) {
@@ -270,18 +274,42 @@ export const CartProvider = ({ children }) => {
         syncCart();
     }, [isLoggedIn]);
 
-    const debouncedSendCartToServer = () => {
+    useEffect(() => {
+        sendCartLocalServer();
+    }, [cartData]);
+
+    const debouncedSendCartToServer = (option, id) => {
         if (timeoutRef.current) {
             clearTimeout(timeoutRef.current);
         }
     
         timeoutRef.current = setTimeout(() => {
-            sendCartToServer();
+            sendCartToServer(option, id);
         }, 1000);
     };
 
-    const sendCartToServer = () => {
+    const sendCartLocalServer = () => {
+        const dataItems = cartItems.map(item => {
+            const produto = cartData.find(p => (p.productId || p.id) === item.id);
+            return {
+                id: item.id,
+                price: item.pro_precovenda,
+                quantity: produto.quantity,
+            };
+        });
+        addToCartServer({ dataItems })
+        .then(response => {
+            console.log('Resposta da atualização do carrinho:', response);
+        })
+        .catch(error => {
+            console.error('Erro ao atualizar carrinho no servidor:', error);
+        });
+
+    }
+
+    const sendCartToServer = (option, id) => {
         
+
         if (cartData.length > 0) {
             localStorage.setItem('cart', JSON.stringify(cartData));
             Cookies.set('cart', JSON.stringify(cartData), { expires: 7 });
@@ -322,22 +350,45 @@ export const CartProvider = ({ children }) => {
                     price: getProductPrice(item)
                 };
             });
+
+            switch (option) {
+                case 1:
+                    addToCartServer({ convertedCartData }, id)
+                    .then(response => {
+                        console.log('Resposta da atualização do carrinho:', response);
+                    })
+                    .catch(error => {
+                        console.error('Erro ao atualizar carrinho no servidor:', error);
+                    });
+                    break;
+                case 2:
+                    removeFromCartServer(id)
+                    .then(response => {
+                        console.log('Resposta da atualização do carrinho:', response);
+                    })
+                    .catch(error => {
+                        console.error('Erro ao atualizar carrinho no servidor:', error);
+                    });
+                    break;
+                case 3:
+                    cartUpdate({ convertedCartData }, id)
+                    .then(response => {
+                        console.log('Resposta da atualização do carrinho:', response);
+                    })
+                    .catch(error => {
+                        console.error('Erro ao atualizar carrinho no servidor:', error);
+                    });
+                    break;
+            }
+                
             
-            
-            cartUpdate({ cart_data: convertedCartData })
-                .then(response => {
-                    console.log('Resposta da atualização do carrinho:', response);
-                })
-                .catch(error => {
-                    console.error('Erro ao atualizar carrinho no servidor:', error);
-                });
         }
     };
 
     // Função auxiliar para obter o preço do produto correspondente ao item do carrinho
     const getProductPrice = (item) => {
         const itemId = item.id || item.productId;
-        const product = cartItems.find(p => p && (p.id == itemId || p.id == itemId));
+        const product = cartItems.find(p => p && p.id == itemId);
         
         if (product && product.price) {
             return product.price;
@@ -346,9 +397,6 @@ export const CartProvider = ({ children }) => {
         return 0;
     };
 
-    useEffect(() => {
-        debouncedSendCartToServer();
-    }, [cartData]);
 
     // Carrega o carrinho inicial
     useEffect(() => {
@@ -360,9 +408,6 @@ export const CartProvider = ({ children }) => {
                 if (!serverCartLoaded || cartItems.length === 0) {
                     const localCartLoaded = await loadLocalCart();
                     
-                    if (localCartLoaded && cartItems.length > 0) {
-                        await sendCartToServer();
-                    }
                 }
             } else {
                 await loadLocalCart();

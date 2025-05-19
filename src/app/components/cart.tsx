@@ -37,7 +37,7 @@ export default function Cart({ cartOpened, onCartToggle }) {
     const handleInc = (i, id) => {
         const d = cartData.find(item => item.id == id);
         if (d) {
-            const currentQty = d.qty || d.quantity;
+            const currentQty = d.quantity;
             if (currentQty < max)
                 changeQtyItem(id, currentQty + 1);
         }
@@ -46,7 +46,7 @@ export default function Cart({ cartOpened, onCartToggle }) {
     const handleDec = (i, id) => {
         const d = cartData.find(item => item.id == id);
         if (d) {
-            const currentQty = d.qty || d.quantity;
+            const currentQty = d.quantity;
             if (currentQty > min)
                 changeQtyItem(id, currentQty - 1);
         }
@@ -161,7 +161,7 @@ export default function Cart({ cartOpened, onCartToggle }) {
 
     // Verifica se os dados do carrinho estão sincronizados
     const isCartDataValid = () => {
-        
+        console.log(cartItems, cartData)
         if (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0) {
             return false;
         }
@@ -174,12 +174,12 @@ export default function Cart({ cartOpened, onCartToggle }) {
             if (!item) return false;
             
             const itemId = item.id || item.produto_id || item.productId;
-            
             const hasMatchingProduct = cartItems.some(product => {
                 if (!product) {
                     return false;
                 }
                 
+                console.log(itemId, product.id)
                 const match = product.id == itemId;
                 
                 return match;
@@ -203,8 +203,8 @@ export default function Cart({ cartOpened, onCartToggle }) {
         const quantity = item.quantity || item.qty || 1;
         
         // Sempre usar o preço de venda do produto
-        if (product.price && !isNaN(product.price)) {
-            return product.price * quantity;
+        if (product.pro_precovenda && !isNaN(Number(product.pro_precovenda))) {
+            return Number(product.pro_precovenda) * quantity;
         }
         
         return 0;
@@ -231,9 +231,16 @@ export default function Cart({ cartOpened, onCartToggle }) {
 
     // Função para obter a imagem do produto
     const getProductImage = (product) => {
-        // Verificar se o produto tem imagens
-        if (product.imagens && product.images.length > 0) {
+        if (product.imagens && product.imagens.length > 0) {
+            return product.imagens[0].url;
+        }
+
+        if (product.images && product.images.length > 0) {
             return product.images[0].url;
+        }
+
+        if (product.pro_imagem) {
+            return product.pro_imagem;
         }
         
         return HeadphoneImg;
@@ -244,7 +251,7 @@ export default function Cart({ cartOpened, onCartToggle }) {
         if (isNaN(price) || price === null || price === undefined) {
             return '0,00';
         }
-        return price.toFixed(2).replace('.', ',');
+        return price.toFixed(2).toString().replace('.', ',');
     };
 
     return (
@@ -264,7 +271,7 @@ export default function Cart({ cartOpened, onCartToggle }) {
                         {cartData.map((item, index) => {
                             if (!item) return null;
                             
-                            const itemId = item.productId || item.produto_id || item.id;
+                            const itemId = item.productId || item.id;
                             
                             // Encontra o produto correspondente ao item do carrinho
                             const product = cartItems.find(r => r && (r.id == itemId));

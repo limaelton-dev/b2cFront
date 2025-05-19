@@ -190,7 +190,82 @@ export const getCart = async () => {
     }
 };
 
-export const cartUpdate = async (data) => {
+export const addCartToServer = async (data) => {
+
+    if (!isAuthenticated()) {
+        console.log('Usuário não autenticado, não enviando atualização do carrinho para o servidor');
+        return { status: 200, data: data };
+    }
+
+    try {
+        console.log('\n\n\nEnviando dados para o servidor:', JSON.stringify(data));
+        const response = await axios.post(`${API_URL}/cart/items/addLocal`, data, {
+            headers: getAuthHeader()
+        });
+        return response;
+    }
+    catch (err) {
+        console.error('Erro ao adicionar ao carrinho local:', err);
+        // Em caso de erro de autenticação (401) ou não encontrado (404), retornamos um objeto simulando sucesso
+        if (err.response && (err.response.status === 401 || err.response.status === 404)) {
+            console.log('Erro de autenticação ou carrinho não encontrado, simulando sucesso');
+            return { status: 200, data: data };
+        }
+        return err;
+    }
+};
+
+export const addToCartServer = async (data,productId) => {
+
+    if (!isAuthenticated()) {
+        console.log('Usuário não autenticado, não enviando atualização do carrinho para o servidor');
+        return { status: 200, data: data };
+    }
+
+    try {
+        console.log('\n\n\nEnviando dados para o servidor:', JSON.stringify(data));
+        const response = await axios.post(`${API_URL}/cart/items/product/${productId}`, data, {
+            headers: getAuthHeader()
+        });
+        return response;
+    }
+    catch (err) {
+        console.error('Erro ao adicionar ao carrinho:', err);
+        // Em caso de erro de autenticação (401) ou não encontrado (404), retornamos um objeto simulando sucesso
+        if (err.response && (err.response.status === 401 || err.response.status === 404)) {
+            console.log('Erro de autenticação ou carrinho não encontrado, simulando sucesso');
+            return { status: 200, data: data };
+        }
+        return err;
+    }
+};
+
+export const removeFromCartServer = async (productId) => {
+
+    if (!isAuthenticated()) {
+        console.log('Usuário não autenticado, não enviando atualização do carrinho para o servidor');
+        return { status: 200, data: data };
+    }
+
+    try {
+        console.log('\n\n\nEnviando dados para o servidor');
+        const response = await axios.delete(`${API_URL}/cart/items/${productId}`, {
+            headers: getAuthHeader()
+        });
+        return response;
+    }
+    catch (err) {
+        console.error('Erro ao remover do carrinho:', err);
+        // Em caso de erro de autenticação (401) ou não encontrado (404), retornamos um objeto simulando sucesso
+        if (err.response && (err.response.status === 401 || err.response.status === 404)) {
+            console.log('Erro de autenticação ou carrinho não encontrado, simulando sucesso');
+            return { status: 200, data: data };
+        }
+        return err;
+    }
+};
+
+export const cartUpdate = async (data,productId) => {
     // Se o usuário não estiver autenticado, não enviamos a atualização para o servidor
     // e retornamos um objeto simulando sucesso para que o frontend continue funcionando
     if (!isAuthenticated()) {
@@ -200,7 +275,7 @@ export const cartUpdate = async (data) => {
 
     try {
         console.log('\n\n\nEnviando dados para o servidor:', JSON.stringify(data));
-        const response = await axios.put(`${API_URL}/cart`, data, {
+        const response = await axios.put(`${API_URL}/cart/items/product/${productId}`, data, {
             headers: getAuthHeader()
         });
         return response;
