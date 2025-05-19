@@ -29,6 +29,9 @@ import { addAddress, addCard, updateProfile } from '../minhaconta/services/userA
 import { saveToken } from '../utils/auth';
 import { useCookies } from 'react-cookie';
 import HomeIcon from '@mui/icons-material/Home';
+import CartIcon from '@mui/icons-material/ShoppingCartOutlined';
+import Drawer from '@mui/material/Drawer';
+import ClientOnly from '../components/ClientOnly';
 
 async function buscaTipoPessoa() {
     try {
@@ -1040,13 +1043,22 @@ const CheckoutPage = () => {
 
     return (
         <>
-            <Cart cartOpened={openedCart} onCartToggle={setOpenedCart}/>
+            <ClientOnly>
+                <Cart cartOpened={openedCart} onCartToggle={setOpenedCart}/>
+            </ClientOnly>
             <header>
                 <div className="container">
                     <div className="d-flex justify-content-between">
                         <Image
                             src={LogoColetek}
                             alt="Logo Coletek"
+                            unoptimized={true}
+                            width={150}
+                            height={50}
+                            style={{
+                                maxWidth: '100%',
+                                height: 'auto'
+                            }}
                         />
                         <div className="secure-buy d-flex align-items-center">
                             <LockOutlinedIcon style={{color: 'black', fontSize: '35px'}}/>
@@ -1094,9 +1106,14 @@ const CheckoutPage = () => {
                                     <Image
                                         src={product.imagens && product.imagens[0] ? product.imagens[0].url : HeadphoneImg}
                                         alt={product.pro_descricao || "Produto"}
-                                        layout="responsive"
                                         width={200}
                                         height={200}
+                                        unoptimized={true}
+                                        style={{
+                                            width: '100%',
+                                            height: 'auto',
+                                            objectFit: 'contain'
+                                        }}
                                     />
                                     <div className="info-prod">
                                         <span className='title-prod'>{product.pro_descricao}</span>

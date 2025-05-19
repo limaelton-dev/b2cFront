@@ -26,6 +26,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <meta name="msapplication-navbutton-color" content="#fff" />
               <meta name="apple-mobile-web-app-capable" content="yes" />
               <meta name="apple-mobile-web-app-status-bar-style" content="#fff" />
+              <script
+                dangerouslySetInnerHTML={{
+                  __html: `
+                    // Este script evita erros de hidratação por diferenças de tempo
+                    window.__NEXT_HYDRATION_MARK = Date.now();
+                  `,
+                }}
+              />
           </head>
           <body id="myBody">
               <ToastSideProvider>

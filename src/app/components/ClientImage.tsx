@@ -5,24 +5,46 @@ import Image from 'next/image';
 
 export default function ClientImage(props) {
   const [hasMounted, setHasMounted] = useState(false);
-
+  
   useEffect(() => {
     setHasMounted(true);
   }, []);
 
-  // Se ainda não montou no cliente, renderiza um espaço reservado
-  if (!hasMounted) {
-    return (
-      <div 
-        style={{ 
-          width: props.width || '100%', 
-          height: props.height || '100%',
-          backgroundColor: '#f0f0f0'
-        }}
-      />
-    );
+  // Extrair propriedades específicas do Next.js Image
+  const { width, height, style, src, alt, priority, ...otherProps } = props;
+  
+  // Remova o prop layout se existir
+  const safeProps = { ...otherProps };
+  if ('layout' in safeProps) {
+    delete safeProps.layout;
   }
 
-  // Após a montagem do componente no cliente, renderiza a imagem
-  return <Image {...props} unoptimized={true} />;
+  // Sempre renderiza a Image com unoptimized=true
+  // Isso garante o mesmo output no servidor e no cliente
+  return (
+    <div style={{ 
+      position: 'relative',
+      width: width || '100%', 
+      height: height || 'auto',
+      overflow: 'hidden',
+      ...style
+    }}>
+      <Image
+        src={src}
+        alt={alt || "Imagem"}
+        fill={!width || !height}
+        width={width}
+        height={height}
+        unoptimized={true}
+        priority={priority || false}
+        loading={priority ? "eager" : "lazy"}
+        style={{ 
+          objectFit: 'contain',
+          opacity: hasMounted ? 1 : 0,
+          transition: 'opacity 0.2s'
+        }}
+        {...safeProps}
+      />
+    </div>
+  );
 } 

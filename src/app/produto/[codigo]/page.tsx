@@ -423,10 +423,14 @@ const ProductPage = () => {
                             <Image
                                 src={selectedImg}
                                 alt="Headphone"
-                                layout="responsive"
                                 width={400}
                                 height={400}
                                 unoptimized={true}
+                                style={{
+                                    width: '100%',
+                                    height: 'auto',
+                                    objectFit: 'contain'
+                                }}
                             />
                         </div>
                         <div className="carrousel mt-4">
@@ -436,10 +440,14 @@ const ProductPage = () => {
                                         key={p.id}
                                         src={p.url}
                                         alt="Headphone"
-                                        layout="responsive"
                                         width={150}
                                         height={150}
                                         unoptimized={true}
+                                        style={{
+                                            width: '100%',
+                                            height: 'auto',
+                                            objectFit: 'contain'
+                                        }}
                                         onClick={() => changePicture(p.id)}
                                     />
                                 </div>
@@ -589,8 +597,12 @@ const ProductPage = () => {
                         height={500}
                         src={BannerProd}
                         alt="Banner"
-                        layout="responsive"
                         unoptimized={true}
+                        style={{
+                            width: '100%',
+                            height: 'auto',
+                            objectFit: 'cover'
+                        }}
                     />
                 </div>
             </section> */}
@@ -680,56 +692,98 @@ const ProductPage = () => {
                                             <Image
                                                 src={HeadphoneImg}
                                                 alt="Headphone"
-                                                layout="responsive"
                                                 unoptimized={true}
+                                                width={100}
+                                                height={100}
+                                                style={{
+                                                    width: '100%',
+                                                    height: 'auto',
+                                                    objectFit: 'contain'
+                                                }}
                                             />
                                         </div>
                                         <div className="midia">
                                             <Image
                                                 src={HeadphoneImg}
                                                 alt="Headphone"
-                                                layout="responsive"
                                                 unoptimized={true}
+                                                width={100}
+                                                height={100}
+                                                style={{
+                                                    width: '100%',
+                                                    height: 'auto',
+                                                    objectFit: 'contain'
+                                                }}
                                             />
                                         </div>
                                         <div className="midia">
                                             <Image
                                                 src={HeadphoneImg}
                                                 alt="Headphone"
-                                                layout="responsive"
                                                 unoptimized={true}
+                                                width={100}
+                                                height={100}
+                                                style={{
+                                                    width: '100%',
+                                                    height: 'auto',
+                                                    objectFit: 'contain'
+                                                }}
                                             />
                                         </div>
                                         <div className="midia">
                                             <Image
                                                 src={HeadphoneImg}
                                                 alt="Headphone"
-                                                layout="responsive"
                                                 unoptimized={true}
+                                                width={100}
+                                                height={100}
+                                                style={{
+                                                    width: '100%',
+                                                    height: 'auto',
+                                                    objectFit: 'contain'
+                                                }}
                                             />
                                         </div>
                                         <div className="midia">
                                             <Image
                                                 src={HeadphoneImg}
                                                 alt="Headphone"
-                                                layout="responsive"
                                                 unoptimized={true}
+                                                width={100}
+                                                height={100}
+                                                style={{
+                                                    width: '100%',
+                                                    height: 'auto',
+                                                    objectFit: 'contain'
+                                                }}
                                             />
                                         </div>
                                         <div className="midia">
                                             <Image
                                                 src={HeadphoneImg}
                                                 alt="Headphone"
-                                                layout="responsive"
                                                 unoptimized={true}
+                                                width={100}
+                                                height={100}
+                                                style={{
+                                                    width: '100%',
+                                                    height: 'auto',
+                                                    objectFit: 'contain'
+                                                }}
                                             />
                                         </div>
                                         <div className="midia">
                                             <Image
                                                 src={HeadphoneImg}
                                                 alt="Headphone"
-                                                layout="responsive"
                                                 unoptimized={true}
+                                                width={100}
+                                                height={100}
+                                                style={{
+                                                    width: '100%',
+                                                    height: 'auto',
+                                                    objectFit: 'contain'
+                                                }}
                                             />
                                         </div>
                                     </div>
@@ -776,56 +830,98 @@ const ProductPage = () => {
                                             <Image
                                                 src={HeadphoneImg}
                                                 alt="Headphone"
-                                                layout="responsive"
                                                 unoptimized={true}
+                                                width={100}
+                                                height={100}
+                                                style={{
+                                                    width: '100%',
+                                                    height: 'auto',
+                                                    objectFit: 'contain'
+                                                }}
                                             />
                                         </div>
                                         <div className="midia">
                                             <Image
                                                 src={HeadphoneImg}
                                                 alt="Headphone"
-                                                layout="responsive"
                                                 unoptimized={true}
+                                                width={100}
+                                                height={100}
+                                                style={{
+                                                    width: '100%',
+                                                    height: 'auto',
+                                                    objectFit: 'contain'
+                                                }}
                                             />
                                         </div>
                                         <div className="midia">
                                             <Image
                                                 src={HeadphoneImg}
                                                 alt="Headphone"
-                                                layout="responsive"
                                                 unoptimized={true}
+                                                width={100}
+                                                height={100}
+                                                style={{
+                                                    width: '100%',
+                                                    height: 'auto',
+                                                    objectFit: 'contain'
+                                                }}
                                             />
                                         </div>
                                         <div className="midia">
                                             <Image
                                                 src={HeadphoneImg}
                                                 alt="Headphone"
-                                                layout="responsive"
                                                 unoptimized={true}
+                                                width={100}
+                                                height={100}
+                                                style={{
+                                                    width: '100%',
+                                                    height: 'auto',
+                                                    objectFit: 'contain'
+                                                }}
                                             />
                                         </div>
                                         <div className="midia">
                                             <Image
                                                 src={HeadphoneImg}
                                                 alt="Headphone"
-                                                layout="responsive"
                                                 unoptimized={true}
+                                                width={100}
+                                                height={100}
+                                                style={{
+                                                    width: '100%',
+                                                    height: 'auto',
+                                                    objectFit: 'contain'
+                                                }}
                                             />
                                         </div>
                                         <div className="midia">
                                             <Image
                                                 src={HeadphoneImg}
                                                 alt="Headphone"
-                                                layout="responsive"
                                                 unoptimized={true}
+                                                width={100}
+                                                height={100}
+                                                style={{
+                                                    width: '100%',
+                                                    height: 'auto',
+                                                    objectFit: 'contain'
+                                                }}
                                             />
                                         </div>
                                         <div className="midia">
                                             <Image
                                                 src={HeadphoneImg}
                                                 alt="Headphone"
-                                                layout="responsive"
                                                 unoptimized={true}
+                                                width={100}
+                                                height={100}
+                                                style={{
+                                                    width: '100%',
+                                                    height: 'auto',
+                                                    objectFit: 'contain'
+                                                }}
                                             />
                                         </div>
                                     </div>
@@ -870,56 +966,98 @@ const ProductPage = () => {
                                             <Image
                                                 src={HeadphoneImg}
                                                 alt="Headphone"
-                                                layout="responsive"
                                                 unoptimized={true}
+                                                width={100}
+                                                height={100}
+                                                style={{
+                                                    width: '100%',
+                                                    height: 'auto',
+                                                    objectFit: 'contain'
+                                                }}
                                             />
                                         </div>
                                         <div className="midia">
                                             <Image
                                                 src={HeadphoneImg}
                                                 alt="Headphone"
-                                                layout="responsive"
                                                 unoptimized={true}
+                                                width={100}
+                                                height={100}
+                                                style={{
+                                                    width: '100%',
+                                                    height: 'auto',
+                                                    objectFit: 'contain'
+                                                }}
                                             />
                                         </div>
                                         <div className="midia">
                                             <Image
                                                 src={HeadphoneImg}
                                                 alt="Headphone"
-                                                layout="responsive"
                                                 unoptimized={true}
+                                                width={100}
+                                                height={100}
+                                                style={{
+                                                    width: '100%',
+                                                    height: 'auto',
+                                                    objectFit: 'contain'
+                                                }}
                                             />
                                         </div>
                                         <div className="midia">
                                             <Image
                                                 src={HeadphoneImg}
                                                 alt="Headphone"
-                                                layout="responsive"
                                                 unoptimized={true}
+                                                width={100}
+                                                height={100}
+                                                style={{
+                                                    width: '100%',
+                                                    height: 'auto',
+                                                    objectFit: 'contain'
+                                                }}
                                             />
                                         </div>
                                         <div className="midia">
                                             <Image
                                                 src={HeadphoneImg}
                                                 alt="Headphone"
-                                                layout="responsive"
                                                 unoptimized={true}
+                                                width={100}
+                                                height={100}
+                                                style={{
+                                                    width: '100%',
+                                                    height: 'auto',
+                                                    objectFit: 'contain'
+                                                }}
                                             />
                                         </div>
                                         <div className="midia">
                                             <Image
                                                 src={HeadphoneImg}
                                                 alt="Headphone"
-                                                layout="responsive"
                                                 unoptimized={true}
+                                                width={100}
+                                                height={100}
+                                                style={{
+                                                    width: '100%',
+                                                    height: 'auto',
+                                                    objectFit: 'contain'
+                                                }}
                                             />
                                         </div>
                                         <div className="midia">
                                             <Image
                                                 src={HeadphoneImg}
                                                 alt="Headphone"
-                                                layout="responsive"
                                                 unoptimized={true}
+                                                width={100}
+                                                height={100}
+                                                style={{
+                                                    width: '100%',
+                                                    height: 'auto',
+                                                    objectFit: 'contain'
+                                                }}
                                             />
                                         </div>
                                     </div>

@@ -16,6 +16,7 @@ import { getProdsLimit } from './services/produto/page';
 import { useCart } from './context/cart';
 import { useToastSide } from './context/toastSide';
 import Checkbox, { checkboxClasses } from '@mui/joy/Checkbox';
+import ClientOnly from './components/ClientOnly';
 
 const getProdutosPage = async (limit: number) => {
     try {
@@ -108,7 +109,12 @@ export default function HomePage() {
                             width={200}
                             height={200}
                             alt="Headphone"
-                            layout="responsive"
+                            unoptimized={true}
+                            style={{
+                                width: '100%',
+                                height: 'auto',
+                                objectFit: 'contain'
+                            }}
                     />
                 </a>
                 <div className="promo green">
@@ -179,8 +185,10 @@ export default function HomePage() {
 
     return (
         <>
-            <Cart cartOpened={openedCart} onCartToggle={setOpenedCart}/>
-            <Header cartOpened={openedCart} onCartToggle={setOpenedCart} />
+            <ClientOnly>
+                <Cart cartOpened={openedCart} onCartToggle={setOpenedCart}/>
+                <Header cartOpened={openedCart} onCartToggle={setOpenedCart} />
+            </ClientOnly>
             <main>
                 <section id="banner">
                     <Image
@@ -315,7 +323,14 @@ export default function HomePage() {
                                     <Image
                                         src={HeadphoneImg}
                                         alt="Headphone"
-                                        layout="responsive"
+                                        width={200}
+                                        height={200}
+                                        unoptimized={true}
+                                        style={{
+                                            width: '100%',
+                                            height: 'auto',
+                                            objectFit: 'contain'
+                                        }}
                                     />
                                 </div>
                                 <div className="title-collection">
@@ -327,7 +342,14 @@ export default function HomePage() {
                                     <Image
                                         src={HeadphoneImg}
                                         alt="Headphone"
-                                        layout="responsive"
+                                        width={200}
+                                        height={200}
+                                        unoptimized={true}
+                                        style={{
+                                            width: '100%',
+                                            height: 'auto',
+                                            objectFit: 'contain'
+                                        }}
                                     />
                                 </div>
                                 <div className="title-collection">
@@ -339,7 +361,14 @@ export default function HomePage() {
                                     <Image
                                         src={HeadphoneImg}
                                         alt="Headphone"
-                                        layout="responsive"
+                                        width={200}
+                                        height={200}
+                                        unoptimized={true}
+                                        style={{
+                                            width: '100%',
+                                            height: 'auto',
+                                            objectFit: 'contain'
+                                        }}
                                     />
                                 </div>
                                 <div className="title-collection">
@@ -351,7 +380,14 @@ export default function HomePage() {
                                     <Image
                                         src={HeadphoneImg}
                                         alt="Headphone"
-                                        layout="responsive"
+                                        width={200}
+                                        height={200}
+                                        unoptimized={true}
+                                        style={{
+                                            width: '100%',
+                                            height: 'auto',
+                                            objectFit: 'contain'
+                                        }}
                                     />
                                 </div>
                                 <div className="title-collection">
@@ -366,7 +402,14 @@ export default function HomePage() {
                                     <Image
                                         src={HeadphoneImg}
                                         alt="Headphone"
-                                        layout="responsive"
+                                        width={200}
+                                        height={200}
+                                        unoptimized={true}
+                                        style={{
+                                            width: '100%',
+                                            height: 'auto',
+                                            objectFit: 'contain'
+                                        }}
                                     />
                                 </div>
                                 <div className="title-collection">
@@ -381,7 +424,14 @@ export default function HomePage() {
                                     <Image
                                         src={HeadphoneImg}
                                         alt="Headphone"
-                                        layout="responsive"
+                                        width={200}
+                                        height={200}
+                                        unoptimized={true}
+                                        style={{
+                                            width: '100%',
+                                            height: 'auto',
+                                            objectFit: 'contain'
+                                        }}
                                     />
                                 </div>
                                 <div className="title-collection">
