@@ -113,25 +113,20 @@ export const valorFrete = async (cep) => {
             'Content-Type': 'application/json'
         };
         
-        // Obtendo os dados do carrinho do localStorage com a chave correta
-        const cartDataStr = localStorage.getItem('cart');
-        const cartData = cartDataStr ? JSON.parse(cartDataStr) : [];
+        // Obter o CEP limpo sem traços
+        const cleanZipCode = cep.replace(/\D/g, '');
         
-        // Formatando os dados do carrinho para a API
-        const cart_data = cartData.map(item => ({
-            productId: item.id || item.productId,
-            quantity: item.qty || item.quantity || 1
-        }));
-        
-        const response = await axios.post(
-            `${API_URL}/cart/shipping`,
-            { zipCode: cep.replace(/\D/g, ''), products: cart_data },
+        // Rota correta para usuários autenticados
+        const response = await axios.get(
+            `${API_URL}/cart/shipping?zipCode=${cleanZipCode}&shippingType=ALL`,
             { headers }
         );
+        
+        console.log('Resposta do cálculo de frete (autenticado):', response.data);
         return response;
     }
     catch (err) {
-        console.error('Erro ao calcular frete:', err);
+        console.error('Erro ao calcular frete (autenticado):', err);
         return err;
     }
 }
@@ -143,9 +138,12 @@ export const valorFreteDeslogado = async (cep, dados) => {
         };
         
         // CEP de origem padrão
-        const originZipCode = "01001000";
+        const originZipCode = "85010100";
         
-        // Formatando os produtos para o novo formato da API
+        // Obter o CEP limpo sem traços
+        const cleanZipCode = cep.replace(/\D/g, '');
+        
+        // Formatando os produtos para o formato correto da API
         const products = Array.isArray(dados) 
             ? dados.map(item => ({
                 productId: Number(item.id || item.produto_id),
@@ -156,26 +154,26 @@ export const valorFreteDeslogado = async (cep, dados) => {
                 quantity: Number(item.quantity || 1)
               }));
         
-        // Nova API: usando método GET no endpoint /cart/shipping
-        const cleanZipCode = cep.replace(/\D/g, '');
+        // Corpo da requisição para usuários não autenticados
+        const requestBody = {
+            originZipCode,
+            destinationZipCode: cleanZipCode,
+            products,
+            shippingType: "ALL"
+        };
         
-        // Usando método GET com zipCode como parâmetro de consulta
-        const response = await axios.get(
-            `${API_URL}/cart/shipping?zipCode=${cleanZipCode}`,
-            {
-                headers,
-                // Dados no corpo da requisição mesmo com método GET
-                data: {
-                    originZipCode,
-                    destinationZipCode: cleanZipCode,
-                    products
-                }
-            }
+        // Usar POST para a rota correta de usuários não autenticados
+        const response = await axios.post(
+            `${API_URL}/shipping/calculate-by-ids`,
+            requestBody,
+            { headers }
         );
+        
+        console.log('Resposta do cálculo de frete (não autenticado):', response.data);
         return response;
     }
     catch (err) {
-        console.error('Erro ao calcular frete:', err);
+        console.error('Erro ao calcular frete (não autenticado):', err);
         return err;
     }
 }

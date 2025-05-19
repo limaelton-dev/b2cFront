@@ -87,9 +87,9 @@ export const CartProvider = ({ children }) => {
 
         // Criar dados do item para o carrinho
         const cartItem = {
-            productId: productId,
-            quantity: 1,
-            id: productId
+                    productId: productId,
+                    quantity: 1,
+                    id: productId
         };
 
         // Adicionar o produto ao carrinho
@@ -166,7 +166,7 @@ export const CartProvider = ({ children }) => {
             removeProductFromServer(id);
         } else {
             // Usar o método debounced para usuários não logados
-            debouncedSendCartToServer(2, id);
+        debouncedSendCartToServer(2, id);
         }
     
         return true;
@@ -321,7 +321,7 @@ export const CartProvider = ({ children }) => {
                         
                         // Usar os itens já consolidados em vez de fazer isso novamente depois
                         const productIds = Object.keys(itemsGrouped).map(key => parseInt(key));
-                        
+
                         if (productIds.length === 0) {
                             setSyncInProgress(false);
                             return false;
@@ -496,8 +496,8 @@ export const CartProvider = ({ children }) => {
             }, 10000); // 10 segundos de timeout máximo
             
             try {
-                // Se o usuário acabou de fazer login
-                if (isLoggedIn && !previousLoginState) {
+            // Se o usuário acabou de fazer login
+            if (isLoggedIn && !previousLoginState) {
                     // Quando o usuário acabou de fazer login, devemos sincronizar o carrinho local com o servidor
                     console.log('Usuário acabou de fazer login. Sincronizando carrinhos...');
                     
@@ -675,9 +675,9 @@ export const CartProvider = ({ children }) => {
             } finally {
                 // Garantir que syncInProgress seja definido como false no final do processo
                 setSyncInProgress(false);
-                
-                // Atualiza o estado anterior de login
-                setPreviousLoginState(isLoggedIn);
+            
+            // Atualiza o estado anterior de login
+            setPreviousLoginState(isLoggedIn);
                 
                 // Limpar o timeout se o processo terminar normalmente
                 if (syncTimeout) {
@@ -749,16 +749,16 @@ export const CartProvider = ({ children }) => {
         // Enviar cada item individualmente para o endpoint correto
         const promises = items.map(cartItem => {
             return addToCartServer(cartItem)
-            .then(response => {
-                console.log('Resposta da atualização do carrinho:', response);
+        .then(response => {
+            console.log('Resposta da atualização do carrinho:', response);
                 return response;
-            })
-            .catch(error => {
-                console.error('Erro ao atualizar carrinho no servidor:', error);
+        })
+        .catch(error => {
+            console.error('Erro ao atualizar carrinho no servidor:', error);
                 throw error;
             });
         });
-        
+
         // Aguardar todas as operações terminarem
         Promise.all(promises)
             .then(() => console.log('Todos os itens do carrinho foram enviados para o servidor com sucesso'))
@@ -816,12 +816,12 @@ export const CartProvider = ({ children }) => {
                     const productToAdd = convertedCartData.find(item => item.productId == id);
                     if (productToAdd) {
                         addToCartServer(productToAdd)
-                        .then(response => {
+                    .then(response => {
                             console.log('Resposta da adição ao carrinho:', response);
-                        })
-                        .catch(error => {
+                    })
+                    .catch(error => {
                             console.error('Erro ao adicionar ao carrinho no servidor:', error);
-                        });
+                    });
                     }
                     break;
                 case 2:
@@ -841,12 +841,12 @@ export const CartProvider = ({ children }) => {
                         const productToUpdate = convertedCartData.find(item => item.productId == id);
                         if (productToUpdate) {
                             cartUpdate({ item: productToUpdate }, id)
-                            .then(response => {
+                    .then(response => {
                                 console.log('Resposta da atualização de quantidade (método antigo):', response);
-                            })
-                            .catch(error => {
+                    })
+                    .catch(error => {
                                 console.error('Erro ao atualizar quantidade no servidor:', error);
-                            });
+                    });
                         }
                     }
                     break;
@@ -962,13 +962,13 @@ export const CartProvider = ({ children }) => {
             console.log(`Verificando localStorage na inicialização: ${localStorageCart || 'Vazio'}`);
             
             try {
-                if (isLoggedIn) {
+            if (isLoggedIn) {
                     console.log('Usuário está logado, tentando carregar carrinho do servidor...');
-                    const serverCartLoaded = await loadServerCart();
-                    
-                    if (!serverCartLoaded || cartItems.length === 0) {
+                const serverCartLoaded = await loadServerCart();
+                
+                if (!serverCartLoaded || cartItems.length === 0) {
                         console.log('Carrinho do servidor vazio ou falha no carregamento, tentando carregar do localStorage...');
-                        const localCartLoaded = await loadLocalCart();
+                    const localCartLoaded = await loadLocalCart();
                         
                         if (localCartLoaded) {
                             console.log('Carrinho local carregado com sucesso, enviando para o servidor...');

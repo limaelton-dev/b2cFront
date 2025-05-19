@@ -1,6 +1,8 @@
 // Tipos para dados pessoais
 export interface DadosPessoaisType {
-  full_name: string;
+  full_name?: string;
+  firstName?: string;
+  lastName?: string;
   cpf: string;
   email: string;
   username: string;

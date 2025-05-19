@@ -32,6 +32,7 @@ import HomeIcon from '@mui/icons-material/Home';
 import CartIcon from '@mui/icons-material/ShoppingCartOutlined';
 import Drawer from '@mui/material/Drawer';
 import ClientOnly from '../components/ClientOnly';
+import { useShippingCalculation } from './hooks/useShippingCalculation';
 
 async function buscaTipoPessoa() {
     try {
@@ -137,6 +138,8 @@ const CheckoutPage = () => {
     const [fretePreco, setFretePreco] = useState(0);
     const [prazo, setPrazo] = useState(0);
     
+    // Hook de cálculo de frete
+    const { calculateShipping, isLoadingShipping } = useShippingCalculation();
 
     // Verificar se o usuário está logado
     useEffect(() => {
@@ -295,16 +298,7 @@ const CheckoutPage = () => {
                         setEstado(endereco.state || '');
                         
                         // Verificar se o endereço está completo antes de desabilitar
-                        const enderecoCompleto = endereco.street && endereco.neighborhood && 
-                                               endereco.city && endereco.state && 
-                                               endereco.zipCode && endereco.number;
-                        setDisabledAddress(enderecoCompleto);
-                        const frete = await valorFrete(endereco.zipCode);
-                        if(frete) {
-                            setFreteNome('PAC');
-                            setFretePreco(frete.data.data.totalPreco);
-                            setPrazo(frete.data.data.maiorPrazo);
-                        }
+                                                                        const enderecoCompleto = endereco.street && endereco.neighborhood &&                                                endereco.city && endereco.state &&                                                endereco.zipCode && endereco.number;                        setDisabledAddress(enderecoCompleto);                                                // Usando o hook de cálculo de frete em vez da função direta                        if (endereco.zipCode) {                            const shippingResult = await calculateShipping(endereco.zipCode, true, cartData);                            if (shippingResult && shippingResult.success) {                                setFreteNome(shippingResult.name);                                setFretePreco(shippingResult.price);                                setPrazo(shippingResult.deliveryTime);                            }                        }
                     }
 
                     // Verificar se há cartões antes de acessar
@@ -723,78 +717,39 @@ const CheckoutPage = () => {
         if (cep.length === 9) {
             setLoadingCep(true);
             try {
+                // Buscando dados de endereço pelo ViaCEP
                 const response = await axios.get(`https://viacep.com.br/ws/${cep}/json/`);
                 const data = response.data;
-                setTimeout(async () => {
-                    if (data.erro) {
-                        alert('CEP não encontrado!');
-                        setLoadingCep(false);
-                    } else {
-                        try {
-                            // Preparar dados para API de frete
-                            const cleanZipCode = cep.replace(/-/g, '');
-                            const products = cartData.map(item => ({
-                                productId: Number(item.id),
-                                quantity: Number(item.qty || item.quantity || 1)
-                            }));
-                            
-                            // Configurar headers com autorização para usuários autenticados
-                            const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-                            if (user.name) {
-                                const token = typeof window !== 'undefined' ? localStorage.getItem('token') || '' : '';
-                                if (token) {
-                                    headers['Authorization'] = `Bearer ${token}`;
-                                }
-                            }
-                            
-                            // Chamar a API de frete usando a URL base correta
-                            const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
-                            const freteResponse = await axios.get(
-                                `${API_URL}/cart/shipping?zipCode=${cleanZipCode}`,
-                                {
-                                    headers,
-                                    data: {
-                                        originZipCode: "01001000",
-                                        destinationZipCode: cleanZipCode,
-                                        products
-                                    }
-                                }
-                            );
-                            
-                            // Processar resposta da API
-                            if (freteResponse.data && freteResponse.data.success) {
-                                const { data: freteData } = freteResponse.data;
-                                
-                                // Verificar se existem serviços disponíveis
-                                if (freteData.availableServices && freteData.availableServices.length > 0) {
-                                    const firstService = freteData.availableServices[0];
-                                    setFreteNome(firstService.serviceName);
-                                    setFretePreco(firstService.price);
-                                    setPrazo(firstService.deliveryTime);
-                                } else {
-                                    // Valores padrão para caso não haja serviços
-                                    setFreteNome('');
-                                    setFretePreco(0);
-                                    setPrazo(0);
-                                }
-                            }
-                        } catch (freteError) {
-                            console.error('Erro ao calcular frete:', freteError);
-                            // Valores padrão em caso de erro
-                            setFreteNome('');
-                            setFretePreco(0);
-                            setPrazo(0);
-                        }
-                        
-                        // Preencher o endereço com os dados do ViaCEP
-                        setEndereco(data.logradouro || '');
-                        setBairro(data.bairro || '');
-                        setCidade(data.localidade || '');
-                        setEstado(data.uf || '');
-                    }
+                
+                if (data.erro) {
+                    alert('CEP não encontrado!');
                     setLoadingCep(false);
-                }, 800);
+                    return;
+                }
+                
+                // Preenchendo o endereço com os dados do ViaCEP
+                setEndereco(data.logradouro || '');
+                setBairro(data.bairro || '');
+                setCidade(data.localidade || '');
+                setEstado(data.uf || '');
+                
+                // Calcular frete usando o novo hook
+                const shippingResult = await calculateShipping(cep, isAuthenticated, cartData);
+                
+                if (shippingResult && shippingResult.success) {
+                    setFreteNome(shippingResult.name);
+                    setFretePreco(shippingResult.price);
+                    setPrazo(shippingResult.deliveryTime);
+                } else {
+                    showToast(shippingResult?.error || 'Erro ao calcular frete', 'error');
+                    setFreteNome('');
+                    setFretePreco(0);
+                    setPrazo(0);
+                }
+                
+                setLoadingCep(false);
             } catch (error) {
+                console.error('Erro ao buscar endereço:', error);
                 alert('Erro ao buscar o endereço.');
                 setLoadingCep(false);
             }

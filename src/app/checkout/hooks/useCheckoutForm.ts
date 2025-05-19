@@ -471,14 +471,18 @@ export const useCheckoutForm = () => {
             return null;
         }
 
-        const arrName = formData.name.split(" ");
+        // Dividir o nome completo em firstName e lastName
+        const nameParts = formData.name.trim().split(' ');
+        const firstName = nameParts[0] || '';
+        const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
+        
         const userData = {
-            name: arrName[0],
-            lastname: arrName.length > 1 ? arrName[arrName.length - 1] : '',
-            username: arrName[0].toLowerCase() + (Math.floor(Math.random() * 1000) + 1),
+            firstName: firstName,
+            lastName: lastName,
             email: formData.email,
             password: formData.password,
-            repassword: formData.confirmPassword
+            repassword: formData.confirmPassword,
+            cpf: formData.cpf.replace(/\D/g, '')
         };
 
         try {
@@ -531,8 +535,21 @@ export const useCheckoutForm = () => {
             // Adicionar dados específicos com base no tipo de pessoa
             if (formData.profileType === '1') {
                 // Pessoa Física
-                profileUpdateData.cpf = formData.cpf.replace(/\D/g, '');
-                profileUpdateData.full_name = formData.name;
+                // Garantir que o CPF seja enviado sem caracteres especiais
+                const cpfLimpo = formData.cpf.replace(/\D/g, '');
+                console.log('CPF para atualização do perfil:', cpfLimpo);
+                
+                // Garante que o CPF é tratado como string, mesmo que comece com zero
+                profileUpdateData.cpf = cpfLimpo.toString();
+                
+                // Dividir o nome completo em firstName e lastName
+                const nameParts = formData.name.trim().split(' ');
+                const firstName = nameParts[0] || '';
+                const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
+                
+                // Usar firstName e lastName em vez de full_name
+                profileUpdateData.firstName = firstName;
+                profileUpdateData.lastName = lastName;
             } else {
                 // Pessoa Jurídica
                 profileUpdateData.cnpj = formData.cnpj.replace(/\D/g, '');

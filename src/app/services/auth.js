@@ -65,19 +65,54 @@ export const register = async (userData) => {
                 municipalRegistration: userData.municipalRegistration || ''
             };
         } else {
-            // Caso seja PF - dividindo o nome completo em firstName e lastName
-            const fullNameParts = userData.fullName ? userData.fullName.trim().split(' ') : ['', ''];
-            const firstName = fullNameParts[0] || '';
-            const lastName = fullNameParts.slice(1).join(' ') || '';
+            // Caso seja PF
+            // Garantir que o CPF esteja presente em todas as condições
+            const cpf = userData.cpf || '';
             
-            requestData.profile = {
-                firstName: firstName,
-                lastName: lastName,
-                cpf: userData.cpf || '',
-                birthDate: userData.birthDate || new Date().toISOString().split('T')[0],
-                gender: userData.gender || null
-            };
+            if (userData.firstName && userData.lastName) {
+                // Se já tiver firstName e lastName separados
+                requestData.profile = {
+                    firstName: userData.firstName,
+                    lastName: userData.lastName,
+                    cpf: cpf,
+                    birthDate: userData.birthDate || new Date().toISOString().split('T')[0],
+                    gender: userData.gender || null
+                };
+            } else if (userData.fullName) {
+                // Se tiver fullName, dividir em firstName e lastName
+                const fullNameParts = userData.fullName.trim().split(' ');
+                const firstName = fullNameParts[0] || '';
+                const lastName = fullNameParts.slice(1).join(' ') || '';
+                
+                requestData.profile = {
+                    firstName: firstName,
+                    lastName: lastName,
+                    cpf: cpf,
+                    birthDate: userData.birthDate || new Date().toISOString().split('T')[0],
+                    gender: userData.gender || null
+                };
+            } else if (userData.name && userData.lastname) {
+                // Suporte para o formato vindo do checkout
+                requestData.profile = {
+                    firstName: userData.name,
+                    lastName: userData.lastname,
+                    cpf: cpf,
+                    birthDate: userData.birthDate || new Date().toISOString().split('T')[0],
+                    gender: userData.gender || null
+                };
+            } else {
+                // Caso não tenha nenhuma informação de nome
+                requestData.profile = {
+                    firstName: "",
+                    lastName: "",
+                    cpf: cpf,
+                    birthDate: userData.birthDate || new Date().toISOString().split('T')[0],
+                    gender: userData.gender || null
+                };
+            }
         }
+        
+        console.log('Dados de registro enviados:', JSON.stringify(requestData));
         
         const response = await axios.post(`${API_URL}/auth/signup`, requestData);
         

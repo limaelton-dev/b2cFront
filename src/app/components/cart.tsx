@@ -15,6 +15,15 @@ import { getAddressUser } from '../services/profile';
 import { valorFrete } from '../services/checkout';
 import { useAuth } from '../context/auth';
 
+// Use try/catch para importar o hook, com fallback para a função direta
+let useShippingCalculationImport;
+try {
+    useShippingCalculationImport = require('../checkout/hooks/useShippingCalculation').useShippingCalculation;
+} catch (error) {
+    console.warn('Erro ao importar hook useShippingCalculation, usando fallback:', error);
+    useShippingCalculationImport = null;
+}
+
 export default function Cart({ cartOpened, onCartToggle }) {
     const { showToast } = useToastSide();
     const { openDialog } = useAlertDialog();
@@ -29,6 +38,35 @@ export default function Cart({ cartOpened, onCartToggle }) {
     const [errorCoupon, setErrorCoupon] = useState(false);
     const [discountPix, setDiscountPix] = useState(5);
     const [loadingCoupon, setLoadingCoupon] = useState(false);
+    
+    // Implementação de um cálculo de frete local para fallback
+    const calculateShippingFallback = async (zipCode, isAuthenticated, cartItems) => {
+        try {
+            if (isAuthenticated) {
+                const response = await valorFrete(zipCode);
+                if (response?.data?.data) {
+                    return {
+                        success: true,
+                        name: 'PAC',
+                        price: response.data.data.totalPreco,
+                        deliveryTime: response.data.data.maiorPrazo
+                    };
+                }
+            }
+            return { success: false, error: 'Erro ao calcular frete' };
+        } catch (error) {
+            console.error('Erro no fallback do cálculo de frete:', error);
+            return { success: false, error: 'Erro ao calcular frete' };
+        }
+    };
+    
+    // Usando o hook se estiver disponível ou o fallback
+    const useShippingCalculationHook = useShippingCalculationImport ? useShippingCalculationImport() : { 
+        calculateShipping: calculateShippingFallback,
+        isLoadingShipping: false
+    };
+    
+    const { calculateShipping, isLoadingShipping } = useShippingCalculationHook;
 
     const handleCloseCart = () => {
         onCartToggle(false);
@@ -144,10 +182,18 @@ export default function Cart({ cartOpened, onCartToggle }) {
                 try {
                     const resp = await getAddressUser();
                     if(resp && resp.length > 0 && resp[0] && resp[0].postal_code) {
-                        const freteVal = await valorFrete(resp[0].postal_code.replace(/\D/,''));
-                        if(freteVal && freteVal.data && freteVal.data.data) {
-                            setFrete(freteVal.data.data.totalPreco);
-                            setFreteNome('PAC - até ' + freteVal.data.data.maiorPrazo + ' dias úteis');
+                        // Usando o hook de cálculo de frete em vez da função direta
+                        const cleanZipCode = resp[0].postal_code.replace(/\D/g, '');
+                        // Formatar o CEP no padrão 99999-999
+                        const formattedZipCode = cleanZipCode.length === 8 ? 
+                            `${cleanZipCode.substring(0, 5)}-${cleanZipCode.substring(5)}` : 
+                            cleanZipCode;
+                        
+                        const shippingResult = await calculateShipping(formattedZipCode, true, cartData);
+                        
+                        if (shippingResult && shippingResult.success) {
+                            setFrete(shippingResult.price);
+                            setFreteNome('PAC - até ' + shippingResult.deliveryTime + ' dias úteis');
                         }
                     }
                 } catch (error) {
@@ -156,8 +202,8 @@ export default function Cart({ cartOpened, onCartToggle }) {
                 }
             }
         }
-        getAddress()
-    }, [cartItems, user])
+        getAddress();
+    }, [cartItems, user, calculateShipping, cartData]);
 
     // Verifica se os dados do carrinho estão sincronizados
     const isCartDataValid = () => {
