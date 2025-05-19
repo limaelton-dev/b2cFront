@@ -40,7 +40,16 @@ export default function LoginPage() {
     // Função para carregar o perfil completo após login
     const loadCompleteProfile = async () => {
         try {
-            const profileData = await getUserProfile();
+            // Criar Promise com timeout para o carregamento do perfil
+            const profilePromise = getUserProfile();
+            
+            // Adicionar timeout para garantir que não ficaremos travados aqui
+            const timeoutPromise = new Promise((_, reject) => {
+                setTimeout(() => reject(new Error('Timeout ao carregar perfil')), 5000);
+            });
+            
+            // Usar Promise.race para limitar o tempo de carregamento
+            const profileData = await Promise.race([profilePromise, timeoutPromise]);
             
             if (profileData) {
                 // Montando o objeto de usuário com os dados do perfil
@@ -61,12 +70,24 @@ export default function LoginPage() {
                 };
                 
                 setUserFn(userData);
+                return true;
             }
+            return false;
         } catch (error) {
             console.error("Erro ao carregar perfil completo:", error);
+            return false;
         }
     };
 
+    const navigateAfterLogin = (redirectTarget) => {
+        // Sempre redirecionar, mesmo que o carregamento do perfil falhe
+        if (redirectTarget === 'checkout') {
+            router.push('/checkout');
+        } else {
+            router.push('/');
+        }
+    };
+    
     const handleGoogleSuccess = async (credentialResponse: any) => {
         setIsLoading(true);
         try {
@@ -78,13 +99,25 @@ export default function LoginPage() {
                 // O token já é salvo no serviço de loginWithGoogle
                 setCookie('jwt', response.access_token);
                 
-                // Carregar o perfil completo do usuário
-                await loadCompleteProfile();
-                
-                if (redirect === 'checkout') {
-                    router.push('/checkout');
-                } else {
-                    router.push('/');
+                // Tentar carregar o perfil, mas garantir redirecionamento mesmo se falhar
+                try {
+                    // Definir um timeout para garantir o redirecionamento
+                    const redirectTimeout = setTimeout(() => {
+                        console.log('Timeout: redirecionando após login com Google');
+                        navigateAfterLogin(redirect);
+                    }, 3000);
+                    
+                    // Carregar o perfil com limite de tempo
+                    await loadCompleteProfile();
+                    
+                    // Limpar o timeout se o carregamento foi rápido o suficiente
+                    clearTimeout(redirectTimeout);
+                    
+                    // Redirecionar depois de carregar o perfil
+                    navigateAfterLogin(redirect);
+                } catch (profileError) {
+                    console.error('Erro ao carregar perfil após login com Google:', profileError);
+                    navigateAfterLogin(redirect);
                 }
             } else {
                 setIsLoading(false);
@@ -107,40 +140,70 @@ export default function LoginPage() {
     const submit = async (e: any) => {
         e.preventDefault();
         setIsLoading(true);
-        const response = await login(formData.email, formData.password)
-        if(response.status == 200) {
-            setUserFn(response.data.user);
-            setCookie('jwt', response.data.access_token);
+        
+        try {
+            // Adicionar timeout para a operação de login
+            const loginPromise = login(formData.email, formData.password);
+            const timeoutPromise = new Promise((_, reject) => {
+                setTimeout(() => reject(new Error('Timeout ao fazer login')), 5000);
+            });
             
-            // Verificar se a resposta contém o token de acesso
-            if (response && response.access_token) {
-                // Configurar o usuário no contexto de autenticação
-                setUserFn({
-                    id: response.user.id,
-                    email: response.user.email,
-                    profileId: response.user.profileId,
-                    profileType: response.user.profileType,
-                    name: response.user.profileType === 'PF' 
-                        ? response.user.profile?.firstName + ' ' + response.user.profile?.lastName 
-                        : response.user.profile?.companyName,
-                    profile: response.user.profile
-                });
+            // Usar Promise.race para garantir que o login não trave
+            const response = await Promise.race([loginPromise, timeoutPromise]);
+            
+            if(response.status == 200) {
+                setUserFn(response.data.user);
+                setCookie('jwt', response.data.access_token);
                 
-                // O token já é salvo no serviço de login
-                setCookie('jwt', response.access_token);
-                
-                // Carregar o perfil completo do usuário
-                await loadCompleteProfile();
-                
-                if (redirect === 'checkout') {
-                    router.push('/checkout');
+                // Verificar se a resposta contém o token de acesso
+                if (response && response.access_token) {
+                    // Configurar o usuário no contexto de autenticação
+                    setUserFn({
+                        id: response.user.id,
+                        email: response.user.email,
+                        profileId: response.user.profileId,
+                        profileType: response.user.profileType,
+                        name: response.user.profileType === 'PF' 
+                            ? response.user.profile?.firstName + ' ' + response.user.profile?.lastName 
+                            : response.user.profile?.companyName,
+                        profile: response.user.profile
+                    });
+                    
+                    // O token já é salvo no serviço de login
+                    setCookie('jwt', response.access_token);
+                    
+                    // Tentar carregar o perfil, mas garantir redirecionamento mesmo se falhar
+                    try {
+                        // Definir um timeout para garantir o redirecionamento
+                        const redirectTimeout = setTimeout(() => {
+                            console.log('Timeout: redirecionando após login normal');
+                            navigateAfterLogin(redirect);
+                        }, 3000);
+                        
+                        // Carregar o perfil com limite de tempo
+                        await loadCompleteProfile();
+                        
+                        // Limpar o timeout se o carregamento foi rápido o suficiente
+                        clearTimeout(redirectTimeout);
+                        
+                        // Redirecionar depois de carregar o perfil
+                        navigateAfterLogin(redirect);
+                    } catch (profileError) {
+                        console.error('Erro ao carregar perfil após login normal:', profileError);
+                        navigateAfterLogin(redirect);
+                    }
                 } else {
-                    router.push('/');
+                    setIsLoading(false);
+                    setTextError('Email ou senha incorretos');
                 }
             } else {
                 setIsLoading(false);
                 setTextError('Email ou senha incorretos');
             }
+        } catch (error) {
+            console.error('Erro durante o login:', error);
+            setIsLoading(false);
+            setTextError('Erro ao fazer login. Por favor, tente novamente.');
         }
     }
 

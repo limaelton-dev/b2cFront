@@ -483,85 +483,220 @@ export const CartProvider = ({ children }) => {
 
     // Efeito para sincronizar o carrinho quando o estado de login muda
     useEffect(() => {
+        let syncTimeout: NodeJS.Timeout | null = null;
+        
         const syncCart = async () => {
+            console.log(`syncCart executando. isLoggedIn: ${isLoggedIn}, previousLoginState: ${previousLoginState}, syncInProgress: ${syncInProgress}`);
             
-            // Se o usuário acabou de fazer login
-            if (isLoggedIn && !previousLoginState) {
-                // Quando o usuário acabou de fazer login, devemos sincronizar o carrinho local com o servidor
-                console.log('Usuário acabou de fazer login. Sincronizando carrinhos...');
-                
-                try {
-                    // Primeiro tentamos carregar o carrinho do servidor
-                    const serverCartLoaded = await loadServerCart();
+            // Configurar um timeout para garantir que o processo de sincronização não trave
+            syncTimeout = setTimeout(() => {
+                console.log('Timeout de sincronização atingido, finalizando syncInProgress');
+                setSyncInProgress(false);
+                setPreviousLoginState(isLoggedIn);
+            }, 10000); // 10 segundos de timeout máximo
+            
+            try {
+                // Se o usuário acabou de fazer login
+                if (isLoggedIn && !previousLoginState) {
+                    // Quando o usuário acabou de fazer login, devemos sincronizar o carrinho local com o servidor
+                    console.log('Usuário acabou de fazer login. Sincronizando carrinhos...');
                     
-                    // Verifica se há itens no carrinho local
-                    const storedData = localStorage.getItem('cart');
-                    const hasLocalItems = storedData && JSON.parse(storedData).length > 0;
-                    
-                    // Se há itens no carrinho local, enviamos para o servidor
-                    if (hasLocalItems) {
-                        console.log('Enviando itens do carrinho local para o servidor após login...');
+                    try {
+                        // Primeiro tentamos carregar o carrinho do servidor com um timeout menor
+                        const serverCartLoadPromise = loadServerCart();
                         
-                        // Se há itens no carrinho do servidor, limpar o carrinho do servidor antes
-                        // para evitar duplicidades quando enviarmos o carrinho local
-                        if (serverCartLoaded && cartItems.length > 0) {
-                            console.log('Limpando carrinho do servidor antes de enviar itens locais...');
+                        // Adicionar um timeout para a operação de carregamento do servidor
+                        const serverTimeout = new Promise<boolean>((resolve) => {
+                            setTimeout(() => {
+                                console.log('Timeout ao carregar carrinho do servidor, continuando...');
+                                resolve(false);
+                            }, 5000); // 5 segundos de timeout
+                        });
+                        
+                        // Usar Promise.race para limitar o tempo de espera
+                        const serverCartLoaded = await Promise.race([serverCartLoadPromise, serverTimeout]);
+                        
+                        // Verifica se há itens no carrinho local
+                        const storedData = localStorage.getItem('cart');
+                        const hasLocalItems = storedData && JSON.parse(storedData).length > 0;
+                        
+                        // Se há itens no carrinho local, enviamos para o servidor
+                        if (hasLocalItems) {
+                            console.log('Enviando itens do carrinho local para o servidor após login...');
                             
-                            // Primeiro salvar os itens locais em variáveis temporárias
-                            const localCartItems = [...cartItems];
-                            const localCartData = [...cartData];
-                            
-                            // Limpar o carrinho do servidor
-                            try {
-                                const headers = {
-                                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                                };
-                                await axios.delete(`${process.env.NEXT_PUBLIC_BACKEND_URL}/cart`, { headers });
+                            // Se há itens no carrinho do servidor, limpar o carrinho do servidor antes
+                            // para evitar duplicidades quando enviarmos o carrinho local
+                            if (serverCartLoaded && cartItems.length > 0) {
+                                console.log('Limpando carrinho do servidor antes de enviar itens locais...');
                                 
-                                // Restaurar os itens locais depois de limpar o servidor
-                                setCartItems(localCartItems);
-                                setCartData(localCartData);
-                                
-                                // Aguardar um pouco para garantir que o servidor processou a limpeza
-                                await new Promise(resolve => setTimeout(resolve, 1000));
-                                
-                                // Agora enviar o carrinho local para o servidor
-                                await sendCartLocalServer();
-                            } catch (error) {
-                                console.error('Erro ao limpar carrinho no servidor:', error);
+                                try {
+                                    // Primeiro salvar os itens locais em variáveis temporárias
+                                    const localCartItems = [...cartItems];
+                                    const localCartData = [...cartData];
+                                    
+                                    // Limpar o carrinho do servidor com timeout reduzido
+                                    const token = getToken();
+                                    if (token) {
+                                        try {
+                                            const clearPromise = axios.delete(`${process.env.NEXT_PUBLIC_BACKEND_URL}/cart`, {
+                                                headers: { 'Authorization': `Bearer ${token}` },
+                                                timeout: 3000 // 3 segundos de timeout
+                                            });
+                                            
+                                            // Adicionar um timeout para a operação de limpeza
+                                            const clearTimeout = new Promise<void>((resolve) => {
+                                                setTimeout(() => {
+                                                    console.log('Timeout ao limpar carrinho do servidor, continuando...');
+                                                    resolve();
+                                                }, 3000);
+                                            });
+                                            
+                                            // Usar Promise.race para limitar o tempo de espera
+                                            await Promise.race([clearPromise, clearTimeout]);
+                                        } catch (error) {
+                                            console.error('Erro ao limpar carrinho no servidor:', error);
+                                        }
+                                    }
+                                    
+                                    // Restaurar os itens locais depois de limpar o servidor
+                                    setCartItems(localCartItems);
+                                    setCartData(localCartData);
+                                    
+                                    // Reduzir o tempo de espera para garantir que o processamento continue
+                                    await new Promise(resolve => setTimeout(resolve, 500));
+                                    
+                                    // Agora enviar o carrinho local para o servidor com timeout
+                                    const sendPromise = sendCartLocalServer();
+                                    const sendTimeout = new Promise<void>((resolve) => {
+                                        setTimeout(() => {
+                                            console.log('Timeout ao enviar carrinho para o servidor, continuando...');
+                                            resolve();
+                                        }, 3000);
+                                    });
+                                    
+                                    await Promise.race([sendPromise, sendTimeout]);
+                                } catch (error) {
+                                    console.error('Erro ao limpar carrinho no servidor:', error);
+                                }
+                            } else {
+                                // Se o servidor não tem itens ou não conseguimos carregar, enviamos o carrinho local diretamente
+                                try {
+                                    const loadPromise = loadLocalCart();
+                                    const loadTimeout = new Promise<boolean>((resolve) => {
+                                        setTimeout(() => {
+                                            console.log('Timeout ao carregar carrinho local, continuando...');
+                                            resolve(false);
+                                        }, 3000);
+                                    });
+                                    
+                                    await Promise.race([loadPromise, loadTimeout]);
+                                    
+                                    const sendPromise = sendCartLocalServer();
+                                    const sendTimeout = new Promise<void>((resolve) => {
+                                        setTimeout(() => {
+                                            console.log('Timeout ao enviar carrinho para o servidor, continuando...');
+                                            resolve();
+                                        }, 3000);
+                                    });
+                                    
+                                    await Promise.race([sendPromise, sendTimeout]);
+                                } catch (error) {
+                                    console.error('Erro ao processar carrinho local:', error);
+                                }
                             }
+                        } else if (serverCartLoaded) {
+                            // Se não há itens locais mas há no servidor, mantenha os do servidor
+                            console.log('Mantendo itens do carrinho do servidor após login...');
                         } else {
-                            // Se o servidor não tem itens ou não conseguimos carregar, enviamos o carrinho local diretamente
-                            await loadLocalCart(); // Certifique-se de que o local está carregado
-                            await sendCartLocalServer();
+                            // Nem servidor nem local têm itens
+                            console.log('Nenhum item no carrinho local ou do servidor após login...');
+                            
+                            const loadPromise = loadLocalCart();
+                            const loadTimeout = new Promise<boolean>((resolve) => {
+                                setTimeout(() => {
+                                    console.log('Timeout ao carregar carrinho local, continuando...');
+                                    resolve(false);
+                                }, 3000);
+                            });
+                            
+                            await Promise.race([loadPromise, loadTimeout]);
                         }
-                    } else if (serverCartLoaded) {
-                        // Se não há itens locais mas há no servidor, mantenha os do servidor
-                        console.log('Mantendo itens do carrinho do servidor após login...');
-                    } else {
-                        // Nem servidor nem local têm itens
-                        console.log('Nenhum item no carrinho local ou do servidor após login...');
-                        await loadLocalCart();
+                    } catch (error) {
+                        console.error('Erro ao sincronizar carrinho após login:', error);
+                        // Tentar pelo menos carregar o que tiver localmente com timeout
+                        try {
+                            const loadPromise = loadLocalCart();
+                            const loadTimeout = new Promise<boolean>((resolve) => {
+                                setTimeout(() => {
+                                    console.log('Timeout ao carregar carrinho local após erro, continuando...');
+                                    resolve(false);
+                                }, 3000);
+                            });
+                            
+                            await Promise.race([loadPromise, loadTimeout]);
+                        } catch (innerError) {
+                            console.error('Erro ao carregar carrinho local após falha de sincronização:', innerError);
+                        }
                     }
-                } catch (error) {
-                    console.error('Erro ao sincronizar carrinho após login:', error);
-                    // Tentar pelo menos carregar o que tiver localmente
-                    await loadLocalCart();
+                    
+                } else if (isLoggedIn) {
+                    // Usuário já estava logado, apenas carregar do servidor com timeout
+                    try {
+                        const loadPromise = loadServerCart();
+                        const loadTimeout = new Promise<boolean>((resolve) => {
+                            setTimeout(() => {
+                                console.log('Timeout ao carregar carrinho do servidor para usuário já logado, continuando...');
+                                resolve(false);
+                            }, 5000);
+                        });
+                        
+                        await Promise.race([loadPromise, loadTimeout]);
+                    } catch (error) {
+                        console.error('Erro ao carregar carrinho do servidor para usuário já logado:', error);
+                    }
+                } else {
+                    // Usuário não está logado, carregar do local com timeout
+                    try {
+                        const loadPromise = loadLocalCart();
+                        const loadTimeout = new Promise<boolean>((resolve) => {
+                            setTimeout(() => {
+                                console.log('Timeout ao carregar carrinho local para usuário não logado, continuando...');
+                                resolve(false);
+                            }, 3000);
+                        });
+                        
+                        await Promise.race([loadPromise, loadTimeout]);
+                    } catch (error) {
+                        console.error('Erro ao carregar carrinho local para usuário não logado:', error);
+                    }
+                }
+            } catch (error) {
+                console.error('Erro geral no processo de sincronização:', error);
+            } finally {
+                // Garantir que syncInProgress seja definido como false no final do processo
+                setSyncInProgress(false);
+                
+                // Atualiza o estado anterior de login
+                setPreviousLoginState(isLoggedIn);
+                
+                // Limpar o timeout se o processo terminar normalmente
+                if (syncTimeout) {
+                    clearTimeout(syncTimeout);
+                    syncTimeout = null;
                 }
                 
-            } else if (isLoggedIn) {
-                // Usuário já estava logado, apenas carregar do servidor
-                await loadServerCart();
-            } else {
-                // Usuário não está logado, carregar do local
-                await loadLocalCart();
+                console.log('Sincronização de carrinho concluída.');
             }
-            
-            // Atualiza o estado anterior de login
-            setPreviousLoginState(isLoggedIn);
         };
         
         syncCart();
+        
+        // Limpar o timeout se o componente for desmontado
+        return () => {
+            if (syncTimeout) {
+                clearTimeout(syncTimeout);
+            }
+        };
     }, [isLoggedIn]);
 
     const debouncedSendCartToServer = (option, id) => {
