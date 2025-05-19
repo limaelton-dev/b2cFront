@@ -22,8 +22,8 @@ const PagamentoSucessoPage = () => {
         const orderParam = searchParams.get('pedido');
         
         if (!orderParam) {
-            showToast('Informações do pedido não encontradas', 'error');
-            router.push('/');
+            // showToast('Informações do pedido não encontradas', 'error');
+            // router.push('/');
             return;
         }
         
@@ -35,7 +35,7 @@ const PagamentoSucessoPage = () => {
     };
     
     const handleCheckOrders = () => {
-        router.push('/minhaconta/pedidos');
+        router.push('/minhaconta');
     };
     
     return (
@@ -46,9 +46,9 @@ const PagamentoSucessoPage = () => {
                     <Typography variant="h4" gutterBottom>
                         Pagamento Confirmado!
                     </Typography>
-                    <Typography variant="body1" color="text.secondary" gutterBottom>
+                    {/* <Typography variant="body1" color="text.secondary" gutterBottom>
                         Pedido #{orderId}
-                    </Typography>
+                    </Typography> */}
                     <Typography variant="body1">
                         Obrigado pela sua compra! Seu pagamento foi processado com sucesso.
                     </Typography>
@@ -95,7 +95,7 @@ const PagamentoSucessoPage = () => {
                         variant="contained" 
                         onClick={handleCheckOrders}
                     >
-                        Meus pedidos
+                        Minha conta
                     </Button>
                 </Box>
             </Paper>
