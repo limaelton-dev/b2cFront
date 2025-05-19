@@ -232,8 +232,28 @@ export default function Cart({ cartOpened, onCartToggle }) {
     // Função para obter a imagem do produto
     const getProductImage = (product) => {
         // Verificar se o produto tem imagens
-        if (product.imagens && product.images.length > 0) {
-            return product.images[0].url;
+        if (product.images && Array.isArray(product.images) && product.images.length > 0) {
+            // Procurar imagem principal
+            const mainImage = product.images.find(img => img.isMain);
+            if (mainImage && mainImage.url) {
+                return mainImage.url;
+            }
+            // Se não encontrar principal, usar a primeira
+            if (product.images[0] && product.images[0].url) {
+                return product.images[0].url;
+            }
+        }
+        
+        // Verificar o formato alternativo (imagens)
+        if (product.imagens && Array.isArray(product.imagens) && product.imagens.length > 0) {
+            if (product.imagens[0] && product.imagens[0].url) {
+                return product.imagens[0].url;
+            }
+        }
+        
+        // Se tiver um campo img específico
+        if (product.img) {
+            return product.img;
         }
         
         return HeadphoneImg;
@@ -289,6 +309,7 @@ export default function Cart({ cartOpened, onCartToggle }) {
                                         alt={product.name || "Produto"}
                                         width={100}
                                         height={100}
+                                        unoptimized={true}
                                     />
                                     <div className="name-qty">
                                         <Tooltip title={product.name}>

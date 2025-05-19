@@ -96,11 +96,24 @@ export const getProdsLimit = async (limit = 12, category = '', fabricante = '', 
         
         const response = await axios.get(url);
         
-        // Se a resposta for um array, formatamos para o formato esperado
+        // Se a resposta já contém os dados formatados corretamente
+        if (response.data && response.data.data && Array.isArray(response.data.data)) {
+            // Formato padrão da API: { data: [...produtos], totalPages, totalItems }
+            return {
+                data: {
+                    data: response.data.data,
+                    totalItems: response.data.totalItems || response.data.data.length,
+                    totalPages: response.data.totalPages || 1,
+                    currentPage: response.data.currentPage || page
+                }
+            };
+        }
+        
+        // Se a resposta for um array simples, formatamos para o formato esperado
         if (Array.isArray(response.data)) {
             const formattedResponse = {
                 data: {
-                    items: response.data,
+                    data: response.data,
                     totalItems: response.data.length,
                     totalPages: 1,
                     currentPage: page
@@ -117,28 +130,46 @@ export const getProdsLimit = async (limit = 12, category = '', fabricante = '', 
     }
 };
 
-export const getProdutosCategoria = async (limit) => {
+export const getProdutosCategoria = async () => {
     try {
-        const response = await axios.get(`${API_URL}/category/products?limit=${limit}`);
+        // Novo endpoint para obter apenas categorias de nível 1
+        const response = await axios.get(`${API_URL}/category/all?level=1`);
+        console.log('Resposta da API de categorias:', JSON.stringify(response.data));
         return response;
     }
     catch (err) {
-        console.error('Erro ao obter categorias de produtos:', err);
+        console.error('Erro ao obter categorias:', err);
         return err;
     }
 };
 
 export const getProdutosFabricante = async () => {
     try {
-        const response = await axios.get(`${API_URL}/category/menu`);
+        // Novo endpoint para obter todas as marcas
+        const response = await axios.get(`${API_URL}/category/brands`);
+        console.log('Resposta da API de marcas:', JSON.stringify(response.data));
         return response;
     }
     catch (err) {
-        console.error('Erro ao obter categorias de produtos:', err);
+        console.error('Erro ao obter marcas:', err);
         return err;
     }
 };
 
+export const getProdutosFiltrados = async (brandName = '', categoryName = '', page = 1, limit = 12, sortDirection = 'DESC') => {
+    try {
+        // Novo endpoint de filtro
+        const url = `${API_URL}/category/filter?${brandName ? 'brandName='+brandName : ''}${categoryName ? '&categoryName='+categoryName : ''}&page=${page}&limit=${limit}&sortDirection=${sortDirection}`;
+        console.log('URL de filtro:', url);
+        const response = await axios.get(url);
+        console.log('Resposta da API de filtro:', JSON.stringify(response.data).substring(0, 200) + '...');
+        return response;
+    }
+    catch (err) {
+        console.error('Erro ao obter produtos filtrados:', err);
+        return err;
+    }
+};
 
 export const getCart = async () => {
     // Se o usuário não estiver autenticado, retornamos um objeto vazio

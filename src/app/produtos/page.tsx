@@ -10,6 +10,7 @@ import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import { useEffect, useState } from 'react';
 import { getProduto } from '../services/produto/page';
 import Cart from '../components/cart';
+import ClientOnly from '../components/ClientOnly';
 import Header from '../header';
 import { useCart } from '../context/cart';
 import { Alert, Snackbar, Slide, Button, CircularProgress, Typography, Checkbox, FormControlLabel, FormGroup, Pagination, Switch, Breadcrumbs, Link } from '@mui/material';
@@ -20,16 +21,12 @@ import Accordion from '@mui/material/Accordion';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
-import { getProdsLimit, getProdutosCategoria, getProdutosFabricante } from '../services/produto/page';
+import { getProdsLimit, getProdutosCategoria, getProdutosFabricante, getProdutosFiltrados } from '../services/produto/page';
 import NoImage from "../assets/img/noimage.png";
+import { Product, ProductBrand, ProductCategory, ProductResponse, PaginatedResponse } from '../types/produto';
 
 const isClient = typeof window !== 'undefined';
 const backendUrl = isClient ? process.env.NEXT_PUBLIC_BACKEND_URL : 'http://localhost:3000';
-
-interface ProductResponse {
-  brand: any;
-  categories: any[];
-}
 
 const debugRequestToBackend = async (url) => {
     try {
@@ -67,55 +64,24 @@ const clearProductCache = async () => {
 
 const getProdutos = async (limit: number, category, fabricante, page = 1) => {
     try {
-        // Adicionando timestamp para evitar cache
-        const timestamp = new Date().getTime();
-        const resp = await getProdsLimit(limit, category, fabricante, page, timestamp);
+        // Nova abordagem de filtro usando os nomes das categorias e marcas
+        const brandName = fabricante ? fabricante.toString() : '';
+        const categoryName = category ? category.toString() : '';
+        const resp = await getProdutosFiltrados(brandName, categoryName, page, limit, 'DESC');
         
-        // Se a resposta já estiver no formato de array de itens
-        if (Array.isArray(resp.data.data)) {
-            const prodFormatted = resp.data.data.map((produto: any) => ({
-                id: produto.id,
-                pro_codigo: produto.reference,
-                pro_descricao: produto.name,
-                pro_desc_tecnica: produto.techDescription,
-                pro_precovenda: produto.price,
-                pro_url_amigavel: produto.slug,
-                imagens: produto.images,
-                name: produto.name,
-                img: produto.images && produto.images.length > 0 ? produto.images[0].url : "",
-                price: produto.price ? `R$ ${produto.price.replace('.', ',')}` : 'Preço indisponível',
-                sku: produto.model,
-            }));
+        // Log para depuração
+        console.log('Parâmetros do filtro:', { brandName, categoryName, page, limit });
+        console.log('URL do filtro:', `category/filter?brandName=${brandName}&categoryName=${categoryName}&page=${page}&limit=${limit}&sortDirection=DESC`);
+        
+        // Verificar formato da resposta e extrair dados dos produtos
+        if (resp.data && resp.data.data && Array.isArray(resp.data.data)) {
+            const prodFormatted = resp.data.data.map(produto => formatProduct(produto));
             
             return {
                 items: prodFormatted,
-                totalItems: resp.data.length,
-                totalPages: 1,
-                currentPage: page
-            };
-        }
-        
-        // Se a resposta estiver no formato paginado com items
-        if (resp.data && resp.data.data) {
-            const prodFormatted = resp.data.data.map((produto: any) => ({
-                id: produto.id,
-                pro_codigo: produto.reference,
-                pro_descricao: produto.name,
-                pro_desc_tecnica: produto.techDescription,
-                pro_precovenda: produto.price,
-                pro_url_amigavel: produto.slug,
-                imagens: produto.images,
-                name: produto.name,
-                img: produto.images && produto.images.length > 0 ? produto.images[0].url : "",
-                price: produto.price ? `R$ ${produto.price.replace('.', ',')}` : 'Preço indisponível',
-                sku: produto.model,
-            }));
-            
-            return {
-                items: prodFormatted,
-                totalItems: resp.data.totalItems,
-                totalPages: resp.data.totalPages,
-                currentPage: resp.data.currentPage
+                totalItems: resp.data.meta?.total || prodFormatted.length,
+                totalPages: resp.data.meta?.totalPages || 1,
+                currentPage: resp.data.meta?.page || page
             };
         }
         
@@ -126,6 +92,7 @@ const getProdutos = async (limit: number, category, fabricante, page = 1) => {
             currentPage: 1
         };
     } catch (error) {
+        console.error('Erro ao carregar produtos:', error);
         return {
             items: [],
             totalItems: 0,
@@ -135,16 +102,33 @@ const getProdutos = async (limit: number, category, fabricante, page = 1) => {
     }
 };
 
-const getProdutoCategory = async (limit: number) => {
+const getProdutoCategory = async () => {
     try {
-        const resp = await getProdutosCategoria(limit);
-        const prodFormatted = resp.data.map((produto: any) => ({
-            id: produto.id,
-            name: produto.name,
-        }));
-        return prodFormatted;
+        const resp = await getProdutosCategoria();
+        console.log('Resposta completa de categorias:', resp);
+        
+        // Novo formato da resposta da API
+        if (resp && resp.data) {
+            // Garantir que estamos trabalhando com um array
+            const categorias = Array.isArray(resp.data) ? resp.data : 
+                               (resp.data.data && Array.isArray(resp.data.data)) ? resp.data.data : [];
+            
+            console.log('Categorias processadas:', categorias);
+            
+            const prodFormatted = categorias.map((categoria: any) => ({
+                id: categoria.id,
+                oracleId: categoria.oracleId,
+                name: categoria.name,
+                slug: categoria.slug,
+                level: categoria.level || 1
+            }));
+            
+            console.log('Categorias formatadas:', prodFormatted);
+            return prodFormatted;
+        }
+        return [];
     } catch (error) {
-        console.error('Erro: ', error);
+        console.error('Erro ao obter categorias:', error);
         return [];
     }
 };
@@ -152,18 +136,84 @@ const getProdutoCategory = async (limit: number) => {
 const getProdutoFabricante = async () => {
     try {
         const resp = await getProdutosFabricante();
-        const prodFormatted = resp.data.map((produto: any) => ({
-            id: produto.id,
-            brand: produto.brand,
-            categories: produto.categories,
-        }));
-        return prodFormatted;
+        console.log('Resposta completa de marcas:', resp);
+        
+        // Novo formato da resposta da API
+        if (resp && resp.data) {
+            // Garantir que estamos trabalhando com um array
+            const marcas = Array.isArray(resp.data) ? resp.data : 
+                          (resp.data.data && Array.isArray(resp.data.data)) ? resp.data.data : [];
+            
+            console.log('Marcas processadas:', marcas);
+            
+            const prodFormatted = marcas.map((marca: any) => ({
+                brand: {
+                    id: marca.id,
+                    oracleId: marca.oracleId,
+                    name: marca.name,
+                    slug: marca.slug
+                }
+            }));
+            
+            console.log('Marcas formatadas:', prodFormatted);
+            return prodFormatted;
+        }
+        return [];
     } catch (error) {
-        console.error('Erro: ', error);
+        console.error('Erro ao obter marcas:', error);
         return [];
     }
 };
 
+// Adicionar função para lidar com erros de imagem
+const handleImageError = (event) => {
+    console.log('Erro ao carregar imagem, usando imagem padrão');
+    event.target.src = NoImage.src;
+};
+
+// Função única para processar imagens de produtos
+const processProductImage = (produto) => {
+    let mainImage = "";
+    if (produto.images && Array.isArray(produto.images) && produto.images.length > 0) {
+        // Primeiro tenta encontrar a imagem principal
+        const mainImg = produto.images.find(img => img.isMain);
+        if (mainImg && mainImg.url) {
+            mainImage = mainImg.url;
+        } else if (produto.images[0] && produto.images[0].url) {
+            // Se não encontrar imagem principal, usa a primeira
+            mainImage = produto.images[0].url;
+        }
+        
+        // Verificar se a URL é válida
+        if (!mainImage || !mainImage.startsWith('http')) {
+            mainImage = NoImage.src;
+        }
+    } else {
+        mainImage = NoImage.src;
+    }
+    return mainImage;
+};
+
+// Função para formatar produto
+const formatProduct = (produto) => {
+    return {
+        id: produto.id,
+        pro_codigo: produto.reference || produto.oracleId,
+        pro_descricao: produto.name,
+        pro_desc_tecnica: produto.techDescription,
+        pro_precovenda: produto.price,
+        pro_url_amigavel: produto.slug,
+        imagens: produto.images,
+        name: produto.name,
+        img: processProductImage(produto),
+        price: produto.price ? `R$ ${produto.price.replace('.', ',')}` : 'Preço indisponível',
+        sku: produto.model || produto.sku,
+        brand: produto.brand,
+        categoryLevel1: produto.categoryLevel1,
+        categoryLevel2: produto.categoryLevel2,
+        categoryLevel3: produto.categoryLevel3
+    };
+};
 
 const ProductsPage = () => {
     const [openedCart, setOpenedCart] = useState(false);
@@ -175,20 +225,14 @@ const ProductsPage = () => {
     const [products, setProducts] = useState<{id: number, name: string; pro_url_amigavel: string; img: string; price: string; sku: string }[]>([]);
     const [isActiveColorId, setIsActiveColorId] = useState(null)
     const { codigo } = useParams();
-    const [categories, setCategories] = useState<{id: number,tpo_codigo: number,name: string}[]>([]);
+    const [categories, setCategories] = useState<{id: number, name: string, slug: string, level: number}[]>([]);
     const [fabricantes, setFabricantes] = useState<ProductResponse[]>(null);
     const [catSett, setCatSett] = useState([]);
     const [fabSett, setFabSett] = useState([]);
-    const [product, setProduct] = useState({
-        pro_codigo: 54862,
-        pro_descricao: 'DISCO FLAP 4 1/2" GRÃO 400',
-        pro_valorultimacompra: 139.90,
-        cores: []
-    });
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [totalItems, setTotalItems] = useState(0);
-    const itemsPerPage = 12;
+    const itemsPerPage = 12;  // Quantidade padrão de itens por página em todas as chamadas
     
     const searchParams = useSearchParams();
 
@@ -216,8 +260,16 @@ const ProductsPage = () => {
     };
 
     useEffect(() => {
-        const categoriasArray = category ? category.split(",").map(Number) : [];
-        const fabricantesArray = fabricante ? fabricante.split(",").map(Number) : [];
+        // Processar os parâmetros da URL
+        const categoriasArray = category ? category.split(",").map(cat => decodeURIComponent(cat.trim())) : [];
+        const fabricantesArray = fabricante ? fabricante.split(",").map(fab => decodeURIComponent(fab.trim())) : [];
+        
+        console.log('Parâmetros iniciais da URL (processados):', {
+            categoriasArray,
+            fabricantesArray,
+            page,
+            search: buscaParams
+        });
         
         setCatSett(categoriasArray);
         setFabSett(fabricantesArray);
@@ -229,7 +281,15 @@ const ProductsPage = () => {
             try {
                 // Função para carregar produtos diretamente do backend
                 const timestamp = new Date().getTime();
-                const backendQueryUrl = `${backendUrl}/product?limit=${itemsPerPage}&page=${page}&_nocache=${timestamp}${category ? '&categoria='+category : ''}${buscaParams ? '&s='+buscaParams : ''}${fabricante ? '&fabricante='+fabricante : ''}`;
+                const brandName = fabricante ? fabricante.toString() : '';
+                const categoryName = category ? category.toString() : '';
+                
+                // Log para depuração
+                console.log('Parâmetros diretos do filtro:', { brandName, categoryName, page });
+                
+                const backendQueryUrl = `${backendUrl}/category/filter?page=${page}&limit=${itemsPerPage}${buscaParams ? '&s='+buscaParams : ''}${brandName ? '&brandName='+encodeURIComponent(brandName) : ''}${categoryName ? '&categoryName='+encodeURIComponent(categoryName) : ''}&sortDirection=DESC&_nocache=${timestamp}`;
+                
+                console.log('URL direta do filtro:', backendQueryUrl);
                 
                 const response = await fetch(backendQueryUrl, {
                     method: 'GET',
@@ -246,29 +306,23 @@ const ProductsPage = () => {
                 }
                 
                 const data = await response.json();
+                console.log('Resposta direta da API filter:', data);
                 
-                if (data && data.data && data.data.length > 0) {
-                    const formattedProducts = data.data.map((produto) => ({
-                        id: produto.id,
-                        pro_codigo: produto.reference,
-                        pro_descricao: produto.name,
-                        pro_desc_tecnica: produto.techDescription,
-                        pro_precovenda: produto.price,
-                        pro_url_amigavel: produto.slug,
-                        imagens: produto.images,
-                        name: produto.name,
-                        img: produto.images && produto.images.length > 0 ? produto.images[0].url : "",
-                        price: produto.price ? `R$ ${produto.price.replace('.', ',')}` : 'Preço indisponível',
-                        sku: produto.model,
-                    }));
+                // Processar a resposta da API
+                if (data && data.data && Array.isArray(data.data)) {
+                    const formattedProducts = data.data.map(produto => formatProduct(produto));
                     
                     setProducts(formattedProducts);
-                    setTotalPages(data.totalPages);
-                    setTotalItems(data.totalItems);
+                    setTotalPages(data.meta?.totalPages || 1);
+                    setTotalItems(data.meta?.total || formattedProducts.length);
+                    setCurrentPage(data.meta?.page || page);
                 } else {
                     setProducts([]);
+                    setTotalPages(1);
+                    setTotalItems(0);
                 }
             } catch (error) {
+                console.error('Erro ao carregar produtos diretamente:', error);
                 setProducts([]);
                 
                 // Fallback para o método original em caso de falha
@@ -280,13 +334,25 @@ const ProductsPage = () => {
         
         // Carregar categorias e fabricantes
         const loadCategories = async () => {
-            const categories = await getProdutoCategory(25);
-            setCategories(categories);
+            try {
+                const categories = await getProdutoCategory();
+                console.log('Categorias carregadas para o state:', categories);
+                setCategories(categories);
+            } catch (error) {
+                console.error('Erro ao carregar categorias:', error);
+                setCategories([]);
+            }
         };
         
         const loadFabricantes = async () => {
-            const fabricantes = await getProdutoFabricante();
-            setFabricantes(fabricantes);
+            try {
+                const fabricantes = await getProdutoFabricante();
+                console.log('Fabricantes carregados para o state:', fabricantes);
+                setFabricantes(fabricantes);
+            } catch (error) {
+                console.error('Erro ao carregar fabricantes:', error);
+                setFabricantes([]);
+            }
         };
         
         // Executar carregamentos
@@ -295,48 +361,68 @@ const ProductsPage = () => {
         loadCategories();
     }, [page, category, fabricante]);
 
+    useEffect(() => {
+        console.log('Categorias armazenadas no filtro:', catSett);
+        console.log('Fabricantes armazenados no filtro:', fabSett);
+    }, [catSett, fabSett]);
+
     const handleAtualizaFiltros = async () => {
         const url = new URL(window.location.href);
         
         setCurrentPage(1);
         url.searchParams.set('page', '1');
         
-        if (catSett.length > 0) {
-            url.searchParams.set('categoria', catSett.join(','));
+        // Filtros usando nomes de categorias e marcas
+        const categoriasSelecionadas = catSett.length > 0 ? catSett.map(cat => encodeURIComponent(cat)).join(',') : '';
+        const fabricantesSelecionados = fabSett.length > 0 ? fabSett.map(fab => encodeURIComponent(fab)).join(',') : '';
+        
+        console.log('Filtros aplicados:', {
+            categorias: catSett,
+            fabricantes: fabSett,
+            categoriasSelecionadas,
+            fabricantesSelecionados
+        });
+        
+        if (categoriasSelecionadas) {
+            url.searchParams.set('categoria', categoriasSelecionadas);
         } else {
             url.searchParams.delete('categoria');
         }
         
-        if (fabSett.length > 0) {
-            url.searchParams.set('fabricante', fabSett.join(','));
+        if (fabricantesSelecionados) {
+            url.searchParams.set('fabricante', fabricantesSelecionados);
         } else {
             url.searchParams.delete('fabricante');
         }
         
         window.history.pushState({}, '', url);
         
-        const categoriaParam = catSett.length > 0 ? catSett.join(',') : null;
-        const fabricanteParam = fabSett.length > 0 ? fabSett.join(',') : null;
-        
-        await loadProductsData(1, categoriaParam, fabricanteParam);
+        await loadProductsData(1, categoriasSelecionadas, fabricantesSelecionados);
     };
     
-    const handleCheckboxChange = (event: React.ChangeEvent<HTMLInputElement>, id: number) => {
+    const handleCheckboxChange = (event: React.ChangeEvent<HTMLInputElement>, categoryName: string) => {
         setCatSett((prev) =>
-          event.target.checked ? [...prev, id] : prev.filter((item) => item !== id)
+          event.target.checked ? [...prev, categoryName] : prev.filter((item) => item !== categoryName)
         );
     };
 
-    const handleCheckboxChangeFab = (event: React.ChangeEvent<HTMLInputElement>, fab_codigo: number) => {
+    const handleCheckboxChangeFab = (event: React.ChangeEvent<HTMLInputElement>, brandName: string | undefined) => {
+        if (brandName === undefined) return;
         setFabSett((prev) =>
-          event.target.checked ? [...prev, fab_codigo] : prev.filter((item) => item !== fab_codigo)
+          event.target.checked ? [...prev, brandName] : prev.filter((item) => item !== brandName)
         );
     };
     
     const handlePageChange = async (event, value) => {
         // Preparar os parâmetros de filtro
-        const categoriaParam = catSett.length > 0 ? catSett.join(',') : category;
-        const fabricanteParam = fabSett.length > 0 ? fabSett.join(',') : fabricante;
+        const categoriaParam = catSett.length > 0 ? catSett.join(',') : category || '';
+        const fabricanteParam = fabSett.length > 0 ? fabSett.join(',') : fabricante || '';
+        
+        console.log('Parâmetros de filtro para paginação:', {
+            categoriaParam,
+            fabricanteParam,
+            page: value
+        });
         
         // Forçar uma limpeza dos produtos para indicar carregamento
         setProducts([]);
@@ -371,7 +457,14 @@ const ProductsPage = () => {
             
             // Fazer requisição direta ao backend com opções anti-cache
             const timestamp = new Date().getTime();
-            const backendQueryUrl = `${backendUrl}/product?limit=${itemsPerPage}&page=${value}&_nocache=${timestamp}${buscaParams ? '&s='+buscaParams : ''}${categoriaParam ? '&categoria='+categoriaParam : ''}${fabricanteParam ? '&fabricante='+fabricanteParam : ''}`;
+            const brandName = fabricanteParam ? fabricanteParam.toString() : '';
+            const categoryName = categoriaParam ? categoriaParam.toString() : '';
+            
+            console.log('Parâmetros de paginação para a API:', { brandName, categoryName, page: value });
+            
+            const backendQueryUrl = `${backendUrl}/category/filter?page=${value}&limit=${itemsPerPage}${buscaParams ? '&s='+buscaParams : ''}${brandName ? '&brandName='+encodeURIComponent(brandName) : ''}${categoryName ? '&categoryName='+encodeURIComponent(categoryName) : ''}&sortDirection=DESC&_nocache=${timestamp}`;
+            
+            console.log('URL de paginação:', backendQueryUrl);
             
             const response = await fetch(backendQueryUrl, {
                 method: 'GET',
@@ -389,36 +482,24 @@ const ProductsPage = () => {
             
             const data = await response.json();
             
-            // Debug: Verificar se os dados são diferentes para página 1 e 2
-            if (value === 2) {
-                // Fazer requisição para a página 1 para comparar
-                const page1Data = await debugRequestToBackend(`${backendUrl}/product?limit=${itemsPerPage}&page=1&_t=${timestamp}${categoriaParam ? '&categoria='+categoriaParam : ''}${fabricanteParam ? '&fabricante='+fabricanteParam : ''}`);
-            }
-            
-            if (data && data.data && data.data.length > 0) {
-                const formattedProducts = data.data.map((produto) => ({
-                    id: produto.id,
-                    pro_codigo: produto.reference,
-                    pro_descricao: produto.name,
-                    pro_desc_tecnica: produto.techDescription,
-                    pro_precovenda: produto.price,
-                    pro_url_amigavel: produto.slug,
-                    imagens: produto.images,
-                    name: produto.name,
-                    img: produto.images && produto.images.length > 0 ? produto.images[0].url : "",
-                    price: produto.price ? `R$ ${produto.price.replace('.', ',')}` : 'Preço indisponível',
-                    sku: produto.model,
-                }));
+            // Processar a resposta da API
+            if (data && data.data && Array.isArray(data.data)) {
+                const formattedProducts = data.data.map(produto => formatProduct(produto));
                 
                 // Forçar a atualização do estado imediatamente
                 setProducts(formattedProducts);
-                setTotalPages(data.totalPages);
-                setTotalItems(data.totalItems);
+                setTotalPages(data.meta?.totalPages || 1);
+                setTotalItems(data.meta?.total || formattedProducts.length);
             } else {
                 setProducts([]);
+                setTotalPages(1);
+                setTotalItems(0);
             }
         } catch (error) {
+            console.error('Erro ao carregar produtos por paginação:', error);
             setProducts([]);
+            setTotalPages(1);
+            setTotalItems(0);
         } finally {
             setIsLoading(false);
         }
@@ -442,8 +523,10 @@ const ProductsPage = () => {
 
     return (
         <>
-            <Cart cartOpened={openedCart} onCartToggle={setOpenedCart}/>
-            <Header cartOpened={openedCart} onCartToggle={setOpenedCart} />
+            <ClientOnly>
+                <Cart cartOpened={openedCart} onCartToggle={setOpenedCart}/>
+                <Header cartOpened={openedCart} onCartToggle={setOpenedCart} />
+            </ClientOnly>
             <div className="container d-flex flex-wrap justify-content-center mt-3">
                 <div className="w-100 mb-3">
                     <Breadcrumbs aria-label="breadcrumb">
@@ -478,19 +561,23 @@ const ProductsPage = () => {
                                     </AccordionSummary>
                                     <AccordionDetails>
                                         <FormGroup>
-                                            {categories.map((c) => (
-                                                <FormControlLabel 
-                                                    key={c.id} 
-                                                    control={
-                                                        <Checkbox 
-                                                            onChange={(event) => handleCheckboxChange(event, c.id)} 
-                                                            checked={catSett.includes(c.id)} 
-                                                            size='small' 
-                                                        />
-                                                    } 
-                                                    label={c.name} 
-                                                />
-                                            ))}
+                                            {Array.isArray(categories) && categories.length > 0 ? (
+                                                categories.map((c) => (
+                                                    <FormControlLabel 
+                                                        key={c.id || `cat-${Math.random()}`} 
+                                                        control={
+                                                            <Checkbox 
+                                                                onChange={(event) => handleCheckboxChange(event, c.name)} 
+                                                                checked={catSett.includes(c.name)} 
+                                                                size='small' 
+                                                            />
+                                                        } 
+                                                        label={c.name || 'Categoria sem nome'} 
+                                                    />
+                                                ))
+                                            ) : (
+                                                <Typography variant="body2">Carregando categorias...</Typography>
+                                            )}
                                         </FormGroup>
                                     </AccordionDetails>
                                 </Accordion>
@@ -504,19 +591,23 @@ const ProductsPage = () => {
                                     </AccordionSummary>
                                     <AccordionDetails>
                                         <FormGroup>
-                                            {fabricantes && fabricantes.map((f) => (
-                                                <FormControlLabel 
-                                                    key={f.brand.id} 
-                                                    control={
-                                                        <Checkbox 
-                                                            onChange={(event) => handleCheckboxChangeFab(event, f.brand.id)} 
-                                                            checked={fabSett.includes(f.brand.id)} 
-                                                            size='small' 
-                                                        />
-                                                    } 
-                                                    label={f.brand.name} 
-                                                />
-                                            ))}
+                                            {Array.isArray(fabricantes) && fabricantes.length > 0 ? (
+                                                fabricantes.map((f) => (
+                                                    <FormControlLabel 
+                                                        key={f.brand?.id || `brand-${Math.random()}`} 
+                                                        control={
+                                                            <Checkbox 
+                                                                onChange={(event) => handleCheckboxChangeFab(event, f.brand?.name)} 
+                                                                checked={fabSett.includes(f.brand?.name)} 
+                                                                size='small' 
+                                                            />
+                                                        } 
+                                                        label={f.brand?.name || 'Marca sem nome'} 
+                                                    />
+                                                ))
+                                            ) : (
+                                                <Typography variant="body2">Carregando marcas...</Typography>
+                                            )}
                                         </FormGroup>
                                     </AccordionDetails>
                                 </Accordion>
@@ -537,6 +628,24 @@ const ProductsPage = () => {
                                 </Accordion>
                                 <div style={{padding: '10px'}}>
                                     <button type='button' onClick={handleAtualizaFiltros} className='refreshFillters'>Atualizar Filtros</button>
+                                    {process.env.NODE_ENV === 'development' && (
+                                        <button 
+                                            type='button' 
+                                            onClick={() => {
+                                                console.log('=== DEBUG ===');
+                                                console.log('Categorias:', categories);
+                                                console.log('Fabricantes:', fabricantes);
+                                                console.log('Seleção de categorias:', catSett);
+                                                console.log('Seleção de fabricantes:', fabSett);
+                                                console.log('=============');
+                                                alert('Dados de debug exibidos no console');
+                                            }} 
+                                            className='refreshFillters'
+                                            style={{marginTop: '10px', background: '#333'}}
+                                        >
+                                            Debug
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -555,11 +664,12 @@ const ProductsPage = () => {
                                 </div>
                                 <a href={`/produto/${produto.pro_url_amigavel}`}>
                                     <Image
-                                            src={produto.img}
+                                            src={produto.img || NoImage.src}
                                             width={200}
                                             height={200}
-                                            alt="Produto"
-                                            layout="responsive"
+                                            alt={produto.name || "Produto"}
+                                            unoptimized={true}
+                                            onError={handleImageError}
                                     />
                                 </a>
                                 <div className="promo green">
