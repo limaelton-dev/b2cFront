@@ -401,15 +401,26 @@ const CheckoutPage = () => {
                     return;
                 }
 
+                // Extrair o token JWT da resposta
+                const token = registerResponse.access_token;
+                
                 // Salvar o token JWT nos cookies
-                saveToken(registerResponse.token);
-                setCookie('jwt', registerResponse.token, { maxAge: 60 * 60 * 24 * 7 }); // 7 dias
+                saveToken(token);
+                setCookie('jwt', token, { maxAge: 60 * 60 * 24 * 7 }); // 7 dias
 
-                // Atualizar o contexto de autenticação
+                // Configuração para autenticação com o token correto
+                const authConfig = {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                };
+
+                // Atualizar o contexto de autenticação com os dados recebidos
                 setUserFn({
                     id: registerResponse.user.id,
                     name: registerResponse.user.name,
-                    email: registerResponse.user.email
+                    email: registerResponse.user.email,
+                    profileId: registerResponse.user.profileId || registerResponse.profileId
                 });
                 
                 // Salvar dados do usuário no localStorage
@@ -417,11 +428,13 @@ const CheckoutPage = () => {
                     localStorage.setItem('user', JSON.stringify({
                         id: registerResponse.user.id,
                         name: registerResponse.user.name,
-                        email: registerResponse.user.email
+                        email: registerResponse.user.email,
+                        profileId: registerResponse.user.profileId || registerResponse.profileId
                     }));
                 }
                 
                 setIsAuthenticated(true);
+                setProfileId(registerResponse.user.profileId || registerResponse.profileId);
                 
                 // Aguardar um momento para garantir que o token seja aplicado
                 await new Promise(resolve => setTimeout(resolve, 500));
@@ -445,77 +458,77 @@ const CheckoutPage = () => {
                         profileUpdateData.state_registration = inscEstadual;
                     }
                     
-                    // Atualizar perfil
-                    await updateProfile(profileUpdateData);
+                    // Atualizar perfil usando o token correto
+                    await axios.post(`${API_URL}/profile`, profileUpdateData, authConfig);
                     showToast('Perfil cadastrado com sucesso', 'success');
-                } catch (profileError) {
-                    console.error('Erro ao cadastrar dados de perfil:', profileError);
-                    showToast('Erro ao cadastrar dados de perfil', 'error');
-                    setLoadBtn(false);
-                    return; // Interromper o fluxo em caso de erro
-                }
-                
-                // Primeiro obter os dados pessoais para ter o profile_id
-                try {
-                    profileResponse = await getUserPersonalData();
-                    if (!profileResponse || !profileResponse.profile.id) {
-                        throw new Error('Não foi possível obter o profile_id');
-                    }
-                } catch (personalDataError) {
-                    console.error('Erro ao obter dados pessoais:', personalDataError);
-                    showToast('Erro ao obter dados pessoais', 'error');
-                    setLoadBtn(false);
-                    return;
-                }
-                
-                // Cadastrar telefone apenas se o usuário não estiver autenticado previamente
-                if (telCelular && !isAuthenticated) {
-                    try {
-                        // Validar telefone novamente antes de cadastrar
-                        if (!validaTelefone(telCelular)) {
-                            throw new Error('Formato de telefone inválido');
+                    
+                    // Usamos o profileId já obtido na resposta do registro
+                    const profileId = registerResponse.user.profileId || registerResponse.profileId;
+                    
+                    // Cadastrar telefone apenas se o usuário não estiver autenticado previamente e se há um profileId válido
+                    if (telCelular && profileId) {
+                        try {
+                            // Validar telefone novamente antes de cadastrar
+                            if (!validaTelefone(telCelular)) {
+                                throw new Error('Formato de telefone inválido');
+                            }
+                            
+                            const phoneNumber = telCelular.replace(/\D/g, '');
+                            // Extrair DDD e número
+                            const ddd = phoneNumber.substring(0, 2);
+                            const number = phoneNumber.substring(2);
+                            
+                            // Criar objeto com os dados necessários para o telefone
+                            const phoneData = {
+                                ddd,
+                                number,
+                                isDefault: true
+                            };
+                            
+                            console.log('Enviando requisição de telefone com token:', token);
+                            console.log('Dados do telefone:', phoneData);
+                            
+                            // Usar o token para autenticação (mesmo authConfig definido acima)
+                            const response = await axios.post(`${API_URL}/phone`, phoneData, authConfig);
+                            console.log('Resposta da adição de telefone:', response);
+                            
+                            showToast('Telefone cadastrado com sucesso', 'success');
+                        } catch (phoneError) {
+                            console.error('Erro ao adicionar telefone:', phoneError);
+                            showToast('Erro ao adicionar telefone: ' + (phoneError.message || 'Verifique o formato'), 'error');
+                            setLoadBtn(false);
+                            return; // Interromper o fluxo em caso de erro
                         }
-                        
-                        const phoneNumber = telCelular.replace(/\D/g, '');
-                        // Extrair DDD e número
-                        const ddd = phoneNumber.substring(0, 2);
-                        const number = phoneNumber.substring(2);
-                        
-                        // Criar objeto com os dados necessários para o telefone
-                        const phoneData = {
-                            ddd,
-                            number,
+                    }
+                    
+                    // Cadastrar endereço com o token atualizado
+                    try {
+                        const addressData = {
+                            street: endereco,
+                            number: numero,
+                            complement: complemento,
+                            neighborhood: bairro,
+                            city: cidade,
+                            state: estado,
+                            zipCode: cepNumber,
                             isDefault: true
                         };
                         
-                        await axios.post(`${API_URL}/phone`, phoneData, getAuthConfig());
-                        showToast('Telefone cadastrado com sucesso', 'success');
-                    } catch (phoneError) {
-                        console.error('Erro ao adicionar telefone:', phoneError);
-                        showToast('Erro ao adicionar telefone: ' + (phoneError.message || 'Verifique o formato'), 'error');
+                        console.log('Enviando requisição de endereço com token:', token);
+                        console.log('Dados do endereço:', addressData);
+                        
+                        // Usar o mesmo objeto authConfig definido anteriormente
+                        await axios.post(`${API_URL}/address`, addressData, authConfig);
+                        showToast('Endereço cadastrado com sucesso', 'success');
+                    } catch (addressError) {
+                        console.error('Erro ao cadastrar endereço:', addressError);
+                        showToast('Erro ao cadastrar endereço', 'error');
                         setLoadBtn(false);
                         return; // Interromper o fluxo em caso de erro
                     }
-                }
-                
-                // Cadastrar endereço
-                try {
-                    const addressData = {
-                        street: endereco,
-                        number: numero,
-                        complement: complemento,
-                        neighborhood: bairro,
-                        city: cidade,
-                        state: estado,
-                        zipCode: cepNumber,
-                        isDefault: true
-                    };
-                    
-                    await axios.post(`${API_URL}/address`, addressData, getAuthConfig());
-                    showToast('Endereço cadastrado com sucesso', 'success');
-                } catch (addressError) {
-                    console.error('Erro ao cadastrar endereço:', addressError);
-                    showToast('Erro ao cadastrar endereço', 'error');
+                } catch (profileError) {
+                    console.error('Erro ao cadastrar dados de perfil:', profileError);
+                    showToast('Erro ao cadastrar dados de perfil', 'error');
                     setLoadBtn(false);
                     return; // Interromper o fluxo em caso de erro
                 }
@@ -1204,7 +1217,7 @@ const CheckoutPage = () => {
                             <button type='button' className='button-change-checkout' onClick={() => changeStep(1)} style={{display: step == 1 ? 'none' : 'block'}}>
                                 <LocalShippingIcon></LocalShippingIcon>
                             </button>
-                            <Box className={'d-flex justify-content-between flex-wrap '+(step == 1 ? 'active-column-checkout' : 'nonactive-column-checkout')} sx={{filter: loadingDadosPessoais ? 'blur(2px)' : 'blur:(0px)'}}>
+                            <Box className={'d-flex justify-content-between flex-wrap '+(step == 1 ? 'active-column-checkout' : 'nonactive-column-checkout')} sx={{filter: loadingDadosPessoais ? 'blur(2px)' : 'blur(0px)'}}>
                                 <RadioGroup
                                     row
                                     value={tipoPessoa}
@@ -1322,228 +1335,220 @@ const CheckoutPage = () => {
                                     <Checkbox sx={{'& .MuiCheckbox-label': {zIndex: '55'}}} label={<>Quero receber ofertas futuras</>}/>
                                     <Checkbox sx={{'& .MuiCheckbox-label': {zIndex: '55'}}} label={<>Aceito a <Link sx={{color: 'blue'}} underline="hover" color="inherit" href="/">Política de Privacidade</Link></>}/>
                                 </div>
-                                <Button 
-                                    variant="contained" 
-                                    color="primary"
-                                    className='mb-3'
-                                    fullWidth 
-                                    onClick={() => {changeStep(2);}}
-                                    disabled={loadBtn}
-                                >
-                                    Continuar
-                                </Button>
-                            </Box>
-                        </form>
-                    </div>
-                    <div className="shipping content-ship-pay px-3">
-                        <span className='title-section' style={{ 
-                            cursor: 'pointer', 
-                            fontWeight: step === 2 ? 'bold' : 'normal',
-                            color: step === 2 ? '#0d6efd' : 'inherit',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            padding: '8px 0',
-                            borderBottom: step === 2 ? '2px solid #0d6efd' : 'none',
-                            transition: 'all 0.3s ease'
-                        }} onClick={() => changeStep(2)}>
-                            Entrega {step !== 2 && <span style={{ fontSize: '12px', marginLeft: '4px' }}>(clique para editar)</span>}
-                        </span>
-                        <form action="" className='d-flex justify-content-center flex-wrap position-relative'>
-                            <button type='button' className='button-change-checkout' onClick={() => changeStep(2)} style={{display: step == 2 ? 'none' : 'block'}}>
-                                <LocalShippingIcon></LocalShippingIcon>
-                            </button>
-                            <div className={'d-flex justify-content-center flex-wrap '+(step == 2 ? 'active-column-checkout' : 'nonactive-column-checkout')}>
-                                <div className={'d-flex justify-content-center align-items-center'} style={{marginTop: '20px',  marginBottom: '8px'}}>
-                                    <ReactInputMask
-                                        mask="99999-999"
-                                        value={cepNumber}
-                                        onChange={handleChangeCep}
-                                        maskChar=""
-                                    >
-                                        {(inputProps) => (
-                                            <TextField
-                                            {...inputProps}
-                                            label="Cep*"
-                                            variant="standard"
-                                            sx={{
-                                                '& .MuiInputBase-input::placeholder': {
-                                                    fontSize: '23px', 
-                                                    fontWeight: 'bold',
-                                                },width: '60%',  marginBottom: '8px'
-                                            }}
-                                            />
-                                        )}
-                                    </ReactInputMask>
-                                </div>
-                                <div className='d-flex justify-content-between flex-wrap' style={{ position: 'relative' }}>
-                                    {loadingCep ? (
-                                        <Box sx={{ 
-                                            position: 'absolute', 
-                                            top: '40%', 
-                                            left: '50%', 
-                                            transform: 'translate(-50%, -50%)', 
-                                            display: 'flex', 
-                                            justifyContent: 'center', 
-                                            alignItems: 'center',
-                                            zIndex: '99999'
-                                        }}>
-                                            <CircularProgress />
-                                        </Box>
-                                    ) : ''}
-                                    <Box className='d-flex justify-content-between flex-wrap' sx={{filter: loadingCep ? 'blur(2px)' : 'blur:(0px)'}}>
-                                        <TextField sx={{width: '100%',  marginBottom: '8px', marginTop: '0px'}} value={endereco} onChange={changeEndereco} label="Endereço de Entrega*" variant="standard" />
-                                        <TextField sx={{width: '19%',  marginBottom: '8px'}} value={numero} onChange={changeNumero} label="Número*" variant="standard" />
-                                        <TextField sx={{width: '45%',  marginBottom: '8px'}} value={complemento} onChange={changeComplemento} label="Complemento" variant="standard" />
-                                        <TextField sx={{width: '31%',  marginBottom: '8px'}} value={estado} onChange={changeEstado} label="Estado*" variant="standard" />
-                                        <TextField sx={{width: '42%',  marginBottom: '8px'}} value={cidade} onChange={changeCidade} label="Cidade*" variant="standard" />
-                                        <TextField sx={{width: '42%',  marginBottom: '8px'}} value={bairro} onChange={changeBairro} label="Bairro*" variant="standard" />
-                                    </Box>
-                                    <div className="fretes">
-                                        {freteNome && 
-                                            <>
-                                                <h6 style={{marginTop: '10px'}}>Escolha o frete:</h6>
-                                                <div className="frete-box">
-                                                    <div className="frete">
-                                                        <Checkbox sx={{'& .MuiSvgIcon-root': {background: 'gray', borderRadius: '4px'}, '& .MuiCheckbox-label': {zIndex: '55'}}} label={
-                                                            <div className='text-frete'>
-                                                                <span>{freteNome} {prazo ? `(até ${prazo} dias úteis)` : ''} </span>
-                                                                <span className="price">
-                                                                    R$ {fretePreco !== undefined ? fretePreco.toFixed(2).replace('.',',') : '0,00'}
-                                                                </span>
-                                                            </div>
-                                                        } />
-                                                    </div>
-                                                </div>
-                                            </>
-                                        }
-                                    </div>
-                                    <Button 
-                                        variant="contained" 
-                                        color="primary"
-                                        className='mb-3'
-                                        fullWidth 
-                                        onClick={() => changeStep(3)}
-                                        disabled={loadBtn}
-                                    >
-                                        Continuar
-                                    </Button>
-                                </div> 
-                            </div>
-                        </form>
-                    </div>
-                    <div className="payment content-ship-pay px-5">
-                        <span className='title-section' style={{ 
-                            cursor: 'pointer', 
-                            fontWeight: step === 3 ? 'bold' : 'normal',
-                            color: step === 3 ? '#0d6efd' : 'inherit',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            padding: '8px 0',
-                            borderBottom: step === 3 ? '2px solid #0d6efd' : 'none',
-                            transition: 'all 0.3s ease'
-                        }} onClick={() => changeStep(3)}>
-                            Pagamento
-                        </span>
-                        <div className="position-relative d-flex flex-wrap" style={{ width: '100%', height: '100%' }}>
-                            <button type='button' className='button-change-checkout' onClick={() => changeStep(3)} style={{display: step == 3 ? 'none' : 'block'}}>
-                                <LocalAtmIcon></LocalAtmIcon>
-                            </button>
-                            <div className={'d-flex justify-content-center flex-wrap '+(step == 3 ? 'active-column-checkout' : 'nonactive-column-checkout')}>
-                                <RadioGroup
-                                    row
-                                    value={tipoCompra}
-                                    aria-labelledby="demo-row-radio-buttons-group-label"
-                                    name="row-radio-buttons-group"
-                                    sx={{justifyContent: 'space-between', width: '100%', marginTop: '15px'}}
-                                >
-                                    <FormControlLabel value="1" sx={{margin: '0px'}} control={<Radio />} onClick={changeRadioTipoCompra} label="Cartão de Crédito" />
-                                    <FormControlLabel value="2" sx={{margin: '0px'}} control={<Radio />} onClick={changeRadioTipoCompra} label="Pix" />
-                                </RadioGroup>
-                                {tipoCompra == '1' &&    
-                                    <div className='d-flex justify-content-between flex-wrap' style={{height: '158px'}}>
+                                                                    <Button                                         variant="contained"                                         color="primary"                                        className='mb-3'                                        fullWidth                                         onClick={() => {changeStep(2);}}                                        disabled={loadBtn}                                    >                                        Continuar                                    </Button>                                </Box>
+                            </form>
+                        </div>
+                        <div className="shipping content-ship-pay px-3">
+                            <span className='title-section' style={{ 
+                                cursor: 'pointer', 
+                                fontWeight: step === 2 ? 'bold' : 'normal',
+                                color: step === 2 ? '#0d6efd' : 'inherit',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                padding: '8px 0',
+                                borderBottom: step === 2 ? '2px solid #0d6efd' : 'none',
+                                transition: 'all 0.3s ease'
+                            }} onClick={() => changeStep(2)}>
+                                Entrega {step !== 2 && <span style={{ fontSize: '12px', marginLeft: '4px' }}>(clique para editar)</span>}
+                            </span>
+                            <form action="" className='d-flex justify-content-center flex-wrap position-relative'>
+                                <button type='button' className='button-change-checkout' onClick={() => changeStep(2)} style={{display: step == 2 ? 'none' : 'block'}}>
+                                    <LocalShippingIcon></LocalShippingIcon>
+                                </button>
+                                <div className={'d-flex justify-content-center flex-wrap '+(step == 2 ? 'active-column-checkout' : 'nonactive-column-checkout')}>
+                                    <div className={'d-flex justify-content-center align-items-center'} style={{marginTop: '20px',  marginBottom: '8px'}}>
                                         <ReactInputMask
-                                            mask="9999 9999 9999 9999"
-                                            value={cardNumber}
-                                            onChange={handleChangeCardNumber}
-                                            disabled={isMaskedCC}
-                                            maskChar="X"
-                                            >
+                                            mask="99999-999"
+                                            value={cepNumber}
+                                            onChange={handleChangeCep}
+                                            maskChar=""
+                                        >
                                             {(inputProps) => (
                                                 <TextField
                                                 {...inputProps}
-                                                label="Número do Cartão"
+                                                label="Cep*"
                                                 variant="standard"
-                                                placeholder='•••• •••• •••• ••••'
-                                                slotProps={{
-                                                    input: {
-                                                        endAdornment: (
-                                                            <InputAdornment position="end">
-                                                                {flagCard}
-                                                            </InputAdornment>
-                                                        ),
-                                                    },
-                                                }}
                                                 sx={{
                                                     '& .MuiInputBase-input::placeholder': {
                                                         fontSize: '23px', 
                                                         fontWeight: 'bold',
-                                                    },width: '100%',  marginBottom: '4px', marginTop: '0px'
+                                                    },width: '60%',  marginBottom: '8px'
                                                 }}
                                                 />
                                             )}
                                         </ReactInputMask>
-                                        <TextField sx={{width: '25%',  marginBottom: '7px'}} disabled={isMaskedCC} onChange={changeCCV} value={CVV} label="CVV*" variant="standard" />
-                                        <TextField sx={{width: '45%',  marginBottom: '7px'}} disabled={isMaskedCC} onChange={changeExpireCC} value={expireCC} label="Validade*" placeholder='mm/aa' variant="standard" />
-                                        <div style={{width: '100%', marginTop: '25px'}}>
-                                            <Checkbox disabled={isMaskedCC} label="Guardar para compras futuras"/>
+                                    </div>
+                                    <div className='d-flex justify-content-between flex-wrap' style={{ position: 'relative' }}>
+                                        {loadingCep ? (
+                                            <Box sx={{ 
+                                                position: 'absolute', 
+                                                top: '40%', 
+                                                left: '50%', 
+                                                transform: 'translate(-50%, -50%)', 
+                                                display: 'flex', 
+                                                justifyContent: 'center', 
+                                                alignItems: 'center',
+                                                zIndex: '99999'
+                                            }}>
+                                                <CircularProgress />
+                                            </Box>
+                                        ) : ''}
+                                        <Box className='d-flex justify-content-between flex-wrap' sx={{filter: loadingCep ? 'blur(2px)' : 'blur(0px)'}}>
+                                            <TextField sx={{width: '100%',  marginBottom: '8px', marginTop: '0px'}} value={endereco} onChange={changeEndereco} label="Endereço de Entrega*" variant="standard" />
+                                            <TextField sx={{width: '19%',  marginBottom: '8px'}} value={numero} onChange={changeNumero} label="Número*" variant="standard" />
+                                            <TextField sx={{width: '45%',  marginBottom: '8px'}} value={complemento} onChange={changeComplemento} label="Complemento" variant="standard" />
+                                            <TextField sx={{width: '31%',  marginBottom: '8px'}} value={estado} onChange={changeEstado} label="Estado*" variant="standard" />
+                                            <TextField sx={{width: '42%',  marginBottom: '8px'}} value={cidade} onChange={changeCidade} label="Cidade*" variant="standard" />
+                                            <TextField sx={{width: '42%',  marginBottom: '8px'}} value={bairro} onChange={changeBairro} label="Bairro*" variant="standard" />
+                                        </Box>
+                                        <div className="fretes">
+                                            {freteNome && 
+                                                <>
+                                                    <h6 style={{marginTop: '10px'}}>Escolha o frete:</h6>
+                                                    <div className="frete-box">
+                                                        <div className="frete">
+                                                            <Checkbox sx={{'& .MuiSvgIcon-root': {background: 'gray', borderRadius: '4px'}, '& .MuiCheckbox-label': {zIndex: '55'}}} label={
+                                                                <div className='text-frete'>
+                                                                    <span>{freteNome} {prazo ? `(até ${prazo} dias úteis)` : ''} </span>
+                                                                    <span className="price">
+                                                                        R$ {fretePreco !== undefined ? fretePreco.toFixed(2).replace('.',',') : '0,00'}
+                                                                    </span>
+                                                                </div>
+                                                            } />
+                                                        </div>
+                                                    </div>
+                                                </>
+                                            }
                                         </div>
-                                        {isMaskedCC && (
-                                            <div style={{width: '100%', marginTop: '10px', textAlign: 'center', color: '#0d6efd', fontSize: '14px'}}>
-                                                <p>Você já possui um cartão cadastrado que será utilizado para esta compra.</p>
+                                        <Button 
+                                            variant="contained" 
+                                            color="primary"
+                                            className='mb-3'
+                                            fullWidth 
+                                            onClick={() => changeStep(3)}
+                                            disabled={loadBtn}
+                                        >
+                                            Continuar
+                                        </Button>
+                                    </div> 
+                                </div>
+                            </form>
+                        </div>
+                        <div className="payment content-ship-pay px-5">
+                            <span className='title-section' style={{ 
+                                cursor: 'pointer', 
+                                fontWeight: step === 3 ? 'bold' : 'normal',
+                                color: step === 3 ? '#0d6efd' : 'inherit',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                padding: '8px 0',
+                                borderBottom: step === 3 ? '2px solid #0d6efd' : 'none',
+                                transition: 'all 0.3s ease'
+                            }} onClick={() => changeStep(3)}>
+                                Pagamento
+                            </span>
+                            <div className="position-relative d-flex flex-wrap" style={{ width: '100%', height: '100%' }}>
+                                <button type='button' className='button-change-checkout' onClick={() => changeStep(3)} style={{display: step == 3 ? 'none' : 'block'}}>
+                                    <LocalAtmIcon></LocalAtmIcon>
+                                </button>
+                                <div className={'d-flex justify-content-center flex-wrap '+(step == 3 ? 'active-column-checkout' : 'nonactive-column-checkout')}>
+                                    <RadioGroup
+                                        row
+                                        value={tipoCompra}
+                                        aria-labelledby="demo-row-radio-buttons-group-label"
+                                        name="row-radio-buttons-group"
+                                        sx={{justifyContent: 'space-between', width: '100%', marginTop: '15px'}}
+                                    >
+                                        <FormControlLabel value="1" sx={{margin: '0px'}} control={<Radio />} onClick={changeRadioTipoCompra} label="Cartão de Crédito" />
+                                        <FormControlLabel value="2" sx={{margin: '0px'}} control={<Radio />} onClick={changeRadioTipoCompra} label="Pix" />
+                                    </RadioGroup>
+                                    {tipoCompra == '1' &&    
+                                        <div className='d-flex justify-content-between flex-wrap' style={{height: '158px'}}>
+                                            <ReactInputMask
+                                                mask="9999 9999 9999 9999"
+                                                value={cardNumber}
+                                                onChange={handleChangeCardNumber}
+                                                disabled={isMaskedCC}
+                                                maskChar="X"
+                                            >
+                                                {(inputProps) => (
+                                                    <TextField
+                                                        {...inputProps}
+                                                        label="Número do Cartão"
+                                                        variant="standard"
+                                                        placeholder='•••• •••• •••• ••••'
+                                                        InputProps={{
+                                                            endAdornment: (
+                                                                <InputAdornment position="end">
+                                                                    {flagCard}
+                                                                </InputAdornment>
+                                                            )
+                                                        }}
+                                                        sx={{
+                                                            '& .MuiInputBase-input::placeholder': {
+                                                                fontSize: '23px', 
+                                                                fontWeight: 'bold',
+                                                            },
+                                                            width: '100%',  
+                                                            marginBottom: '4px', 
+                                                            marginTop: '0px'
+                                                        }}
+                                                    />
+                                                )}
+                                            </ReactInputMask>
+                                            <TextField sx={{width: '25%',  marginBottom: '7px'}} disabled={isMaskedCC} onChange={changeCCV} value={CVV} label="CVV*" variant="standard" />
+                                            <TextField sx={{width: '45%',  marginBottom: '7px'}} disabled={isMaskedCC} onChange={changeExpireCC} value={expireCC} label="Validade*" placeholder='mm/aa' variant="standard" />
+                                            <div style={{width: '100%', marginTop: '25px'}}>
+                                                <Checkbox disabled={isMaskedCC} label="Guardar para compras futuras"/>
+                                            </div>
+                                            {isMaskedCC && (
+                                                <div style={{width: '100%', marginTop: '10px', textAlign: 'center', color: '#0d6efd', fontSize: '14px'}}>
+                                                    <p>Você já possui um cartão cadastrado que será utilizado para esta compra.</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    }
+                                    {tipoCompra == '2' &&    
+                                        <div className='d-flex justify-content-center align-items-center' style={{height: '158px'}}>
+                                            <span>A chave pix será liberada após a confirmação</span>
+                                        </div>
+                                    }
+                                    {tipoPessoa == '2' && 
+                                        <div className='d-flex justify-content-between flex-wrap'>
+                                            <div style={{width: '100%', marginTop: '3px'}}>
+                                                <Checkbox label="Estou autorizado a comprar em nome da empresa"/>
+                                            </div>
+                                        </div>
+                                    }
+                                    <div className="btn-pay mt-3">
+                                        {!isMaskedCC && tipoCompra === '1' && (!cardNumber || !CVV || !expireCC) && (
+                                            <div style={{ 
+                                                padding: '10px', 
+                                                marginBottom: '10px', 
+                                                borderRadius: '4px', 
+                                                backgroundColor: '#fee', 
+                                                color: '#d33', 
+                                                textAlign: 'center' 
+                                            }}>
+                                                <span>Você precisa informar um cartão para continuar com a compra</span>
                                             </div>
                                         )}
+                                        <Button 
+                                            variant="contained" 
+                                            color="primary" 
+                                            fullWidth 
+                                            onClick={handlePayButton}
+                                            disabled={loadBtn}
+                                        >
+                                            {loadBtn ? (
+                                                <CircularProgress size={24} color="inherit" />
+                                            ) : (
+                                                'Finalizar Compra'
+                                            )}
+                                        </Button>
                                     </div>
-                                }
-                                {tipoCompra == '2' &&    
-                                    <div className='d-flex justify-content-center align-items-center' style={{height: '158px'}}>
-                                        <span>A chave pix será liberada após a confirmação</span>
-                                    </div>
-                                }
-                                {tipoPessoa == '2' && 
-                                    <div className='d-flex justify-content-between flex-wrap'>
-                                        <div style={{width: '100%', marginTop: '3px'}}>
-                                            <Checkbox label="Estou autorizado a comprar em nome da empresa"/>
-                                        </div>
-                                    </div>
-                                }
-                                <div className="btn-pay mt-3">
-                                    {!isMaskedCC && tipoCompra === '1' && (!cardNumber || !CVV || !expireCC) && (
-                                        <div style={{ 
-                                            padding: '10px', 
-                                            marginBottom: '10px', 
-                                            borderRadius: '4px', 
-                                            backgroundColor: '#fee', 
-                                            color: '#d33', 
-                                            textAlign: 'center' 
-                                        }}>
-                                            <span>Você precisa informar um cartão para continuar com a compra</span>
-                                        </div>
-                                    )}
-                                    <Button 
-                                        variant="contained" 
-                                        color="primary" 
-                                        fullWidth 
-                                        onClick={handlePayButton}
-                                        disabled={loadBtn}
-                                    >
-                                        {loadBtn ? (
-                                            <CircularProgress size={24} color="inherit" />
-                                        ) : (
-                                            'Finalizar Compra'
-                                        )}
-                                    </Button>
                                 </div>
                             </div>
                         </div>

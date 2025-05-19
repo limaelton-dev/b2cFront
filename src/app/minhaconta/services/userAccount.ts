@@ -183,33 +183,28 @@ export const deleteCard = async (cardId: number): Promise<void> => {
  */
 export const addCard = async (cardData: Partial<CartaoType>): Promise<CartaoType> => {
   try {
-    // Obter o perfil do usuário para pegar o profile_id
-    const profileResponse = await axios.get(`${API_URL}/user/profile/details`, getAuthConfig());
-    const profileData = profileResponse.data;
-    
     // Criar uma cópia dos dados para não modificar o objeto original
-    const cardWithProfileId = { ...cardData };
+    const cardPayload: {
+      cardNumber?: string;
+      holderName?: string;
+      expirationDate?: string;
+      brand?: string;
+      isDefault: boolean;
+      cvv?: string;
+    } = {
+      cardNumber: cardData.card_number?.replace(/\s+/g, ''),
+      holderName: cardData.holder_name,
+      expirationDate: cardData.expiration_date,
+      brand: cardData.card_type || detectCardType(cardData.card_number || ''),
+      isDefault: true
+    };
     
-    // Adicionar o profile_id aos dados do cartão
-    cardWithProfileId.profile_id = profileData.id;
-    
-    // Remover espaços do número do cartão
-    if (cardWithProfileId.card_number) {
-      // Remover todos os espaços do número do cartão
-      cardWithProfileId.card_number = cardWithProfileId.card_number.replace(/\s+/g, '');
-      
-      // Extrair os últimos 4 dígitos do número do cartão, se não fornecido
-      if (!cardWithProfileId.last_four_digits) {
-        cardWithProfileId.last_four_digits = cardWithProfileId.card_number.slice(-4);
-      }
-      
-      // Detectar o tipo do cartão se não fornecido
-      if (!cardWithProfileId.card_type) {
-        cardWithProfileId.card_type = detectCardType(cardWithProfileId.card_number);
-      }
+    // Adicionar CVV apenas se estiver presente
+    if (cardData.cvv) {
+      cardPayload.cvv = cardData.cvv;
     }
     
-    const response = await axios.post(`${API_URL}/my-account/add-card`, cardWithProfileId, getAuthConfig());
+    const response = await axios.post(`${API_URL}/card`, cardPayload, getAuthConfig());
     return response.data;
   } catch (error) {
     console.error('Erro ao adicionar cartão:', error);
@@ -276,28 +271,18 @@ export const updateCard = async (cardId: number, cardData: Partial<CartaoType>):
  * Atualiza os dados de perfil do usuário (nome, CPF, data de nascimento, gênero)
  * @param data Dados a serem atualizados
  */
-export const updateProfile = async (data: Partial<DadosPessoaisType>): Promise<void> => {
+export const updateProfile = async (data: any): Promise<void> => {
   try {
-    const dataToUpdate: Record<string, any> = {};
-    
-    // Adicionar logs para debug
+    // Esta função será mantida apenas para compatibilidade
+    // com o código existente, mas não fará chamadas à API
     console.log('Dados recebidos para atualização de perfil:', data);
+    console.log('A atualização de perfil agora é feita diretamente pelos endpoints específicos de endereço, telefone e cartão');
     
-    // Adicionar apenas os campos que foram fornecidos
-    if (data.firstName !== undefined) dataToUpdate.firstName = data.firstName;
-    if (data.lastName !== undefined) dataToUpdate.lastName = data.lastName;
-    if (data.full_name !== undefined) dataToUpdate.full_name = data.full_name;
-    if (data.cpf !== undefined) dataToUpdate.cpf = data.cpf;
-    if (data.birth_date !== undefined) dataToUpdate.birth_date = data.birth_date;
-    if (data.gender !== undefined) dataToUpdate.gender = data.gender;
-    
-    console.log('Dados formatados para envio:', dataToUpdate);
-    
-    // Enviar requisição PATCH para atualizar o perfil
-    await axios.patch(`${API_URL}/my-account/update-profile`, dataToUpdate, getAuthConfig());
+    // Não faz nenhuma chamada à API, pois os dados são adicionados
+    // diretamente pelos endpoints específicos
+    return;
   } catch (error) {
-    console.error('Erro ao atualizar perfil:', error);
-    console.error('Detalhes do erro:', error.response?.data || error.message);
+    console.error('Erro ao processar dados do perfil:', error);
     throw error;
   }
 };
@@ -315,7 +300,7 @@ export const updateUser = async (data: Partial<DadosPessoaisType>): Promise<void
     if (data.email !== undefined) dataToUpdate.email = data.email;
     
     // Enviar requisição PATCH para atualizar o usuário
-    await axios.patch(`${API_URL}/my-account/update-user`, dataToUpdate, getAuthConfig());
+    await axios.post(`${API_URL}/user`, dataToUpdate, getAuthConfig());
   } catch (error) {
     console.error('Erro ao atualizar usuário:', error);
     throw error;
@@ -324,11 +309,22 @@ export const updateUser = async (data: Partial<DadosPessoaisType>): Promise<void
 
 /**
  * Adiciona um novo telefone
- * @param phoneNumber Número do telefone
+ * @param phoneNumber Número do telefone completo com DDD
  */
 export const addPhone = async (phoneNumber: string): Promise<void> => {
   try {
-    await axios.post(`${API_URL}/my-account/add-phone`, { phone: phoneNumber }, getAuthConfig());
+    // Extrair DDD e número
+    const ddd = phoneNumber.substring(0, 2);
+    const number = phoneNumber.substring(2);
+    
+    // Criar payload conforme nova API
+    const phonePayload = {
+      ddd,
+      number,
+      isDefault: true
+    };
+    
+    await axios.post(`${API_URL}/phone`, phonePayload, getAuthConfig());
   } catch (error) {
     console.error('Erro ao adicionar telefone:', error);
     throw error;
@@ -381,15 +377,19 @@ export const setPrimaryPhone = async (phoneId: number): Promise<void> => {
  */
 export const addAddress = async (addressData: Partial<EnderecoType>): Promise<EnderecoType> => {
   try {
-    // Obter o perfil do usuário para pegar o profile_id
-    const profileResponse = await axios.get(`${API_URL}/user/profile/details`, getAuthConfig());
-    
-    // Adicionar o profile_id aos dados do endereço
-    const addressWithProfileId = {
-      ...addressData,
+    // Formatar os dados do endereço conforme a nova API
+    const addressPayload = {
+      street: addressData.street,
+      number: addressData.number,
+      complement: addressData.complement,
+      neighborhood: addressData.neighborhood,
+      city: addressData.city,
+      state: addressData.state,
+      zipCode: addressData.postal_code,
+      isDefault: addressData.is_default || true
     };
     
-    const response = await axios.post(`${API_URL}/address`, addressWithProfileId, getAuthConfig());
+    const response = await axios.post(`${API_URL}/address`, addressPayload, getAuthConfig());
     return response.data;
   } catch (error) {
     console.error('Erro ao adicionar endereço:', error);

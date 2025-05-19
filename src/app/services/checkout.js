@@ -60,7 +60,19 @@ export const addAddress = async (addressData) => {
         const headers = {
             Authorization: `Bearer ${getToken()}`
         };
-        const response = await axios.post(`${API_URL}/my-account/add-address`, addressData, { headers });
+        // Formatar os dados para a nova API
+        const formattedData = {
+            street: addressData.street,
+            number: addressData.number,
+            complement: addressData.complement,
+            neighborhood: addressData.neighborhood,
+            city: addressData.city,
+            state: addressData.state,
+            zipCode: addressData.zipCode || addressData.postal_code,
+            isDefault: addressData.isDefault || addressData.is_default || true
+        };
+        
+        const response = await axios.post(`${API_URL}/address`, formattedData, { headers });
         return response.data;
     }
     catch (err) {
@@ -74,7 +86,18 @@ export const addCard = async (cardData) => {
         const headers = {
             Authorization: `Bearer ${getToken()}`
         };
-        const response = await axios.post(`${API_URL}/my-account/add-card`, cardData, { headers });
+        
+        // Formatar os dados para a nova API
+        const formattedData = {
+            cardNumber: cardData.card_number ? cardData.card_number.replace(/\s+/g, '') : cardData.cardNumber,
+            holderName: cardData.holder_name || cardData.holderName,
+            expirationDate: cardData.expiration_date || cardData.expirationDate,
+            brand: cardData.card_type || cardData.brand,
+            cvv: cardData.cvv,
+            isDefault: cardData.is_default || cardData.isDefault || true
+        };
+        
+        const response = await axios.post(`${API_URL}/card`, formattedData, { headers });
         return response.data;
     }
     catch (err) {
@@ -89,15 +112,42 @@ export const addPhone = async (phoneData) => {
             Authorization: `Bearer ${getToken()}`
         };
         
-        // Garantir que o objeto tenha o campo 'number' em vez de 'phone'
+        let ddd, number;
+        
+        // Verificar o formato dos dados de entrada
+        if (typeof phoneData === 'string') {
+            // Se for uma string, é o número completo
+            if (phoneData.length >= 2) {
+                ddd = phoneData.substring(0, 2);
+                number = phoneData.substring(2);
+            } else {
+                throw new Error('Formato de telefone inválido');
+            }
+        } else if (phoneData.phone) {
+            // Formato antigo com campo 'phone'
+            const cleanNumber = phoneData.phone.replace(/\D/g, '');
+            if (cleanNumber.length >= 2) {
+                ddd = cleanNumber.substring(0, 2);
+                number = cleanNumber.substring(2);
+            } else {
+                throw new Error('Formato de telefone inválido');
+            }
+        } else if (phoneData.ddd && phoneData.number) {
+            // Já está no formato correto
+            ddd = phoneData.ddd;
+            number = phoneData.number;
+        } else {
+            throw new Error('Dados de telefone inválidos');
+        }
+        
+        // Formatar para a nova API
         const formattedData = {
-            number: phoneData.phone ? phoneData.phone.replace(/\D/g, '') : '',
-            profileId: phoneData.profile_id,
-            type: phoneData.type || 'celular',
-            is_primary: phoneData.is_primary || true
+            ddd,
+            number,
+            isDefault: phoneData.isDefault || phoneData.is_primary || true
         };
         
-        const response = await axios.post(`${API_URL}/my-account/add-phone`, formattedData, { headers });
+        const response = await axios.post(`${API_URL}/phone`, formattedData, { headers });
         return response.data;
     }
     catch (err) {

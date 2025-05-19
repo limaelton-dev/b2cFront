@@ -16,19 +16,28 @@ const getAuthConfig = () => {
 // Função para obter o perfil do usuário usando a mesma convenção do minhaconta
 export const getProfileUser = async (profileId) => {
     try {
-        // Usar o endpoint do my-account para manter a mesma convenção
-        const response = await axios.get(`${API_URL}/user/profile/details`, getAuthConfig());
+        // Obter dados do perfil
+        const profileResponse = await axios.get(`${API_URL}/profile`, getAuthConfig());
+        
+        // Obter endereços separadamente
+        const addressResponse = await axios.get(`${API_URL}/address`, getAuthConfig());
+        
+        // Obter telefones separadamente
+        const phoneResponse = await axios.get(`${API_URL}/phone`, getAuthConfig());
+        
+        // Obter cartões separadamente
+        const cardResponse = await axios.get(`${API_URL}/card`, getAuthConfig());
         
         // Combinar os dados para retornar no formato esperado pelo checkout
         const profileData = {
-            id: response.data.id,
-            email: response.data.email,
-            profile: response.data.profile,
-            profileType: response.data.profileType,
-            // Para manter compatibilidade com o código existente
-            addresses: response.data.address || [],
-            cards: response.data.card || [],
-            phones: response.data.phone || []
+            id: profileResponse.data.id,
+            email: profileResponse.data.email,
+            profile: profileResponse.data.profile,
+            profileType: profileResponse.data.profileType,
+            // Usar os dados obtidos das chamadas separadas
+            address: addressResponse.data || [],
+            card: cardResponse.data || [],
+            phone: phoneResponse.data || []
         };
         
         return profileData;
@@ -42,8 +51,8 @@ export const getProfileUser = async (profileId) => {
 export const getAddressUser = async () => {
     try {
         // Usar a nova API para obter os endereços
-        const response = await axios.get(`${API_URL}/user/profile/details`, { headers: getAuthHeader() });
-        return response.data.address || [];
+        const response = await axios.get(`${API_URL}/address`, getAuthConfig());
+        return response.data || [];
     }
     catch (err) {
         console.error('Erro ao obter endereços do usuário:', err);
@@ -55,14 +64,14 @@ export const getAddressUser = async () => {
 export const getUserPersonalData = async () => {
     try {
         // Usar a nova API para obter os dados pessoais
-        const response = await axios.get(`${API_URL}/user/profile/details`, { headers: getAuthHeader() });
+        const response = await axios.get(`${API_URL}/profile`, getAuthConfig());
         
         // Formatar os dados para manter compatibilidade com o código existente
         return {
             id: response.data.id,
             email: response.data.email,
-            profile: response.data.profile,
-            profileType: response.data.profileType
+            profile: response.data.profile || {},
+            profileType: response.data.profileType || 'PF'
         };
     }
     catch (err) {
