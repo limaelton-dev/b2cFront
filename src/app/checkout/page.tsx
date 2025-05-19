@@ -577,8 +577,8 @@ const CheckoutPage = () => {
                                 holderName: nameUser,
                                 expirationDate: expireCC,
                                 cvv: CVV,
-                                isDefault: true,
-                                brand: detectCardBrand(cardNumber)
+                                is_default: true,
+                                profile_id: profileResponse.id
                             };
                             
                             // Cadastrar o cartão usando a nova API
