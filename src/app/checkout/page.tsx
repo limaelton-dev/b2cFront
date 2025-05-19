@@ -530,8 +530,7 @@ const CheckoutPage = () => {
                     "payment_method": tipoCompra === '1' ? "card" : "pix",
                     "card_id": 1 // Usar o cartão padrão ou selecionado
                 });
-                
-                if (validateResponse.status !== 200) {
+                if (![200, 201, 204].includes(validateResponse.status)) {
                     showToast('Erro ao validar o pagamento', 'error');
                     setLoadBtn(false);
                     return;
