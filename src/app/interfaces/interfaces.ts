@@ -45,7 +45,6 @@ export interface User {
     name?: string,
     email: string,
     username?: string,
-    profile_id?: number,
     profileId?: number,
     profileType?: 'PF' | 'PJ',
     profile?: ProfilePF | ProfilePJ,
@@ -56,6 +55,8 @@ export interface User {
 
 export interface ProfilePF {
     id?: number,
+    firstName?: string,
+    lastName?: string,
     fullName?: string,
     cpf?: string,
     birthDate?: string,

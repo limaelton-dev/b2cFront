@@ -16,10 +16,9 @@ const inter = Inter({ subsets: ["latin"] });
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-      <html lang="pt">
+      <html lang="pt" suppressHydrationWarning>
           <head>
               <meta charSet="utf-8" />
-              <link rel="stylesheet" href="assets/css/banner.css" />
               <link rel="shortcut icon" href="favicon.png" />
               <meta name="robots" content="index, follow" />
               <meta name="viewport" content="width=device-width, initial-scale=1" />

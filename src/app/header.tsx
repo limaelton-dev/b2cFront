@@ -21,6 +21,7 @@ import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import SearchIcon from '@mui/icons-material/Search';
 import { logout } from './services/auth';
 import { getProdutosFabricante } from './services/produto/page';
+import ClientImage from './components/ClientImage';
 
 
 
@@ -55,12 +56,30 @@ export default function Header({ cartOpened, onCartToggle }) {
 
     useEffect(() => {
         async function getFabricantes() {
-            const resp = await getProdutosFabricante();
-            const prodFormatted = resp.data.map((b: any) => ({
-                brand: b.brand,
-                categories: b.categories
-            }));
-            setFabricantes(prodFormatted);
+            try {
+                const resp = await getProdutosFabricante();
+                console.log('Resposta da API fabricantes (header):', resp);
+                
+                // Verificar diferentes formatos possíveis de resposta
+                let marcas = [];
+                if (resp && resp.data) {
+                    if (Array.isArray(resp.data)) {
+                        marcas = resp.data;
+                    } else if (resp.data.data && Array.isArray(resp.data.data)) {
+                        marcas = resp.data.data;
+                    }
+                }
+                
+                const prodFormatted = marcas.map((b: any) => ({
+                    brand: b.brand || b,
+                    categories: b.categories || []
+                }));
+                
+                setFabricantes(prodFormatted);
+            } catch (error) {
+                console.error('Erro ao carregar fabricantes:', error);
+                setFabricantes([]);
+            }
         }
         getFabricantes();
     }, [])
@@ -181,11 +200,12 @@ export default function Header({ cartOpened, onCartToggle }) {
                     <div className="row" style={{alignItems: 'center', marginBottom: '5px'}}>
                         <div className="logo">
                             <div className="logo-footer" >
-                                <Image
+                                <ClientImage
                                     onClick={() => router.push('/')} 
                                     style={{cursor: 'pointer'}}
                                     src={LogoColetek}
                                     alt="Logo Coletek"
+                                    priority={true}
                                 />
                             </div>
                         </div>
@@ -212,7 +232,7 @@ export default function Header({ cartOpened, onCartToggle }) {
                                                 return (
                                                     <li key={result.pro_codigo} style={{display: 'flex', alignItems: 'center'}}>
                                                         <div style={{width: '50px', height: '50px', marginRight: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-                                                            <Image
+                                                            <ClientImage
                                                                 src={imageUrl || NoImage}
                                                                 alt={result.pro_desc_tecnica}
                                                                 width={50}
@@ -236,7 +256,7 @@ export default function Header({ cartOpened, onCartToggle }) {
                             <div className="user">
                                 <div className="content-img" onClick={() => user.name ? router.push('/minhaconta') : router.push('/login')} style={{cursor: 'pointer'}}>
                                     {user.name ? 
-                                        <Image
+                                        <ClientImage
                                             src={UserImg}
                                             alt="Icone Usuário"
                                             height={45}

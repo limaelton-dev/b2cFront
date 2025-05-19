@@ -10,6 +10,7 @@ import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import { useEffect, useState } from 'react';
 import { getProdsLimit, getProduto } from '../../services/produto/page';
 import Cart from '../../components/cart';
+import ClientOnly from '../../components/ClientOnly';
 import Header from '../../header';
 import { useCart } from '../../context/cart';
 import { Alert, Snackbar, Slide, Button, CircularProgress, Typography, TextField, Checkbox, Breadcrumbs, Link } from '@mui/material';
@@ -200,6 +201,7 @@ const ProductPage = () => {
                             height={200}
                             alt="Headphone"
                             layout="responsive"
+                            unoptimized={true}
                     />
                 </a>
                 <div className="promo green">
@@ -337,8 +339,10 @@ const ProductPage = () => {
 
     return (
     <>
-        <Cart cartOpened={openedCart} onCartToggle={setOpenedCart}/>
-        <Header cartOpened={openedCart} onCartToggle={setOpenedCart} />
+        <ClientOnly>
+            <Cart cartOpened={openedCart} onCartToggle={setOpenedCart}/>
+            <Header cartOpened={openedCart} onCartToggle={setOpenedCart} />
+        </ClientOnly>
         <ScrollTopButton/>
         <main>
             <section id="content-product">
@@ -422,6 +426,7 @@ const ProductPage = () => {
                                 layout="responsive"
                                 width={400}
                                 height={400}
+                                unoptimized={true}
                             />
                         </div>
                         <div className="carrousel mt-4">
@@ -434,7 +439,7 @@ const ProductPage = () => {
                                         layout="responsive"
                                         width={150}
                                         height={150}
-
+                                        unoptimized={true}
                                         onClick={() => changePicture(p.id)}
                                     />
                                 </div>
@@ -585,6 +590,7 @@ const ProductPage = () => {
                         src={BannerProd}
                         alt="Banner"
                         layout="responsive"
+                        unoptimized={true}
                     />
                 </div>
             </section> */}
@@ -675,6 +681,7 @@ const ProductPage = () => {
                                                 src={HeadphoneImg}
                                                 alt="Headphone"
                                                 layout="responsive"
+                                                unoptimized={true}
                                             />
                                         </div>
                                         <div className="midia">
@@ -682,6 +689,7 @@ const ProductPage = () => {
                                                 src={HeadphoneImg}
                                                 alt="Headphone"
                                                 layout="responsive"
+                                                unoptimized={true}
                                             />
                                         </div>
                                         <div className="midia">
@@ -689,6 +697,7 @@ const ProductPage = () => {
                                                 src={HeadphoneImg}
                                                 alt="Headphone"
                                                 layout="responsive"
+                                                unoptimized={true}
                                             />
                                         </div>
                                         <div className="midia">
@@ -696,6 +705,7 @@ const ProductPage = () => {
                                                 src={HeadphoneImg}
                                                 alt="Headphone"
                                                 layout="responsive"
+                                                unoptimized={true}
                                             />
                                         </div>
                                         <div className="midia">
@@ -703,6 +713,7 @@ const ProductPage = () => {
                                                 src={HeadphoneImg}
                                                 alt="Headphone"
                                                 layout="responsive"
+                                                unoptimized={true}
                                             />
                                         </div>
                                         <div className="midia">
@@ -710,6 +721,7 @@ const ProductPage = () => {
                                                 src={HeadphoneImg}
                                                 alt="Headphone"
                                                 layout="responsive"
+                                                unoptimized={true}
                                             />
                                         </div>
                                         <div className="midia">
@@ -717,6 +729,7 @@ const ProductPage = () => {
                                                 src={HeadphoneImg}
                                                 alt="Headphone"
                                                 layout="responsive"
+                                                unoptimized={true}
                                             />
                                         </div>
                                     </div>
@@ -764,6 +777,7 @@ const ProductPage = () => {
                                                 src={HeadphoneImg}
                                                 alt="Headphone"
                                                 layout="responsive"
+                                                unoptimized={true}
                                             />
                                         </div>
                                         <div className="midia">
@@ -771,6 +785,7 @@ const ProductPage = () => {
                                                 src={HeadphoneImg}
                                                 alt="Headphone"
                                                 layout="responsive"
+                                                unoptimized={true}
                                             />
                                         </div>
                                         <div className="midia">
@@ -778,6 +793,7 @@ const ProductPage = () => {
                                                 src={HeadphoneImg}
                                                 alt="Headphone"
                                                 layout="responsive"
+                                                unoptimized={true}
                                             />
                                         </div>
                                         <div className="midia">
@@ -785,6 +801,7 @@ const ProductPage = () => {
                                                 src={HeadphoneImg}
                                                 alt="Headphone"
                                                 layout="responsive"
+                                                unoptimized={true}
                                             />
                                         </div>
                                         <div className="midia">
@@ -792,6 +809,7 @@ const ProductPage = () => {
                                                 src={HeadphoneImg}
                                                 alt="Headphone"
                                                 layout="responsive"
+                                                unoptimized={true}
                                             />
                                         </div>
                                         <div className="midia">
@@ -799,6 +817,7 @@ const ProductPage = () => {
                                                 src={HeadphoneImg}
                                                 alt="Headphone"
                                                 layout="responsive"
+                                                unoptimized={true}
                                             />
                                         </div>
                                         <div className="midia">
@@ -806,6 +825,7 @@ const ProductPage = () => {
                                                 src={HeadphoneImg}
                                                 alt="Headphone"
                                                 layout="responsive"
+                                                unoptimized={true}
                                             />
                                         </div>
                                     </div>
@@ -851,6 +871,7 @@ const ProductPage = () => {
                                                 src={HeadphoneImg}
                                                 alt="Headphone"
                                                 layout="responsive"
+                                                unoptimized={true}
                                             />
                                         </div>
                                         <div className="midia">
@@ -858,6 +879,7 @@ const ProductPage = () => {
                                                 src={HeadphoneImg}
                                                 alt="Headphone"
                                                 layout="responsive"
+                                                unoptimized={true}
                                             />
                                         </div>
                                         <div className="midia">
@@ -865,6 +887,7 @@ const ProductPage = () => {
                                                 src={HeadphoneImg}
                                                 alt="Headphone"
                                                 layout="responsive"
+                                                unoptimized={true}
                                             />
                                         </div>
                                         <div className="midia">
@@ -872,6 +895,7 @@ const ProductPage = () => {
                                                 src={HeadphoneImg}
                                                 alt="Headphone"
                                                 layout="responsive"
+                                                unoptimized={true}
                                             />
                                         </div>
                                         <div className="midia">
@@ -879,6 +903,7 @@ const ProductPage = () => {
                                                 src={HeadphoneImg}
                                                 alt="Headphone"
                                                 layout="responsive"
+                                                unoptimized={true}
                                             />
                                         </div>
                                         <div className="midia">
@@ -886,6 +911,7 @@ const ProductPage = () => {
                                                 src={HeadphoneImg}
                                                 alt="Headphone"
                                                 layout="responsive"
+                                                unoptimized={true}
                                             />
                                         </div>
                                         <div className="midia">
@@ -893,6 +919,7 @@ const ProductPage = () => {
                                                 src={HeadphoneImg}
                                                 alt="Headphone"
                                                 layout="responsive"
+                                                unoptimized={true}
                                             />
                                         </div>
                                     </div>

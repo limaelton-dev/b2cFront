@@ -1,4 +1,3 @@
-
 import Image from 'next/image';
 import LogoColetek from './assets/img/logo_coletek.png';
 
@@ -11,6 +10,7 @@ export default function Footer() {
                         <Image
                                 src={LogoColetek}
                                 alt="Logo Coletek"
+                                unoptimized={true}
                             />
                     </div>
                     <h4>Siga-nos nas<br/>redes sociais!</h4>

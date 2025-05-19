@@ -18,20 +18,28 @@ export const login = async (email, password) => {
             const userData = response.data.user;
             
             if (isBrowser()) {
-                localStorage.setItem('user', JSON.stringify({
+                const userDataToStore = {
                     id: userData.id,
                     email: userData.email,
-                    profile_id: userData.profileId,
-                    profile_type: userData.profileType
-                }));
+                    profileId: userData.profileId,
+                    profileType: userData.profileType,
+                    name: userData.profileType === 'PF' 
+                        ? (userData.profile?.firstName && userData.profile?.lastName)
+                            ? `${userData.profile.firstName} ${userData.profile.lastName}`
+                            : userData.profile?.fullName || ''
+                        : userData.profile?.companyName || '',
+                    profile: userData.profile
+                };
+                
+                localStorage.setItem('user', JSON.stringify(userDataToStore));
             }
         }
         
-        return response;
+        return response.data;
     }
     catch (err) {
         console.error('Erro ao fazer login:', err);
-        return err;
+        throw err;
     }
 };
 
@@ -44,17 +52,11 @@ export const register = async (userData) => {
         const requestData = {
             email: userData.email,
             password: userData.password,
-            profileType: 'PF',
-            profile: {
-                fullName: `${userData.name} ${userData.lastname}`.trim(),
-                cpf: userData.cpf || '',
-                birthDate: userData.birthDate || new Date().toISOString().split('T')[0],
-                gender: userData.gender || null
-            }
+            profileType: userData.profileType || 'PF',
+            profile: {}
         };
         
         if (userData.profileType === 'PJ') {
-            requestData.profileType = 'PJ';
             requestData.profile = {
                 companyName: userData.companyName || '',
                 cnpj: userData.cnpj || '',
@@ -62,28 +64,31 @@ export const register = async (userData) => {
                 stateRegistration: userData.stateRegistration || '',
                 municipalRegistration: userData.municipalRegistration || ''
             };
+        } else {
+            // Caso seja PF - dividindo o nome completo em firstName e lastName
+            const fullNameParts = userData.fullName ? userData.fullName.trim().split(' ') : ['', ''];
+            const firstName = fullNameParts[0] || '';
+            const lastName = fullNameParts.slice(1).join(' ') || '';
+            
+            requestData.profile = {
+                firstName: firstName,
+                lastName: lastName,
+                cpf: userData.cpf || '',
+                birthDate: userData.birthDate || new Date().toISOString().split('T')[0],
+                gender: userData.gender || null
+            };
         }
         
         const response = await axios.post(`${API_URL}/auth/signup`, requestData);
         
         if (response.data && response.data.access_token) {
             saveToken(response.data.access_token);
-            
-            if (isBrowser() && response.data.user) {
-                localStorage.setItem('user', JSON.stringify({
-                    id: response.data.user.id,
-                    email: response.data.user.email,
-                    profile_id: response.data.user.profileId,
-                    profile_type: response.data.user.profileType,
-                    profile: response.data.user.profile
-                }));
-            }
         }
         
         return response.data;
     } catch (err) {
         console.error('Erro ao registrar usuário:', err);
-        return err;
+        throw err;
     }
 };
 
@@ -167,6 +172,7 @@ export const getUserProfile = async () => {
         }
         
         const response = await axios.get(`${API_URL}/user/profile/details`, { headers });
+        
         return response.data;
     } catch (error) {
         console.error('Erro ao buscar perfil do usuário:', error);

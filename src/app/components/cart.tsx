@@ -296,6 +296,7 @@ export default function Cart({ cartOpened, onCartToggle }) {
                                         alt={product.name || "Produto"}
                                         width={100}
                                         height={100}
+                                        unoptimized={true}
                                     />
                                     <div className="name-qty">
                                         <Tooltip title={product.name}>
