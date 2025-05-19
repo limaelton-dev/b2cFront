@@ -366,6 +366,7 @@ const CheckoutPage = () => {
                     lastname: arrName.length > 1 ? arrName[arrName.length - 1] : '',
                     username: arrName[0].toLowerCase() + (Math.floor(Math.random() * 1000) + 1),
                     email: emailUser,
+                    cpf: cpf.replace(/\D/g, ''),
                     password: password,
                     repassword: confirmPassword
                 }
