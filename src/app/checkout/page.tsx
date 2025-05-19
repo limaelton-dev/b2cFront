@@ -458,8 +458,12 @@ const CheckoutPage = () => {
                 // Primeiro obter os dados pessoais para ter o profile_id
                 try {
                     profileResponse = await getUserPersonalData();
-                    if (!profileResponse || !profileResponse.profile.id) {
-                        throw new Error('Não foi possível obter o profile_id');
+                    // A estrutura da resposta pode variar, verificamos todas as possíveis localizações do profileId
+                    if (!profileResponse || 
+                        (!profileResponse.id && 
+                         !profileResponse.profileId && 
+                         !(profileResponse.profile && profileResponse.profile.id))) {
+                        throw new Error('Não foi possível obter o profileId');
                     }
                 } catch (personalDataError) {
                     console.error('Erro ao obter dados pessoais:', personalDataError);
@@ -524,6 +528,7 @@ const CheckoutPage = () => {
                 // Se o usuário já está autenticado, buscar os dados do perfil
                 try {
                     profileResponse = await getUserPersonalData();
+                    // Verificamos a resposta para garantir que temos dados
                     if (!profileResponse) {
                         showToast('Erro ao obter dados do perfil', 'error');
                         setLoadBtn(false);
@@ -577,8 +582,8 @@ const CheckoutPage = () => {
                                 holderName: nameUser,
                                 expirationDate: expireCC,
                                 cvv: CVV,
-                                is_default: true,
-                                profile_id: profileResponse.id
+                                isDefault: true,
+                                brand: detectCardBrand(cardNumber)
                             };
                             
                             // Cadastrar o cartão usando a nova API
