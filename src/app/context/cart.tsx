@@ -4,6 +4,7 @@ import Cookies from 'js-cookie';
 import { getProdsArr, cartUpdate, getCart, addToCartServer, removeFromCartServer } from '../services/produto/page';
 import { CartContextType, CartItemDto, CartDataDto } from '../interfaces/interfaces';
 import { useAuth } from './auth';
+import axios from 'axios';
 
 const CartContext = createContext<CartContextType>({
     cartItems: [],
@@ -60,23 +61,21 @@ export const CartProvider = ({ children }) => {
 
         console.log(product)
 
+        // Criar dados do item para o carrinho
+        const cartItem = {
+            productId: productId,
+            quantity: 1,
+            id: productId
+        };
+
         // Adicionar o produto ao carrinho
-        setCartData((prevItems) => {
-            if (!Array.isArray(prevItems)) {
-                return [{
-                    productId: productId,
-                    quantity: 1,
-                    id: productId
-                }];
-            }
-            return [...prevItems, {
-                productId: productId,
-                quantity: 1,
-                id: productId
-            }];
-        });
-        
+        const updatedCartData = [...cartData, cartItem];
+        setCartData(updatedCartData);
         setCartItems((prevItems) => [...prevItems, product]);
+        
+        // Salvar os dados no localStorage
+        localStorage.setItem('cart', JSON.stringify(updatedCartData));
+        Cookies.set('cart', JSON.stringify(updatedCartData), { expires: 7 });
         
         // Enviar o carrinho para o servidor
         debouncedSendCartToServer(1, productId);
@@ -97,6 +96,15 @@ export const CartProvider = ({ children }) => {
             setCartItems(cartItems.filter(item => !(item.id === id || item.id === id)));
         }
     
+        // Atualizar localStorage e cookies
+        if (updatedCartData.length > 0) {
+            localStorage.setItem('cart', JSON.stringify(updatedCartData));
+            Cookies.set('cart', JSON.stringify(updatedCartData), { expires: 7 });
+        } else {
+            localStorage.removeItem('cart');
+            Cookies.remove('cart');
+        }
+    
         debouncedSendCartToServer(2, id);
     
         return true;
@@ -105,6 +113,22 @@ export const CartProvider = ({ children }) => {
     const removeItems = () => {
         setCartItems([]);
         setCartData([]);
+        
+        // Limpar localStorage e cookies
+        localStorage.removeItem('cart');
+        Cookies.remove('cart');
+        
+        // Limpar carrinho no servidor se estiver autenticado
+        if (isLoggedIn) {
+            try {
+                const headers = {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                };
+                axios.delete(`${process.env.NEXT_PUBLIC_BACKEND_URL}/cart`, { headers });
+            } catch (error) {
+                console.error('Erro ao limpar carrinho no servidor:', error);
+            }
+        }
     }
 
     const changeQtyItem = (id, newQty) => {
@@ -121,6 +145,11 @@ export const CartProvider = ({ children }) => {
             return item;
         });
         setCartData(updatedItems);
+        
+        // Atualizar localStorage e cookies
+        localStorage.setItem('cart', JSON.stringify(updatedItems));
+        Cookies.set('cart', JSON.stringify(updatedItems), { expires: 7 });
+        
         debouncedSendCartToServer(3, id)
     }
 
