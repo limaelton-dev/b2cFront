@@ -54,35 +54,35 @@ export default function Header({ cartOpened, onCartToggle }) {
         }
     };
 
-    useEffect(() => {
-        async function getFabricantes() {
-            try {
-                const resp = await getProdutosFabricante();
-                console.log('Resposta da API fabricantes (header):', resp);
+    // useEffect(() => {
+    //     async function getFabricantes() {
+    //         try {
+    //             const resp = await getProdutosFabricante();
+    //             console.log('Resposta da API fabricantes (header):', resp);
                 
-                // Verificar diferentes formatos possíveis de resposta
-                let marcas = [];
-                if (resp && resp.data) {
-                    if (Array.isArray(resp.data)) {
-                        marcas = resp.data;
-                    } else if (resp.data.data && Array.isArray(resp.data.data)) {
-                        marcas = resp.data.data;
-                    }
-                }
+    //             // Verificar diferentes formatos possíveis de resposta
+    //             let marcas = [];
+    //             if (resp && resp.data) {
+    //                 if (Array.isArray(resp.data)) {
+    //                     marcas = resp.data;
+    //                 } else if (resp.data.data && Array.isArray(resp.data.data)) {
+    //                     marcas = resp.data.data;
+    //                 }
+    //             }
                 
-                const prodFormatted = marcas.map((b: any) => ({
-                    brand: b.brand || b,
-                    categories: b.categories || []
-                }));
+    //             const prodFormatted = marcas.map((b: any) => ({
+    //                 brand: b.brand || b,
+    //                 categories: b.categories || []
+    //             }));
                 
-                setFabricantes(prodFormatted);
-            } catch (error) {
-                console.error('Erro ao carregar fabricantes:', error);
-                setFabricantes([]);
-            }
-        }
-        getFabricantes();
-    }, [])
+    //             setFabricantes(prodFormatted);
+    //         } catch (error) {
+    //             console.error('Erro ao carregar fabricantes:', error);
+    //             setFabricantes([]);
+    //         }
+    //     }
+    //     getFabricantes();
+    // }, [])
 
     const handleKeyDown =  async (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === 'Enter') {
@@ -136,7 +136,6 @@ export default function Header({ cartOpened, onCartToggle }) {
     const submitSearch = async () => {
         const response = await search(searchTerm);
         if (response.status == 200) {
-            // Os resultados já estão processados pelo serviço de busca
             setResults(response.data);
         }
     };
@@ -290,7 +289,7 @@ export default function Header({ cartOpened, onCartToggle }) {
                     </div>
                     <div className="row d-flex">
                         <div className="categories d-flex justify-content-between">
-                            <div>
+                            {/* <div>
                                 <Button
                                     aria-controls={open ? 'departamentos-menu' : undefined}
                                     aria-haspopup="true"
@@ -396,7 +395,7 @@ export default function Header({ cartOpened, onCartToggle }) {
                                         </MenuItem>
                                     ))}
                                 </Menu>
-                            </div>
+                            </div> */}
                             <ul>
                                 <li>
                                     <Link underline="hover" color="inherit" href="/produtos?categoria=1&page=1">

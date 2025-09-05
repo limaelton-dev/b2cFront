@@ -148,7 +148,7 @@ const CheckoutPage = () => {
             setNameUser(user.name);
             setEmailUser(user.email);
             setDisabledUser(true);
-            setProfileId(user.profile_id);
+            setProfileId(user.profileId);
             // Não vamos desabilitar todos os campos automaticamente
             // Os campos serão desabilitados apenas se tiverem valores válidos
         }
