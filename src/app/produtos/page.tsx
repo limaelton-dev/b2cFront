@@ -11,28 +11,21 @@ import { useToastSide } from '../context/toastSide';
 import Footer from '../footer';
 import NoImage from "../assets/img/noimage.png";
 import { fetchAllProducts } from '../services/product-service';
-import { ProductsPagineted } from '../types/products-pagineted';
+import { PaginetedProducts } from '../types/pagineted-products';
 import { Product } from '../types/product';
 import ProductsGrid from './components/products/ProductsGrid';
 import FiltersContainer from './components/filters/FiltersContainer';
 import BreadCrumbsPage from './components/breadcrumbs/BreadCrumbsPage';
-import { fetchRootCategories } from '../services/category';
-import { fetchBrands } from '../services/brand';
 
 const getProducts = async (filters = {}, pagination = {}) => {
     try {
-        const dataProducts: Promise<ProductsPagineted> = await fetchAllProducts();
+        const dataProducts: Promise<PaginetedProducts> = await fetchAllProducts();
         return dataProducts;
     } catch (e) {
         console.log('deu pau: ', e)
     }
 };
 
-const getProductUrlImages = (products: Product[]) => {
-
-}
-
-// Função para lidar com erros de imagem
 const handleImageError = (event) => {
     console.log('Erro ao carregar imagem, usando imagem padrão');
     event.target.src = NoImage.src;
@@ -55,7 +48,7 @@ const ProductsPage = () => {
         setIsLoading(true);
         
         try {
-            const paginetedProducts: ProductsPagineted = await getProducts();
+            const paginetedProducts: PaginetedProducts = await getProducts();
 
             setProducts(paginetedProducts.items);
             setTotalPages(paginetedProducts.lastPage);

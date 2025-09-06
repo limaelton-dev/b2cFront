@@ -22,6 +22,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import { logout } from './services/auth';
 import { getProdutosFabricante } from './services/produto/page';
 import ClientImage from './components/ClientImage';
+import NestedMenu, { MenuNode } from './components/NestedMenu';
 
 
 
@@ -29,6 +30,38 @@ interface ProductResponse {
   brand: any;
   categories: any[];
 }
+
+const items: MenuNode[] = [
+    { label: 'Novidades', onClick: () => alert('Novidades') },
+    { label: 'Ofertas', onClick: () => alert('Ofertas') },
+    {
+      label: 'Categorias',
+      children: [
+        {
+          label: 'Eletrônicos',
+          children: [
+            { label: 'Smartphones', onClick: () => alert('Smartphones') },
+            { label: 'Notebooks', onClick: () => alert('Notebooks') },
+            {
+              label: 'Áudio',
+              children: [
+                { label: 'Fones', onClick: () => alert('Fones') },
+                { label: 'Caixas Bluetooth', onClick: () => alert('Caixas') },
+              ],
+            },
+          ],
+        },
+        {
+          label: 'Casa & Cozinha',
+          children: [
+            { label: 'Panelas', onClick: () => alert('Panelas') },
+            { label: 'Cafeteiras', onClick: () => alert('Cafeteiras') },
+          ],
+        },
+      ],
+    },
+    { label: 'Ajuda', onClick: () => alert('Ajuda') },
+  ];
 
 
 const URL = process.env.NEXT_PUBLIC_URL || '';
@@ -40,6 +73,7 @@ export default function Header({ cartOpened, onCartToggle }) {
     const [debounceTimeout, setDebounceTimeout] = useState<NodeJS.Timeout | null>(null);
     const [results, setResults] = useState<any[]>([]);
     const [fabricantes, setFabricantes] = useState<ProductResponse[]>(null);
+    const [categories, setCategories] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [anchorEl, setAnchorEl] = useState(null);
     const open = Boolean(anchorEl);
@@ -288,115 +322,13 @@ export default function Header({ cartOpened, onCartToggle }) {
                         </div>
                     </div>
                     <div className="row d-flex">
-                        <div className="categories d-flex justify-content-between">
-                            {/* <div>
-                                <Button
-                                    aria-controls={open ? 'departamentos-menu' : undefined}
-                                    aria-haspopup="true"
-                                    aria-expanded={open ? 'true' : undefined}
-                                    onClick={handleMenuClick}
-                                    onMouseEnter={handleMouseEnter}
-                                    endIcon={<KeyboardArrowDownIcon />}
-                                    disableRipple
-                                    sx={{ 
-                                        color: '#1976d2', 
-                                        textTransform: 'none',
-                                        fontSize: '16px',
-                                        fontWeight: 500,
-                                        cursor: 'pointer',
-                                        borderRadius: '4px 4px 0 0',
-                                        backgroundColor: open ? 'rgba(25, 118, 210, 0.08)' : 'transparent',
-                                        '&:hover': {
-                                            backgroundColor: 'rgba(25, 118, 210, 0.08)'
-                                        },
-                                        zIndex: open ? 1301 : 'auto'
-                                    }}
-                                >
-                                    Departamentos
-                                </Button>
-                                <Menu
-                                    id="departamentos-menu"
-                                    anchorEl={anchorEl}
-                                    open={open}
-                                    onClose={handleMenuClose}
-                                    MenuListProps={{
-                                        'aria-labelledby': 'departamentos-button',
-                                        onMouseLeave: handleMouseLeave,
-                                        onMouseEnter: () => clearTimeout(debounceTimeout)
-                                    }}
-                                    sx={{
-                                        overflow: 'initial'
-                                    }}
-                                    PaperProps={{
-                                        elevation: 3,
-                                        onMouseLeave: handleMouseLeave,
-                                        sx: { 
-                                            width: 220,
-                                            maxHeight: 400,
-                                            overflow: 'auto',
-                                            borderRadius: '0 0 8px 8px',
-                                            mt: 0,
-                                            border: '1px solid rgba(25, 118, 210, 0.2)',
-                                            borderTop: 'none'
-                                        }
-                                    }}
-                                    transformOrigin={{ horizontal: 'left', vertical: 'top' }}
-                                    anchorOrigin={{ horizontal: 'left', vertical: 'bottom' }}
-                                    disableAutoFocus
-                                    disableEnforceFocus
-                                    slotProps={{
-                                        paper: {
-                                            onMouseEnter: () => clearTimeout(debounceTimeout),
-                                            onMouseLeave: handleMouseLeave
-                                        }
-                                    }}
-                                >
-                                    {fabricantes && fabricantes.map((f) => (
-                                        <MenuItem 
-                                            key={f.brand.id}
-                                            className='relative-item'
-                                            onClick={() => {
-                                                handleMenuClose();
-                                                router.push(`/produtos?limit=12&fabricante=${f.brand.id}&page=1`);
-                                            }}
-                                            sx={{
-                                                py: 1,
-                                                px: 2,
-                                                '&:hover': {
-                                                    backgroundColor: 'rgba(25, 118, 210, 0.08)',
-                                                    color: '#1976d2'
-                                                }
-                                            }}
-                                        >
-                                            <Typography variant="body2">{f.brand.name}</Typography>
-                                            <div className="submenu-itens">
-                                                {f.categories && f.categories.map((j) => (
-                                                    
-                                                    <MenuItem 
-                                                        key={j.id} 
-                                                        className='submenu-items'
-                                                        onClick={() => {
-                                                            handleMenuClose();
-                                                            router.push(`/produtos?limit=12&fabricante=${j.id}&page=1`);
-                                                        }}
-                                                        sx={{
-                                                            py: 1,
-                                                            px: 2,
-                                                            '&:hover': {
-                                                                backgroundColor: 'rgba(25, 118, 210, 0.08)',
-                                                                color: '#1976d2'
-                                                            }
-                                                        }}
-                                                    >
-                                                        <Typography variant="body2">{j.name}</Typography>
-                                                    </MenuItem>
-                                                ))}   
-                                            </div>
-                                        </MenuItem>
-                                    ))}
-                                </Menu>
-                            </div> */}
+                        <div className="categories d-flex justify-content-end">
                             <ul>
+                                <li>
+                                    <Link underline="hover" color="inherit" href="/produtos?categoria=1&page=1">
+                                        <NestedMenu label='Categorias' items={items} />
+                                    </Link>
+                                </li>
                                 <li>
                                     <Link underline="hover" color="inherit" href="/produtos?categoria=1&page=1">
                                         Gabinete
