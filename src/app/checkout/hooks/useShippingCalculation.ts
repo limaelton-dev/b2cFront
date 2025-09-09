@@ -32,10 +32,8 @@ export const useShippingCalculation = () => {
 
             // Determinar qual função usar com base no status de autenticação
             if (isAuthenticated) {
-                console.log('Calculando frete para usuário autenticado');
                 response = await valorFrete(zipCode);
             } else {
-                console.log('Calculando frete para usuário não autenticado');
                 
                 // Formatar os dados dos produtos para o serviço
                 const formattedProducts = cartData.map(item => ({
@@ -47,7 +45,6 @@ export const useShippingCalculation = () => {
                 response = await valorFreteDeslogado(zipCode, formattedProducts);
             }
 
-            console.log('Resposta da API de frete:', response?.data);
 
             // Processar resposta da API
             if (response?.data && response.data.success) {

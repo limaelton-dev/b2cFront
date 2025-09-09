@@ -22,47 +22,65 @@ import SearchIcon from '@mui/icons-material/Search';
 import { logout } from './services/auth';
 import { getProdutosFabricante } from './services/produto/page';
 import ClientImage from './components/ClientImage';
-import NestedMenu, { MenuNode } from './components/NestedMenu';
-
-
+// import NestedMenu, { MenuNode } from './components/NestedMenu';
+import { fetchCategoryMenu } from './services/category';
+import NestedMenu from './components/NestedMenu/NestedMenu';
+import CascadingCategories from './components/NestedMenuCascade/CascadingCategories';
 
 interface ProductResponse {
   brand: any;
   categories: any[];
 }
 
-const items: MenuNode[] = [
-    { label: 'Novidades', onClick: () => alert('Novidades') },
-    { label: 'Ofertas', onClick: () => alert('Ofertas') },
-    {
-      label: 'Categorias',
-      children: [
-        {
-          label: 'Eletrônicos',
-          children: [
-            { label: 'Smartphones', onClick: () => alert('Smartphones') },
-            { label: 'Notebooks', onClick: () => alert('Notebooks') },
-            {
-              label: 'Áudio',
-              children: [
-                { label: 'Fones', onClick: () => alert('Fones') },
-                { label: 'Caixas Bluetooth', onClick: () => alert('Caixas') },
-              ],
-            },
-          ],
-        },
-        {
-          label: 'Casa & Cozinha',
-          children: [
-            { label: 'Panelas', onClick: () => alert('Panelas') },
-            { label: 'Cafeteiras', onClick: () => alert('Cafeteiras') },
-          ],
-        },
-      ],
-    },
-    { label: 'Ajuda', onClick: () => alert('Ajuda') },
-  ];
+// Tipos para a estrutura de categorias da API
+interface CategoryParent {
+  id: number;
+  partnerId: string;
+}
 
+interface Category {
+  id: number;
+  name: string;
+  path: string;
+  partnerId: string;
+  priceFactor: number;
+  totalProducts: number;
+  parent?: CategoryParent;
+  children?: Category[];
+}
+
+type CategoriesApiResponse = Category[];
+
+
+
+const getNestedCategoriesMenu = async (): Promise<CategoriesApiResponse> => {
+    const data = await fetchCategoryMenu();
+    return data;
+}
+
+// Função para transformar categorias da API no formato NestedMenu
+// const transformCategoriesToMenuNodes = (categories: Category[]): MenuNode[] => {
+//     if (!categories || !Array.isArray(categories)) {
+//         return [];
+//     }
+    
+//     return categories.map(category => {
+//         const menuNode: MenuNode = {
+//             label: `${category.name} (${category.totalProducts})`,
+//             onClick: () => {
+//                 // Navegar para a página de produtos com filtro de categoria
+//                 window.location.href = `/produtos?categoria=${category.id}&page=1`;
+//             }
+//         };
+        
+//         // Se tem subcategorias, adiciona recursivamente
+//         if (category.children && Array.isArray(category.children) && category.children.length > 0) {
+//             menuNode.children = transformCategoriesToMenuNodes(category.children);
+//         }
+        
+//         return menuNode;
+//     });
+// }
 
 const URL = process.env.NEXT_PUBLIC_URL || '';
 export default function Header({ cartOpened, onCartToggle }) {
@@ -72,11 +90,9 @@ export default function Header({ cartOpened, onCartToggle }) {
     const { cartItems } = useCart();
     const [debounceTimeout, setDebounceTimeout] = useState<NodeJS.Timeout | null>(null);
     const [results, setResults] = useState<any[]>([]);
-    const [fabricantes, setFabricantes] = useState<ProductResponse[]>(null);
-    const [categories, setCategories] = useState([]);
+    const [nestedCategories, setNestedCategories] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [anchorEl, setAnchorEl] = useState(null);
-    const open = Boolean(anchorEl);
 
     
     const changeSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -89,34 +105,24 @@ export default function Header({ cartOpened, onCartToggle }) {
     };
 
     // useEffect(() => {
-    //     async function getFabricantes() {
+    //     async function loadNestedCategoriesMenu() {
     //         try {
-    //             const resp = await getProdutosFabricante();
-    //             console.log('Resposta da API fabricantes (header):', resp);
+    //             const resp = await getNestedCategoriesMenu();
+    //             console.log('Dados recebidos da API:', resp);
                 
-    //             // Verificar diferentes formatos possíveis de resposta
-    //             let marcas = [];
-    //             if (resp && resp.data) {
-    //                 if (Array.isArray(resp.data)) {
-    //                     marcas = resp.data;
-    //                 } else if (resp.data.data && Array.isArray(resp.data.data)) {
-    //                     marcas = resp.data.data;
-    //                 }
-    //             }
+    //             // Transformar os dados da API diretamente no formato NestedMenu
+    //             const transformedCategories = transformCategoriesToMenuNodes(resp);
                 
-    //             const prodFormatted = marcas.map((b: any) => ({
-    //                 brand: b.brand || b,
-    //                 categories: b.categories || []
-    //             }));
-                
-    //             setFabricantes(prodFormatted);
-    //         } catch (error) {
-    //             console.error('Erro ao carregar fabricantes:', error);
-    //             setFabricantes([]);
+    //             setNestedCategories(transformedCategories);
+    //             console.log('Categorias transformadas:', transformedCategories);
+    //         } catch(e) {
+    //             console.error('Erro ao carregar categorias:', e);
+    //             setNestedCategories([]);
     //         }
     //     }
-    //     getFabricantes();
-    // }, [])
+        
+    //     loadNestedCategoriesMenu();
+    // }, [router]);
 
     const handleKeyDown =  async (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === 'Enter') {
@@ -325,9 +331,9 @@ export default function Header({ cartOpened, onCartToggle }) {
                         <div className="categories d-flex justify-content-end">
                             <ul>
                                 <li>
-                                    <Link underline="hover" color="inherit" href="/produtos?categoria=1&page=1">
-                                        <NestedMenu label='Categorias' items={items} />
-                                    </Link>
+                                    <NestedMenu/>
+                                    {/* <MainNestedMenu/> */}
+                                    {/* <CascadingCategories/> */}
                                 </li>
                                 <li>
                                     <Link underline="hover" color="inherit" href="/produtos?categoria=1&page=1">

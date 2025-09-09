@@ -103,7 +103,6 @@ export default function LoginPage() {
                 try {
                     // Definir um timeout para garantir o redirecionamento
                     const redirectTimeout = setTimeout(() => {
-                        console.log('Timeout: redirecionando após login com Google');
                         navigateAfterLogin(redirect);
                     }, 3000);
                     
@@ -175,7 +174,6 @@ export default function LoginPage() {
                     try {
                         // Definir um timeout para garantir o redirecionamento
                         const redirectTimeout = setTimeout(() => {
-                            console.log('Timeout: redirecionando após login normal');
                             navigateAfterLogin(redirect);
                         }, 3000);
                         

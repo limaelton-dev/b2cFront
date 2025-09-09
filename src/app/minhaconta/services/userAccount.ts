@@ -280,9 +280,6 @@ export const updateProfile = async (data: Partial<DadosPessoaisType>): Promise<v
   try {
     const dataToUpdate: Record<string, any> = {};
     
-    // Adicionar logs para debug
-    console.log('Dados recebidos para atualização de perfil:', data);
-    
     // Adicionar apenas os campos que foram fornecidos
     if (data.firstName !== undefined) dataToUpdate.firstName = data.firstName;
     if (data.lastName !== undefined) dataToUpdate.lastName = data.lastName;
@@ -291,13 +288,10 @@ export const updateProfile = async (data: Partial<DadosPessoaisType>): Promise<v
     if (data.birth_date !== undefined) dataToUpdate.birth_date = data.birth_date;
     if (data.gender !== undefined) dataToUpdate.gender = data.gender;
     
-    console.log('Dados formatados para envio:', dataToUpdate);
-    
     // Enviar requisição PATCH para atualizar o perfil
     await axios.patch(`${API_URL}/my-account/update-profile`, dataToUpdate, getAuthConfig());
   } catch (error) {
     console.error('Erro ao atualizar perfil:', error);
-    console.error('Detalhes do erro:', error.response?.data || error.message);
     throw error;
   }
 };
