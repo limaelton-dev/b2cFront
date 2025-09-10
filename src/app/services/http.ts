@@ -1,4 +1,4 @@
-const BASE_URL = process.env.NEXT_PUBLIC_URL ?? '';
+const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL ?? '';
 
 export async function http<T>(
   input: RequestInfo,

@@ -6,12 +6,7 @@ import Collapse from "@mui/material/Collapse";
 import ExpandLess from "@mui/icons-material/ExpandLess";
 import ExpandMore from "@mui/icons-material/ExpandMore";
 import { useMenu } from "./MenuContext";
-
-interface Category {
-    id: number;
-    name: string;
-    subcategories?: Category[];
-}
+import { Category } from "../../../types/category";
 
 interface NestedMenuItemProps {
     category: Category;
@@ -23,13 +18,12 @@ export default function NestedMenuItem({ category, level = 0, parentPath = "" }:
     const { openMenus, toggleMenu } = useMenu();
     const menuId = parentPath ? `${parentPath}-${category.id}` : `${category.id}`;
     const isOpen = openMenus.has(menuId);
-    const hasSubcategories = category.subcategories && category.subcategories.length > 0;
+    const hasSubcategories = category.children && category.children.length > 0;
 
     const handleClick = () => {
         if (hasSubcategories) {
             toggleMenu(menuId, level);
         } else {
-            // Ação para categoria sem subcategorias
             alert(`Clicou em: ${category.name}`);
         }
     };
@@ -42,8 +36,8 @@ export default function NestedMenuItem({ category, level = 0, parentPath = "" }:
                 <ListItemText 
                     primary={category.name}
                     primaryTypographyProps={{
-                        fontSize: '13px', // Ajuste o tamanho aqui
-                        fontWeight: level === 0 ? 500 : 400 // Categorias principais mais destacadas
+                        fontSize: '13px',
+                        fontWeight: level === 0 ? 500 : 400
                     }}
                 />
                 {hasSubcategories && (isOpen ? <ExpandLess /> : <ExpandMore />)}
@@ -52,7 +46,7 @@ export default function NestedMenuItem({ category, level = 0, parentPath = "" }:
             {hasSubcategories && (
                 <Collapse in={isOpen} timeout="auto" unmountOnExit>
                     <List component="div" disablePadding>
-                        {category.subcategories!.map((subcategory) => (
+                        {category.children!.map((subcategory) => (
                             <NestedMenuItem 
                                 key={subcategory.id} 
                                 category={subcategory}
