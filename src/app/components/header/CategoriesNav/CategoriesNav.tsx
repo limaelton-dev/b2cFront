@@ -8,7 +8,8 @@ export default function CategoriesNav() {
   const { tree, loading } = useCategoriesMenu();
 
   return (
-    <nav className="categories d-flex justify-content-end" aria-label="Categorias">
+    <nav className="categories d-flex justify-content-between" aria-label="Categorias">
+      <div></div>
       <ul>
         <li>{loading ? 'Carregando categorias…' : <NestedMenu />}</li>
         <li><Link href="/produtos?categoria=1&page=1">Gabinete</Link></li>

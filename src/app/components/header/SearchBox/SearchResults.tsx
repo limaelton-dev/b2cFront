@@ -24,7 +24,6 @@ export default function SearchResults({ id, results, onClose }: Props) {
         {results.slice(0, 10).map((r) => (
           <li key={r.id} style={{ display: 'flex', alignItems: 'center' }}>
             <div style={{ width: 50, height: 50, marginRight: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              {/* ClientImage pode ser trocado por Image se preferir */}
               <Image
                 src={resolveImage(r)}
                 alt={r.pro_desc_tecnica}

@@ -7,7 +7,6 @@ import SearchBox from '../header/SearchBox/SearchBox';
 import UserMenu from '../header/UserMenu/UserMenu';
 import CartButton from '../header/CartButton/CartButton';
 import CategoriesNav from '../header/CategoriesNav/CategoriesNav';
-import styles from './header.module.css';
 import { useCart } from '../../context/cart';
 import { useAuth } from '../../context/auth';
 
@@ -33,13 +32,13 @@ export default function Header({ cartOpened, onCartToggle }: Props) {
   };
 
   return (
-    <header className={styles.header} id="header-page">
+    <header id="header-page">
       <TopBar />
-      <div className={styles.container}>
-        <div className={styles.row}>
+      <div className="content-header">
+        <div className="row">
           <Logo onClick={() => router.push('/')} />
           <SearchBox onSubmit={handleSubmitSearch} />
-          <div className={styles.userArea}>
+          <div className="user-preference">
             <UserMenu user={user} />
             <CartButton
               count={cartItems?.length ?? 0}
@@ -47,7 +46,7 @@ export default function Header({ cartOpened, onCartToggle }: Props) {
             />
           </div>
         </div>
-        <div className={styles.row}>
+        <div className="row">
           <CategoriesNav />
         </div>
       </div>
