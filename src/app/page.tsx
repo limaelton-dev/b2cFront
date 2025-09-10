@@ -21,7 +21,6 @@ import ClientOnly from './components/ClientOnly';
 const getProdutosPage = async (limit: number) => {
     try {
         const resp = await getProdsLimit(limit);
-        console.log(resp)
         const prodFormatted = resp.data.data.map((produto: any) => ({
             id: produto.id,
             pro_codigo: produto.reference,
@@ -72,7 +71,6 @@ export default function HomePage() {
             {link: "", img: LogoColetek},
             {link: "", img: LogoColetek}
         ]);
-        console.log(bgNewsletter.src)
     }, []);
     
     const responsiveOptions = [

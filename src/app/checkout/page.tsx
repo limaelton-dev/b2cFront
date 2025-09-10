@@ -913,7 +913,6 @@ const CheckoutPage = () => {
 
     const changeCelular = (event: React.ChangeEvent<HTMLInputElement>) => {
         const phoneValue = event.target.value;
-        console.log("entrous: ", phoneValue)
         setTelCelular(phoneValue);
         
         // Remover validação durante digitação, deixar apenas no onBlur

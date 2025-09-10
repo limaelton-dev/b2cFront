@@ -81,11 +81,9 @@ export const useCheckoutPricing = (cartItems: any[], cartData: any[]) => {
             // Usar funções específicas com base no status de autenticação
             if (isAuthenticated) {
                 // Usuário autenticado - usa valorFrete
-                console.log('Calculando frete para usuário autenticado');
                 response = await valorFrete(cleanPostalCode);
             } else {
                 // Usuário não autenticado - usa valorFreteDeslogado
-                console.log('Calculando frete para usuário não autenticado');
                 
                 // Formatar os dados dos produtos para o serviço
                 const formattedProducts = cartData.map(item => ({
@@ -97,7 +95,6 @@ export const useCheckoutPricing = (cartItems: any[], cartData: any[]) => {
                 response = await valorFreteDeslogado(cleanPostalCode, formattedProducts);
             }
             
-            console.log('Resposta da API de frete:', response?.data);
             
             // Processar a resposta no novo formato
             if (response?.data && response?.data.success) {

@@ -537,7 +537,6 @@ export const useCheckoutForm = () => {
                 // Pessoa Física
                 // Garantir que o CPF seja enviado sem caracteres especiais
                 const cpfLimpo = formData.cpf.replace(/\D/g, '');
-                console.log('CPF para atualização do perfil:', cpfLimpo);
                 
                 // Garante que o CPF é tratado como string, mesmo que comece com zero
                 profileUpdateData.cpf = cpfLimpo.toString();

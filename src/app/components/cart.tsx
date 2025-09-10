@@ -176,7 +176,6 @@ export default function Cart({ cartOpened, onCartToggle }) {
     }
 
     useEffect(() => {
-        console.log(cartItems)
         async function getAddress() {
             if(user && user.name) {
                 try {
@@ -207,7 +206,6 @@ export default function Cart({ cartOpened, onCartToggle }) {
 
     // Verifica se os dados do carrinho estão sincronizados
     const isCartDataValid = () => {
-        console.log(cartItems, cartData)
         if (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0) {
             return false;
         }
@@ -225,7 +223,6 @@ export default function Cart({ cartOpened, onCartToggle }) {
                     return false;
                 }
                 
-                console.log(itemId, product.id)
                 const match = product.id == itemId;
                 
                 return match;

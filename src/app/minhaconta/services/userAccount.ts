@@ -273,6 +273,21 @@ export const updateCard = async (cardId: number, cardData: Partial<CartaoType>):
  */
 export const updateProfile = async (data: any): Promise<void> => {
   try {
+    const dataToUpdate: Record<string, any> = {};
+    
+    // Adicionar apenas os campos que foram fornecidos
+    if (data.firstName !== undefined) dataToUpdate.firstName = data.firstName;
+    if (data.lastName !== undefined) dataToUpdate.lastName = data.lastName;
+    if (data.full_name !== undefined) dataToUpdate.full_name = data.full_name;
+    if (data.cpf !== undefined) dataToUpdate.cpf = data.cpf;
+    if (data.birth_date !== undefined) dataToUpdate.birth_date = data.birth_date;
+    if (data.gender !== undefined) dataToUpdate.gender = data.gender;
+    
+    // Enviar requisição PATCH para atualizar o perfil
+    await axios.patch(`${API_URL}/my-account/update-profile`, dataToUpdate, getAuthConfig());
+  } catch (error) {
+    console.error('Erro ao atualizar perfil:', error);
+=======
     // Esta função será mantida apenas para compatibilidade
     // com o código existente, mas não fará chamadas à API
     console.log('Dados recebidos para atualização de perfil:', data);

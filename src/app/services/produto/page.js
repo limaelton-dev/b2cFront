@@ -28,12 +28,10 @@ export const getProdsArr = async (arr) => {
             return { data: [] };
         }
         
-        console.log('Buscando produtos com IDs:', validIds.join(','));
         const response = await axios.get(`${API_URL}/product/${validIds.join(',')}`);
         
         // Verificar se a resposta contém dados válidos
         if (response && response.data) {
-            console.log('Produtos recuperados:', Array.isArray(response.data) ? response.data.length : 1);
             
             // Se a resposta não for um array, converta para um array
             const products = Array.isArray(response.data) ? response.data : [response.data];
@@ -134,7 +132,6 @@ export const getProdutosCategoria = async () => {
     try {
         // Novo endpoint para obter apenas categorias de nível 1
         const response = await axios.get(`${API_URL}/category/all?level=1`);
-        console.log('Resposta da API de categorias:', JSON.stringify(response.data));
         return response;
     }
     catch (err) {
@@ -147,7 +144,6 @@ export const getProdutosFabricante = async () => {
     try {
         // Novo endpoint para obter todas as marcas
         const response = await axios.get(`${API_URL}/category/brands`);
-        console.log('Resposta da API de marcas:', JSON.stringify(response.data));
         return response;
     }
     catch (err) {
@@ -160,9 +156,7 @@ export const getProdutosFiltrados = async (brandName = '', categoryName = '', pa
     try {
         // Novo endpoint de filtro
         const url = `${API_URL}/category/filter?${brandName ? 'brandName='+brandName : ''}${categoryName ? '&categoryName='+categoryName : ''}&page=${page}&limit=${limit}&sortDirection=${sortDirection}`;
-        console.log('URL de filtro:', url);
         const response = await axios.get(url);
-        console.log('Resposta da API de filtro:', JSON.stringify(response.data).substring(0, 200) + '...');
         return response;
     }
     catch (err) {
@@ -175,30 +169,23 @@ export const getCart = async () => {
     // Se o usuário não estiver autenticado, retornamos um objeto vazio
     // para que o frontend possa usar o carrinho local
     if (!isAuthenticated()) {
-        console.log('Usuário não autenticado, retornando carrinho vazio');
         return { data: { cart_data: [] } };
     }
 
     try {
         const headers = getAuthHeader();
-        console.log('Enviando requisição para obter carrinho com headers:', headers);
         
         const response = await axios.get(`${API_URL}/cart`, {
             headers: headers
         });
         
-        console.log('Resposta da API de carrinho:', response.status);
-        console.log('Dados do carrinho recebidos:', JSON.stringify(response.data));
-        
         // Verificar se a resposta contém a estrutura esperada
         if (!response.data || !response.data.items) {
-            console.log('Resposta da API não contém a estrutura esperada de cart_data');
             return { data: { cart_data: [] } };
         }
         
         // Verificar se cart_data é um array
         if (!Array.isArray(response.data.items)) {
-            console.log('cart_data não é um array, convertendo para array vazio');
             response.data.items = [];
         }
         
@@ -206,15 +193,10 @@ export const getCart = async () => {
     }
     catch (err) {
         console.error('Erro ao obter carrinho:', err);
-        console.log('Detalhes do erro:', err.response ? {
-            status: err.response.status,
-            data: JSON.stringify(err.response.data)
-        } : 'Sem resposta do servidor');
         
         // Em caso de erro de autenticação (401) ou não encontrado (404), retornamos um objeto vazio
         // para que o frontend possa usar o carrinho local
         if (err.response && (err.response.status === 401 || err.response.status === 404)) {
-            console.log('Erro de autenticação ou carrinho não encontrado, retornando carrinho vazio');
             return { data: { cart_data: [] } };
         }
         return { data: { cart_data: [] } };
@@ -224,12 +206,10 @@ export const getCart = async () => {
 export const addCartToServer = async (data) => {
 
     if (!isAuthenticated()) {
-        console.log('Usuário não autenticado, não enviando atualização do carrinho para o servidor');
         return { status: 200, data: data };
     }
 
     try {
-        console.log('\n\n\nEnviando dados para o servidor:', JSON.stringify(data));
         const response = await axios.post(`${API_URL}/cart/items/addLocal`, data, {
             headers: getAuthHeader()
         });
@@ -239,7 +219,6 @@ export const addCartToServer = async (data) => {
         console.error('Erro ao adicionar ao carrinho local:', err);
         // Em caso de erro de autenticação (401) ou não encontrado (404), retornamos um objeto simulando sucesso
         if (err.response && (err.response.status === 401 || err.response.status === 404)) {
-            console.log('Erro de autenticação ou carrinho não encontrado, simulando sucesso');
             return { status: 200, data: data };
         }
         return err;
@@ -249,12 +228,10 @@ export const addCartToServer = async (data) => {
 export const addToCartServer = async (data,productId) => {
 
     if (!isAuthenticated()) {
-        console.log('Usuário não autenticado, não enviando atualização do carrinho para o servidor');
         return { status: 200, data: data };
     }
 
     try {
-        console.log('\n\n\nEnviando dados para o servidor:', JSON.stringify(data));
         const response = await axios.post(`${API_URL}/cart/items`, data, {
             headers: getAuthHeader()
         });
@@ -264,7 +241,6 @@ export const addToCartServer = async (data,productId) => {
         console.error('Erro ao adicionar ao carrinho:', err);
         // Em caso de erro de autenticação (401) ou não encontrado (404), retornamos um objeto simulando sucesso
         if (err.response && (err.response.status === 401 || err.response.status === 404)) {
-            console.log('Erro de autenticação ou carrinho não encontrado, simulando sucesso');
             return { status: 200, data: data };
         }
         return err;
@@ -274,12 +250,10 @@ export const addToCartServer = async (data,productId) => {
 export const removeFromCartServer = async (productId) => {
 
     if (!isAuthenticated()) {
-        console.log('Usuário não autenticado, não enviando atualização do carrinho para o servidor');
         return { status: 200 };
     }
 
     try {
-        console.log('\n\n\nRemovendo produto do carrinho no servidor:', productId);
         const response = await axios.delete(`${API_URL}/cart/items/${productId}`, {
             headers: getAuthHeader()
         });
@@ -289,7 +263,6 @@ export const removeFromCartServer = async (productId) => {
         console.error('Erro ao remover do carrinho:', err);
         // Em caso de erro de autenticação (401) ou não encontrado (404), retornamos um objeto simulando sucesso
         if (err.response && (err.response.status === 401 || err.response.status === 404)) {
-            console.log('Erro de autenticação ou carrinho não encontrado, simulando sucesso');
             return { status: 200 };
         }
         return err;
@@ -300,12 +273,10 @@ export const cartUpdate = async (data,productId) => {
     // Se o usuário não estiver autenticado, não enviamos a atualização para o servidor
     // e retornamos um objeto simulando sucesso para que o frontend continue funcionando
     if (!isAuthenticated()) {
-        console.log('Usuário não autenticado, não enviando atualização do carrinho para o servidor');
         return { status: 200, data: data };
     }
 
     try {
-        console.log('\n\n\nEnviando dados para o servidor:', JSON.stringify(data));
         // Atualizar quantidade do item - o endpoint correto é PUT /cart/items/{productId} 
         // com o payload { quantity: x }
         const payload = { quantity: data.item.quantity };
@@ -318,7 +289,6 @@ export const cartUpdate = async (data,productId) => {
         console.error('Erro ao atualizar carrinho:', err);
         // Em caso de erro de autenticação (401) ou não encontrado (404), retornamos um objeto simulando sucesso
         if (err.response && (err.response.status === 401 || err.response.status === 404)) {
-            console.log('Erro de autenticação ou carrinho não encontrado, simulando sucesso');
             return { status: 200, data: data };
         }
         return err;

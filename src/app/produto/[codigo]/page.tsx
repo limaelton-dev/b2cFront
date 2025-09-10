@@ -296,15 +296,12 @@ const ProductPage = () => {
                                 quantity: 1
                             }];
                             
-                            console.log('Calculando frete para produto:', produtoId, 'CEP:', cep);
                             const frete = await valorFreteDeslogado(cep, dadosProdutos);
-                            console.log('Resposta API frete:', frete?.data);
                             
                             if (frete && frete.data && frete.data.data) {
                                 setFreteNome('PAC');
                                 setFretePreco(frete.data.data.totalPreco);
                                 setPrazo(frete.data.data.maiorPrazo);
-                                console.log('Frete calculado com sucesso:', frete.data.data);
                             } else {
                                 console.error('Resposta inválida da API de frete:', frete);
                                 setFreteError('Não foi possível calcular o frete para este produto.');
