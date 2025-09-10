@@ -26,13 +26,27 @@ import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import LocalAtmIcon from '@mui/icons-material/LocalAtm';
 import { login, register } from '../services/auth';
 import { addAddress, addCard, updateProfile } from '../minhaconta/services/userAccount';
-import { saveToken } from '../utils/auth';
+import { saveToken, getToken } from '../utils/auth';
 import { useCookies } from 'react-cookie';
 import HomeIcon from '@mui/icons-material/Home';
 import CartIcon from '@mui/icons-material/ShoppingCartOutlined';
 import Drawer from '@mui/material/Drawer';
 import ClientOnly from '../components/ClientOnly';
 import { useShippingCalculation } from './hooks/useShippingCalculation';
+import { validateCPF, validatePhone, validatePasswords } from './utils/validation';
+
+// API URL e configurações de autenticação
+const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+
+// Configuração para autenticação com token
+const getAuthConfig = () => {
+    const token = getToken();
+    return {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    };
+};
 
 async function buscaTipoPessoa() {
     try {
@@ -444,8 +458,12 @@ const CheckoutPage = () => {
                 // Primeiro obter os dados pessoais para ter o profile_id
                 try {
                     profileResponse = await getUserPersonalData();
-                    if (!profileResponse || !profileResponse.profile.id) {
-                        throw new Error('Não foi possível obter o profile_id');
+                    // A estrutura da resposta pode variar, verificamos todas as possíveis localizações do profileId
+                    if (!profileResponse || 
+                        (!profileResponse.id && 
+                         !profileResponse.profileId && 
+                         !(profileResponse.profile && profileResponse.profile.id))) {
+                        throw new Error('Não foi possível obter o profileId');
                     }
                 } catch (personalDataError) {
                     console.error('Erro ao obter dados pessoais:', personalDataError);
@@ -463,14 +481,18 @@ const CheckoutPage = () => {
                         }
                         
                         const phoneNumber = telCelular.replace(/\D/g, '');
+                        // Extrair DDD e número
+                        const ddd = phoneNumber.substring(0, 2);
+                        const number = phoneNumber.substring(2);
+                        
                         // Criar objeto com os dados necessários para o telefone
                         const phoneData = {
-                            phone: phoneNumber,
-                            profile_id: profileResponse.profile.id,
-                            type: "celular",
-                            is_primary: true
+                            ddd,
+                            number,
+                            isDefault: true
                         };
-                        await addPhone(phoneData);
+                        
+                        await axios.post(`${API_URL}/phone`, phoneData, getAuthConfig());
                         showToast('Telefone cadastrado com sucesso', 'success');
                     } catch (phoneError) {
                         console.error('Erro ao adicionar telefone:', phoneError);
@@ -490,10 +512,10 @@ const CheckoutPage = () => {
                         city: cidade,
                         state: estado,
                         zipCode: cepNumber,
-                        isDefault: true,
+                        isDefault: true
                     };
                     
-                    await addAddress(addressData);
+                    await axios.post(`${API_URL}/address`, addressData, getAuthConfig());
                     showToast('Endereço cadastrado com sucesso', 'success');
                 } catch (addressError) {
                     console.error('Erro ao cadastrar endereço:', addressError);
@@ -506,6 +528,7 @@ const CheckoutPage = () => {
                 // Se o usuário já está autenticado, buscar os dados do perfil
                 try {
                     profileResponse = await getUserPersonalData();
+                    // Verificamos a resposta para garantir que temos dados
                     if (!profileResponse) {
                         showToast('Erro ao obter dados do perfil', 'error');
                         setLoadBtn(false);
@@ -553,20 +576,19 @@ const CheckoutPage = () => {
                     if (!hasCard && hasFilledCardData) {
                         // Cadastrar o cartão com os dados informados
                         try {
-                            // Preparar dados do cartão incluindo o profile_id
+                            // Preparar dados do cartão
                             const cardData = {
                                 cardNumber: cardNumber.replace(/\s/g, ''),
                                 holderName: nameUser,
                                 expirationDate: expireCC,
                                 cvv: CVV,
                                 isDefault: true,
-                                profileId: profileResponse.id,
-                                brand: detectCardBrand(hasCard ? numberCCFinal : cardNumber)
+                                brand: detectCardBrand(cardNumber)
                             };
                             
                             // Cadastrar o cartão
-                            // const cardResponse = await addCard(cardData);
-                            // showToast('Cartão', 'success');
+                            const cardResponse = await addCard(cardData);
+                            showToast('Cartão cadastrado com sucesso', 'success');
                             
                             // Usar o cartão recém-cadastrado e atualizar o estado da UI
                             setCVVFinal(CVV);
