@@ -1,6 +1,6 @@
 import { Product } from "./product";
 
-export interface PaginetedProducts {
+export interface PaginatedProducts {
     items: Product[];
     offset: number;
     limit: number;

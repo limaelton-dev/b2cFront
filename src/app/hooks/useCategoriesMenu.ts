@@ -1,6 +1,6 @@
 // src/app/hooks/useCategoriesMenu.ts
 import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
-import { fetchCategoryMenuWithCache, preloadPopularCategories } from '../services/category.service';
+import { fetchCategoryMenuWithCache, preloadPopularCategories } from '../services/category-service';
 import { Category } from '../types/category';
 import { findCategoryById, flattenCategories } from '../utils/category-utils';
 

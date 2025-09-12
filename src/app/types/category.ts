@@ -13,10 +13,10 @@ export interface Category {
   totalProducts: number;
   parent?: CategoryParent;
   children?: Category[];
+  slug: string;
   
   level?: number;
   hasChildren?: boolean;
-  slug?: string;
 }
 
 export type CategoriesApiResponse = Category[];

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { search } from '../services/search.service';
+import { search } from '../services/search-service';
 import { SearchResult } from '../types/search';
 
 export function useSearch(minLength = 4) {

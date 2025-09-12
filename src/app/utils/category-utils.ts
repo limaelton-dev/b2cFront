@@ -9,8 +9,7 @@ function enrichCategory(category: Category, level: number = 1): Category {
   const enriched: Category = {
     ...category,
     level,
-    hasChildren: !!(category.children && category.children.length > 0),
-    slug: generateSlug(category.name),
+    hasChildren: !!(category.children && category.children.length > 0)
   };
 
   if (enriched.children) {
@@ -20,17 +19,6 @@ function enrichCategory(category: Category, level: number = 1): Category {
   }
 
   return enriched;
-}
-
-function generateSlug(name: string): string {
-  return name
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
-    .trim();
 }
 
 export function findCategoryById(categories: Category[], id: number): Category | null {

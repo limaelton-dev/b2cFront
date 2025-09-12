@@ -1,12 +1,12 @@
 export interface ProductImage {
     id: number;
-    index: number;
+    index?: number;
     main: boolean;
     url: string;
-    thumbnailUrl: string;
-    lowResolutionUrl: string;
-    standardUrl: string;
-    originalImage: string;
+    thumbnailUrl?: string;
+    lowResolutionUrl?: string;
+    standardUrl?: string;
+    originalImage?: string;
     status: string;
     standardWidth: number;
     standardHeight: number;

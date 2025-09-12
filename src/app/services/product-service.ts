@@ -13,3 +13,15 @@ export const fetchAllProducts = async () => {
         return err;
     }
 }
+
+export const fetchProductBySlug = async (slug: string) => {
+    try {
+        const response = await axios.get(`${API_URL}/products/slug/${slug}`);
+        console.log('RESPONSTA: ', response.data)
+        return response.data;
+    }
+    catch (err) {
+        console.error('Erro ao obter produto por slug:', err);
+        return err;
+    }
+}

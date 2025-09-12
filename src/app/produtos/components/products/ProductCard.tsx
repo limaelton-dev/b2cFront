@@ -12,9 +12,9 @@ interface ProductCardProps {
 
 export default function ProductCard({ product, loadingProducts, handleAddToCart, handleImageError }: ProductCardProps) {
     return (
-        <div className="product" key={product.id}>
+        <div className="product" key={product.slug}>
             <div className="wishlist-button"></div>
-            <a href={`/produto/${product.id}`}>
+            <a href={`/produto/${product.slug}`}>
                 <Image
                     src={product.images[0]?.url ?? NoImage.src}
                     width={200}
@@ -38,7 +38,7 @@ export default function ProductCard({ product, loadingProducts, handleAddToCart,
                     </svg>
                 </div>
             </div>
-            <a className='title-link-product' href={`/produto/${product.id}`}>
+            <a className='title-link-product' href={`/produto/${product.slug}`}>
                 <Typography
                     variant="body1"
                     className='title-product'

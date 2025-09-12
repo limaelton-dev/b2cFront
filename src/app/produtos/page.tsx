@@ -11,7 +11,7 @@ import { useToastSide } from '../context/toastSide';
 import Footer from '../footer';
 import NoImage from "../assets/img/noimage.png";
 import { fetchAllProducts } from '../services/product-service';
-import { PaginetedProducts } from '../types/pagineted-products';
+import { PaginatedProducts } from '../types/paginetad-products';
 import { Product } from '../types/product';
 import ProductsGrid from './components/products/ProductsGrid';
 import FiltersContainer from './components/filters/FiltersContainer';
@@ -19,7 +19,7 @@ import BreadCrumbsPage from './components/breadcrumbs/BreadCrumbsPage';
 
 const getProducts = async (filters = {}, pagination = {}) => {
     try {
-        const dataProducts: Promise<PaginetedProducts> = await fetchAllProducts();
+        const dataProducts: Promise<PaginatedProducts> = await fetchAllProducts();
         return dataProducts;
     } catch (e) {
         console.log('deu pau: ', e)
@@ -48,7 +48,7 @@ const ProductsPage = () => {
         setIsLoading(true);
         
         try {
-            const paginetedProducts: PaginetedProducts = await getProducts();
+            const paginetedProducts: PaginatedProducts = await getProducts();
 
             setProducts(paginetedProducts.items);
             setTotalPages(paginetedProducts.lastPage);
@@ -92,7 +92,7 @@ const ProductsPage = () => {
                     handleAddToCart={handleAddToCart}
                     handleImageError={handleImageError}
                 />
-                {/* Botões de paginação */}
+                {/* TODO:Botões de paginação */}
                 <div style={{width: '100%', margin: '15px', display: 'flex', justifyContent: 'center'}}>
                     <Pagination count={totalPages} page={currentPage} onChange={handlePageChange} />
                 </div>
