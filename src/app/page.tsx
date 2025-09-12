@@ -12,29 +12,17 @@ import Footer from './footer';
 import Cart from './components/cart';
 import { Carousel } from 'primereact/carousel';
 import { Radio, Typography } from '@mui/material';
-import { getProdsLimit } from './services/produto/page';
 import { useCart } from './context/cart';
 import { useToastSide } from './context/toastSide';
 import Checkbox, { checkboxClasses } from '@mui/joy/Checkbox';
 import ClientOnly from './components/ClientOnly';
+import { fetchAllProducts } from './services/product-service';
+import { Product } from './types/product';
 
 const getProdutosPage = async (limit: number) => {
     try {
-        const resp = await getProdsLimit(limit);
-        const prodFormatted = resp.data.data.map((produto: any) => ({
-            id: produto.id,
-            pro_codigo: produto.reference,
-            pro_descricao: produto.name,
-            pro_desc_tecnica: produto.techDescription,
-            pro_precovenda: produto.price,
-            pro_url_amigavel: produto.slug,
-            imagens: produto.images,
-            name: produto.name,
-            img: produto.images && produto.images.length > 0 ? produto.images[0].url : "",
-            price: produto.price ? `R$ ${produto.price.replace('.', ',')}` : 'Preço indisponível',
-            sku: produto.model,
-        }));
-        return prodFormatted;
+        const resp = await fetchAllProducts();
+        return resp.items;
     } catch (error) {
         console.error('Erro: ', error);
         return [];
@@ -45,10 +33,10 @@ export default function HomePage() {
     const { addToCart } = useCart();
     const { showToast } = useToastSide();
     const [openedCart, setOpenedCart] = useState(false);
-    const [prodsNew, setProdsNew] = useState<object[]>([]);
-    const [prodsMaisVend, setProdsMaisVend] = useState<object[]>([]);
-    const [marcas, setMarcas] = useState<object[]>([]);
-    const [prodsOfertas, setProdOfertas] = useState<object[]>([]);
+    const [prodsNew, setProdsNew] = useState<Product[]>([]);
+    const [prodsMaisVend, setProdsMaisVend] = useState<Product[]>([]);
+    const [marcas, setMarcas] = useState<any[]>([]);
+    const [prodsOfertas, setProdOfertas] = useState<Product[]>([]);
     const [loadingProduct, setLoadingProduct] = useState<number | null>(null);
     
 
@@ -56,6 +44,7 @@ export default function HomePage() {
 
         const loadProdutos = async () => {
             const products = await getProdutosPage(8);
+            console.log('products lidos: ', products);
             setProdsNew(products);
             setProdsMaisVend(products);
             setProdOfertas(products)
@@ -81,7 +70,7 @@ export default function HomePage() {
         { breakpoint: "575px", numVisible: 1, numScroll: 1 }  
     ];
 
-    const productTemplate = (product) => {
+    const productTemplate = (product: Product) => {
         const handleAddToCart = async () => {
             setLoadingProduct(product.id);
             if(!addToCart(product, null)) {
@@ -101,9 +90,9 @@ export default function HomePage() {
                 <div className="wishlist-button">
 
                 </div>
-                <a href={`/produto/${product.pro_url_amigavel}`}>
+                <a href={`/produto/${product.slug}`}>
                     <Image
-                            src={product.img}
+                            src={product.images[0].url}
                             width={200}
                             height={200}
                             alt="Headphone"
@@ -131,7 +120,7 @@ export default function HomePage() {
                         </svg>
                     </div>
                 </div>
-                <a className='title-link-product' href={`/produto/${product.pro_url_amigavel}`}>
+                <a className='title-link-product' href={`/produto/${product.slug}`}>
                     <Typography
                         variant="body1"
                         className='title-product'
@@ -142,14 +131,14 @@ export default function HomePage() {
                             overflow: "hidden",
                         }}
                     >
-                        {product.name}
+                        {product.title}
                     </Typography>
                 </a>
                 <div className="description">
-                    {product.sku}
+                    {product.model}
                 </div>
                 <div className="price">
-                    {product.price}
+                    {product.skus[0].price}
                     <div className="discount">
                         (5% OFF)
                     </div>
@@ -168,7 +157,7 @@ export default function HomePage() {
         )
     }
 
-    const templateMarca = (marca) => {
+    const templateMarca = (marca: any) => {
         return (
             <a href={marca.link} className="link-marca">
                 <div className="marca col-lg-2">

@@ -23,7 +23,7 @@ import axios from 'axios';
 import { valorFreteDeslogado } from '../../services/checkout';
 import HomeIcon from '@mui/icons-material/Home';
 import { Product } from '../../types/product';
-import { fetchProductBySlug } from '../../services/product-service';
+import { fetchAllProducts, fetchProductBySlug } from '../../services/product-service';
 
 const ProductPage = () => {
     const scrollTo = useScrollToDiv();
@@ -35,38 +35,46 @@ const ProductPage = () => {
     const [cep, setCep] = useState('');
     const [isActiveColorId, setIsActiveColorId] = useState(null)
     const [loadingProduct, setLoadingProduct] = useState<number | null>(null);
-    const [prodsRelation, setProdsRelation] = useState<object[]>([]);
+    const [product, setProduct] = useState<Product>();
+    const [prodsRelation, setProdsRelation] = useState<Product[]>([])
     const [loadingCep, setLoadingCep] = useState(false);
     const { slug } = useParams();
     const [freteNome, setFreteNome] = useState('');
     const [fretePreco, setFretePreco] = useState(0);
     const [prazo, setPrazo] = useState(0);
     const [freteError, setFreteError] = useState('');
-    const [product, setProduct] = useState<Product>();
     const [loading, setLoading] = useState(true);
     const [openedCart, setOpenedCart] = useState(false);
     console.log('slug', slug);
     const loadProduct = async () => {
-        if (typeof slug === 'string') {
-            try {
-                const dataProduct = await fetchProductBySlug(slug);
-                setProduct(dataProduct);
-                if (dataProduct?.images?.length > 0) {
-                    const mainImage = dataProduct.images.find((image) => image.main === true);
-                    setSelectedImg(mainImage?.url || dataProduct.images[0]?.url || '');
-                }
-                console.log('produtão no useEffect', dataProduct);
-            } catch (error) {
-                console.error('Erro ao buscar produto:', error);
-            } finally {
-                setLoading(false);
+        try {
+            const dataProduct = await fetchProductBySlug(slug as string);
+            setProduct(dataProduct);
+            if (dataProduct?.images?.length > 0) {
+                const mainImage = dataProduct.images.find((image) => image.main === true);
+                setSelectedImg(mainImage?.url || dataProduct.images[0]?.url || '');
             }
+        } catch (error) {
+            console.error('Erro ao buscar produto:', error);
+        } finally {
+            setLoading(false);
         }
     };
+
+    const loadRelatedProducts = async () => {
+        try {
+            const dataRelatedProducts = await fetchAllProducts();
+            setProdsRelation(dataRelatedProducts.items);
+            console.log('produtos relacionados:', dataRelatedProducts.items);
+            console.log('produtos relacionados2:', prodsRelation);
+        } catch (error) {
+            console.error('Erro ao buscar produtos relacionados:', error);
+        }
+    }
     
     useEffect(() => {
         loadProduct();
-        console.log('product', product);
+        loadRelatedProducts();
     }, []);
 
     const responsiveOptions = [
@@ -118,9 +126,9 @@ const ProductPage = () => {
                 <div className="wishlist-button">
 
                 </div>
-                <a href={`/produto/${product.pro_url_amigavel}`}>
+                <a href={`/produto/${product.slug}`}>
                     <Image
-                            src={product.img}
+                            src={product.images[0].url}
                             width={200}
                             height={200}
                             alt="Headphone"
@@ -144,7 +152,7 @@ const ProductPage = () => {
                         </svg>
                     </div>
                 </div>
-                <a className='title-link-product' href={`/produto/${product.pro_url_amigavel}`}>
+                <a className='title-link-product' href={`/produto/${product.slug}`}>
                     <Typography
                         variant="body1"
                         className='title-product'
@@ -155,14 +163,14 @@ const ProductPage = () => {
                             overflow: "hidden",
                         }}
                     >
-                        {product.name}
+                        {product.title}
                     </Typography>
                 </a>
                 <div className="description">
-                    {product.model}
+                    {productDescription(product.model)}
                 </div>
                 <div className="price">
-                    {product.preco}
+                    {product.skus[0].price}
                     <div className="discount">
                         (5% OFF)
                     </div>
@@ -179,13 +187,6 @@ const ProductPage = () => {
                 </div>
             </div>
         )
-    }
-
-    function formatStr(str) {
-        return str
-            .normalize('NFD') // Normaliza a string para decompor caracteres acentuados
-            .replace(/[\u0300-\u036f]/g, '') // Remove os caracteres de acentuação
-            .replace(/[^a-zA-Z0-9 ]/g, ''); // Remove caracteres especiais, mantendo apenas letras, números e espaços
     }
 
     const changePicture = (id) => {
@@ -423,18 +424,6 @@ const ProductPage = () => {
                                 <div className="content-product-info">
                                     {productDescription(product.description)}
                                 </div>
-                                {/* <div className='d-flex flex-direction-column align-items-center'>
-                                    <p className="text-colors">Cores:</p>
-                                    <div className="colors">
-                                        {product.cores.map((item) => (
-                                            <div 
-                                                onClick={() => setIsActiveColorId(item.id)}
-                                                className={'color ' + (isActiveColorId == item.id ? ' active' : '')}
-                                                style={{backgroundColor: item.hex}}
-                                            ></div>
-                                        ))}
-                                    </div>
-                                </div> */}
                                 <hr />
                                 <div className="content-price d-flex flex-direction-column align-items-center">
                                     <h6>Calcule o Frete:</h6>
@@ -536,7 +525,7 @@ const ProductPage = () => {
                             display: 'flex',
                             justifyContent: 'space-between'
                         }}>
-                            {/* <Carousel value={prodsRelation} numVisible={4} numScroll={2} itemTemplate={productTemplate} responsiveOptions={responsiveOptions} circular/> */}
+                            <Carousel value={prodsRelation} numVisible={4} numScroll={2} itemTemplate={productTemplate} responsiveOptions={responsiveOptions} circular/>
                         </div>
                     </div>
                 </section>
