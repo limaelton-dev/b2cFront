@@ -4,19 +4,23 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import NoImage from '../../../assets/img/noimage.png';
-import { SearchResult } from '../../../types/search';
+import { Product } from '../../../api/products/types/product';
 
 type Props = {
   id?: string;
-  results: SearchResult[];
+  results: Product[];
   onClose: () => void;
 };
 
 export default function SearchResults({ id, results, onClose }: Props) {
   const base = process.env.NEXT_PUBLIC_URL || '';
 
-  const resolveImage = (r: SearchResult) =>
-    r.img || (r.imagens && r.imagens[0]?.url) || NoImage;
+  const resolveImage = (r: Product) => {
+    if (r.images && r.images.length > 0 && r.images[0].url) {
+      return r.images[0].url;
+    }
+    return NoImage;
+  };
 
   return (
     <div className="result-search" id={id} role="listbox">
@@ -26,19 +30,22 @@ export default function SearchResults({ id, results, onClose }: Props) {
             <div style={{ width: 50, height: 50, marginRight: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Image
                 src={resolveImage(r)}
-                alt={r.pro_desc_tecnica}
+                alt={r.title}
                 width={50}
                 height={50}
                 style={{ objectFit: 'contain' }}
+                onError={(e) => {
+                  e.currentTarget.src = NoImage.src;
+                }}
               />
             </div>
             <Link
               className="search-product-link"
-              href={`${base}/produto/${r.id}`}
+              href={`${base}/produto/${r.slug}`}
               style={{ textDecoration: 'none', color: 'black', display: 'flex', flexGrow: 1, justifyContent: 'space-between', height: 50, alignItems: 'center' }}
               target="_blank"
             >
-              {r.pro_desc_tecnica}
+              {r.title}
             </Link>
           </li>
         ))}

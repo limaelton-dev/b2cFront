@@ -1,15 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { search } from '../services/search-service';
-import { SearchResult } from '../types/search';
+import { fetchProductsByTerm } from '../api/products/services/product';
+import { Product } from '../api/products/types/product';
 
 export function useSearch(minLength = 4) {
   const [term, setTerm] = useState('');
-  const [results, setResults] = useState<SearchResult[]>([]);
+  const [results, setResults] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
   const ctrl = useRef<AbortController | null>(null);
 
   const canSearch = term.trim().length >= minLength;
-  const debounced = useMemo(() => term.trim(), [term]); // junto com useDebouncedValue, se quiser
+  const debounced = useMemo(() => term.trim(), [term]);
 
   useEffect(() => {
     if (!canSearch) { setResults([]); if (ctrl.current) ctrl.current.abort(); return; }
@@ -17,8 +17,10 @@ export function useSearch(minLength = 4) {
     const c = new AbortController();
     ctrl.current = c;
     setLoading(true);
-    search(debounced, c.signal)
-      .then(setResults)
+    fetchProductsByTerm(debounced)
+      .then((data) => {
+        setResults(data.items);
+      })
       .catch((e) => { if (e.name !== 'AbortError') console.error(e); })
       .finally(() => setLoading(false));
     return () => c.abort();

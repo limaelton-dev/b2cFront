@@ -4,11 +4,10 @@ import { Inter } from "next/font/google";
 import Head from 'next/head';
 import 'bootstrap/dist/css/bootstrap.css';
 import { GeistSans } from 'geist/font/sans';
-import { CartProvider } from "./context/cart";
-import { AlertDialogProvider } from "./context/dialog";
-import { AuthProvider } from "./context/auth";
-import { CouponProvider } from "./context/coupon";
-import { ToastSideProvider } from "./context/toastSide";
+import { CartProvider } from "./context/CartProvider";
+import { AlertDialogProvider } from "./context/AlertDialogProvider";
+import { AuthProvider } from "./context/AuthProvider";
+import { ToastSideProvider } from "./context/ToastSideProvider";
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { CookiesProvider } from 'react-cookie';
 
@@ -40,13 +39,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ''}>
                       <CookiesProvider>
                           <AuthProvider>
-                              <CouponProvider>
                                   <AlertDialogProvider>
                                       <CartProvider>
                                           {children}
                                       </CartProvider>
                                   </AlertDialogProvider>
-                              </CouponProvider>
                           </AuthProvider>
                       </CookiesProvider>
                   </GoogleOAuthProvider>

@@ -6,7 +6,7 @@ import { Link } from "@mui/material";
 import NestedMenuItem from "./NestedMenuItem";
 import { MenuProvider } from "./MenuContext";
 import { useState } from "react";
-import { Category } from "../../../types/category";
+import { Category } from "../../../api/categories/types/category";
 
 
 

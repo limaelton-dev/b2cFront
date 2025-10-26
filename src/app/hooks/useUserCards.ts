@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
-import { Card } from "../types/card";
-import { fetchUserCards, createUserCard, updateUserCard, deleteUserCard } from "../services/user";
+import { Card } from "../api/user/profile/cards/types/card";
+import { fetchUserCards, createUserCard, updateUserCard, deleteUserCard } from "../api/user/services/user";
 
 export const useUserCards = () => {
     const [cards, setCards] = useState<Card[]>([]);

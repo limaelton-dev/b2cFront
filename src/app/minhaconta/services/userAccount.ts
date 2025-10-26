@@ -287,17 +287,6 @@ export const updateProfile = async (data: any): Promise<void> => {
     await axios.patch(`${API_URL}/my-account/update-profile`, dataToUpdate, getAuthConfig());
   } catch (error) {
     console.error('Erro ao atualizar perfil:', error);
-=======
-    // Esta função será mantida apenas para compatibilidade
-    // com o código existente, mas não fará chamadas à API
-    console.log('Dados recebidos para atualização de perfil:', data);
-    console.log('A atualização de perfil agora é feita diretamente pelos endpoints específicos de endereço, telefone e cartão');
-    
-    // Não faz nenhuma chamada à API, pois os dados são adicionados
-    // diretamente pelos endpoints específicos
-    return;
-  } catch (error) {
-    console.error('Erro ao processar dados do perfil:', error);
     throw error;
   }
 };

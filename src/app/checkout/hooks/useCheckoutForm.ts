@@ -1,19 +1,19 @@
 "use client";
 import { useState, useEffect } from 'react';
-import { useAuth } from '../../context/auth';
-import { useToastSide } from '../../context/toastSide';
+import { useAuth } from '../../context/AuthProvider';
+import { useToastSide } from '../../context/ToastSideProvider';
 import { useRouter } from 'next/navigation';
 import { validateCPF, validatePhone, validatePasswords } from '../utils/validation';
 import { fetchAddressByCEP } from '../utils/address';
-import { getProfileUser, getUserPersonalData } from '../../services/profile';
+import { getProfileUser, getUserPersonalData } from '../../api/user/profile/services/profile';
 import { 
     addAddress, 
     addPhone, 
     addCard, 
     updateProfile 
 } from '../../minhaconta/services/userAccount';
-import { cpfValidation, emailVerify } from '../../services/checkout';
-import { register } from '../../services/auth';
+import { cpfValidation, emailVerify } from '../../api/checkout/services/checkout';
+import { register } from '../../api/auth/services/auth-service';
 import { useCookies } from 'react-cookie';
 import { saveToken } from '../../utils/auth';
 
@@ -85,7 +85,7 @@ export interface DisabledFields {
 export const useCheckoutForm = () => {
     const router = useRouter();
     const { showToast } = useToastSide();
-    const { user, setUserFn } = useAuth();
+    const { user, refreshProfile } = useAuth();
     const [cookies, setCookie] = useCookies(['jwt']);
     
     // Dados do formulário
@@ -497,21 +497,8 @@ export const useCheckoutForm = () => {
             saveToken(registerResponse.token);
             setCookie('jwt', registerResponse.token, { maxAge: 60 * 60 * 24 * 7 }); // 7 dias
 
-            // Atualizar o contexto de autenticação
-            setUserFn({
-                id: registerResponse.user.id,
-                name: registerResponse.user.name,
-                email: registerResponse.user.email
-            });
-            
-            // Salvar dados do usuário no localStorage
-            if (typeof window !== 'undefined') {
-                localStorage.setItem('user', JSON.stringify({
-                    id: registerResponse.user.id,
-                    name: registerResponse.user.name,
-                    email: registerResponse.user.email
-                }));
-            }
+            // Atualizar o contexto de autenticação carregando o perfil
+            await refreshProfile();
             
             setIsAuthenticated(true);
             

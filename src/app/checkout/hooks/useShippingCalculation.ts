@@ -1,6 +1,6 @@
 "use client";
 import { useState } from 'react';
-import { valorFrete, valorFreteDeslogado } from '../../services/checkout';
+import { valorFrete, valorFreteDeslogado } from '../../api/checkout/services/checkout';
 
 /**
  * Hook para calcular frete no checkout

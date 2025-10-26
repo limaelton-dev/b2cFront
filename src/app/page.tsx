@@ -9,28 +9,44 @@ import HeadphoneImg from './assets/img/headphone.png';
 import { useEffect, useState, useRef } from 'react';
 import Header from './header';
 import Footer from './footer';
-import Cart from './components/cart';
+import Cart from './components/Cart';
 import { Carousel } from 'primereact/carousel';
 import { Radio, Typography } from '@mui/material';
-import { useCart } from './context/cart';
-import { useToastSide } from './context/toastSide';
+import { useCart } from './context/CartProvider';
+import { useToastSide } from './context/ToastSideProvider';
 import Checkbox, { checkboxClasses } from '@mui/joy/Checkbox';
 import ClientOnly from './components/ClientOnly';
-import { fetchAllProducts } from './services/product-service';
-import { Product } from './types/product';
+import { fetchAllProducts } from './api/products/services/product';
+import { Product } from './api/products/types/product';
 
-const getProdutosPage = async (limit: number) => {
+const getProdutosPage = async (limit: number = 12) => {
     try {
-        const resp = await fetchAllProducts();
-        return resp.items;
+        const resp = await fetchAllProducts(
+            { categories: [], brands: [], term: '' }, 
+            { offset: 0, limit: limit }
+        );
+        console.log('Resposta da API:', resp);
+        
+        // Verificar diferentes estruturas de resposta
+        let products = [];
+        if (resp.items && Array.isArray(resp.items)) {
+            products = resp.items;
+        } else if (resp.data && Array.isArray(resp.data)) {
+            products = resp.data;
+        } else if (Array.isArray(resp)) {
+            products = resp;
+        }
+        
+        console.log('Produtos encontrados:', products.length);
+        return products.slice(0, limit); // Garantir que não exceda o limite
     } catch (error) {
-        console.error('Erro: ', error);
+        console.error('Erro ao carregar produtos:', error);
         return [];
     }
 };
 
 export default function HomePage() {
-    const { addToCart } = useCart();
+    const { addItem } = useCart();
     const { showToast } = useToastSide();
     const [openedCart, setOpenedCart] = useState(false);
     const [prodsNew, setProdsNew] = useState<Product[]>([]);
@@ -43,11 +59,20 @@ export default function HomePage() {
     useEffect(() => {
 
         const loadProdutos = async () => {
-            const products = await getProdutosPage(8);
+            const products = await getProdutosPage(12);
             console.log('products lidos: ', products);
-            setProdsNew(products);
-            setProdsMaisVend(products);
-            setProdOfertas(products)
+            
+            if (products && products.length > 0) {
+                // Dividir os produtos para diferentes seções
+                setProdsNew(products.slice(0, 12)); // Lançamentos - primeiros 12
+                setProdsMaisVend(products.slice(0, 12)); // Mais vendidos - primeiros 12 (pode ser alterado para uma lógica específica)
+                setProdOfertas(products.slice(0, 12)); // Ofertas - primeiros 12 (pode ser alterado para uma lógica específica)
+            } else {
+                console.warn('Nenhum produto foi carregado');
+                setProdsNew([]);
+                setProdsMaisVend([]);
+                setProdOfertas([]);
+            }
           };
       
         loadProdutos();
@@ -73,16 +98,76 @@ export default function HomePage() {
     const productTemplate = (product: Product) => {
         const handleAddToCart = async () => {
             setLoadingProduct(product.id);
-            if(!addToCart(product, null)) {
-                showToast('O produto já existe no carrinho!', 'error');
-                setLoadingProduct(null);
-            } else {
+            
+            try {
+                // Encontrar o primeiro SKU ativo do produto
+                const activeSku = product.skus?.find(sku => sku.active) || product.skus?.[0];
+                
+                if (!activeSku) {
+                    showToast('Produto sem SKU disponível.', 'error');
+                    setLoadingProduct(null);
+                    return;
+                }
+                
+                await addItem(activeSku.id);
                 setTimeout(() => {
                     setLoadingProduct(null);
                     showToast('O produto foi adicionado ao carrinho!', 'success');
                     setOpenedCart(true);
                 }, 500);
+            } catch (error) {
+                console.error('Erro ao adicionar produto ao carrinho:', error);
+                showToast('Erro ao adicionar produto ao carrinho.', 'error');
+                setLoadingProduct(null);
             }
+        };
+
+        // Função para obter a imagem do produto
+        const getProductImage = (product) => {
+            // Nova estrutura: usar a imagem principal ou a primeira imagem
+            if (product.images && Array.isArray(product.images) && product.images.length > 0) {
+                const mainImage = product.images.find(img => img.main) || product.images[0];
+                if (mainImage) {
+                    return mainImage.standardUrl || mainImage.originalImage || mainImage.url;
+                }
+            }
+            
+            // Compatibilidade: estrutura antiga
+            if (product.imagens && Array.isArray(product.imagens) && product.imagens.length > 0) {
+                return product.imagens[0].url;
+            }
+
+            if (product.pro_imagem) {
+                return product.pro_imagem;
+            }
+            
+            return HeadphoneImg;
+        };
+
+        // Função para obter o preço do produto
+        const getProductPrice = (product) => {
+            // Nova estrutura: usar o preço do primeiro SKU ativo
+            if (product.skus && Array.isArray(product.skus) && product.skus.length > 0) {
+                const activeSku = product.skus.find(sku => sku.active) || product.skus[0];
+                if (activeSku && activeSku.sellPrice && !isNaN(Number(activeSku.sellPrice))) {
+                    return `R$ ${Number(activeSku.sellPrice).toFixed(2).replace('.', ',')}`;
+                }
+                if (activeSku && activeSku.price && !isNaN(Number(activeSku.price))) {
+                    return `R$ ${Number(activeSku.price).toFixed(2).replace('.', ',')}`;
+                }
+            }
+            
+            // Compatibilidade: usar campos antigos
+            if (product.pro_precovenda && !isNaN(Number(product.pro_precovenda))) {
+                return `R$ ${Number(product.pro_precovenda).toFixed(2).replace('.', ',')}`;
+            }
+            
+            return 'Preço não disponível';
+        };
+
+        // Função para obter o nome do produto
+        const getProductName = (product) => {
+            return product.title || product.name || product.pro_descricao || "Produto";
         };
 
         return (
@@ -92,10 +177,10 @@ export default function HomePage() {
                 </div>
                 <a href={`/produto/${product.slug}`}>
                     <Image
-                            src={product.images[0].url}
+                            src={getProductImage(product)}
                             width={200}
                             height={200}
-                            alt="Headphone"
+                            alt={getProductName(product)}
                             unoptimized={true}
                             style={{
                                 width: '100%',
@@ -131,14 +216,14 @@ export default function HomePage() {
                             overflow: "hidden",
                         }}
                     >
-                        {product.title}
+                        {getProductName(product)}
                     </Typography>
                 </a>
                 <div className="description">
-                    {product.model}
+                    {product.model || product.description || ''}
                 </div>
                 <div className="price">
-                    {product.skus[0].price}
+                    {getProductPrice(product)}
                     <div className="discount">
                         (5% OFF)
                     </div>

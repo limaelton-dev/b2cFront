@@ -1,34 +1,8 @@
 import { Accordion, AccordionDetails, AccordionSummary, Typography, FormGroup, FormControlLabel, Checkbox } from "@mui/material";
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
-import { fetchBrands } from "../../../services/brand";
-import { useEffect, useState } from "react";
+import { Brand } from "../../../api/brands/types/brand";
 
-const getBrands = async () => {
-    try {
-        const dataBrands = await fetchBrands();
-        return dataBrands.content;
-    } catch (e) {
-        console.log('deu pau: ', e)
-    }
-}
-
-export default function BrandsList() {
-    const [brands, setBrands] = useState([]);
-    const loadBrands = async () => {
-        try {
-            const brands = await getBrands();
-            setBrands(brands);
-        } catch (error) {
-            console.log('Deu algum erro: ', error);
-            setBrands([]);
-        }
-    };
-
-    useEffect(() => {
-        loadBrands()
-    }, [])
-
-
+export default function BrandsList({ brands, filters, setFilters }: { brands: Brand[], filters: string[], setFilters: (filters: string[]) => void }) {
     return (
         <div>
             <Accordion defaultExpanded>
@@ -47,8 +21,8 @@ export default function BrandsList() {
                                     key={brand.id} 
                                     control={
                                         <Checkbox 
-                                            // onChange={(event) => handleCheckboxChangeFab(event, f.brand?.name)} 
-                                            // checked={fabSett.includes(f.brand?.name)} 
+                                            onChange={(event) => setFilters(event.target.checked ? [...filters, brand.id.toString()] : filters.filter((id) => id !== brand.id.toString()))} 
+                                            checked={filters.includes(brand.id.toString())} 
                                             size='small' 
                                         />
                                     } 

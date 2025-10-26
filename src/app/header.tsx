@@ -2,14 +2,14 @@
 'use client';
 
 import { useRouter, usePathname } from 'next/navigation';
-import { useCart } from './context/cart';
-import { useAuth } from './context/auth';
-import TopBar from './components/header/TopBar';
-import Logo from './components/header/Logo';
-import SearchBox from './components/header/SearchBox/SearchBox';
-import UserMenu from './components/header/UserMenu/UserMenu';
-import CartButton from './components/header/CartButton/CartButton';
-import CategoriesNav from './components/header/CategoriesNav/CategoriesNav';
+import { useCart } from './context/CartProvider';
+import { useAuth } from './context/AuthProvider';
+import TopBar from './components/Header/TopBar';
+import Logo from './components/Header/Logo';
+import SearchBox from './components/Header/SearchBox/SearchBox';
+import UserMenu from './components/Header/UserMenu/UserMenu';
+import CartButton from './components/Header/CartButton/CartButton';
+import CategoriesNav from './components/Header/CategoriesNav/CategoriesNav';
 
 type HeaderProps = {
     cartOpened: boolean;

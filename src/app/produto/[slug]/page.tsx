@@ -8,27 +8,37 @@ import HeadphoneImg from '../../assets/img/headphone.png';
 import BannerProd from '../../assets/img/banner_mouse.png';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import { useEffect, useState } from 'react';
-import Cart from '../../components/cart';
+import Cart from '../../components/Cart';
 import ClientOnly from '../../components/ClientOnly';
 import Header from '../../header';
-import { useCart } from '../../context/cart';
+import { useCart } from '../../context/CartProvider';
 import { Alert, Snackbar, Slide, Button, CircularProgress, Typography, TextField, Checkbox, Breadcrumbs, Link } from '@mui/material';
-import { useToastSide } from '../../context/toastSide';
-import ScrollTopButton from '../../components/scrollTopButton';
-import useScrollToDiv from '../../components/useScrollToDiv';
+import { useToastSide } from '../../context/ToastSideProvider';
 import Footer from '../../footer';
 import { Carousel } from 'primereact/carousel';
 import ReactInputMask from 'react-input-mask';
 import axios from 'axios';
-import { valorFreteDeslogado } from '../../services/checkout';
+import { valorFreteDeslogado } from '../../api/checkout/services/checkout';
 import HomeIcon from '@mui/icons-material/Home';
-import { Product } from '../../types/product';
-import { fetchAllProducts, fetchProductBySlug } from '../../services/product-service';
+import { Product } from '../../api/products/types/product';
+import { fetchAllProducts, fetchProductBySlug } from '../../api/products/services/product';
 
 const ProductPage = () => {
-    const scrollTo = useScrollToDiv();
     const { showToast } = useToastSide();
-    const { addToCart, cartItems, cartData } = useCart();
+    const { addItem } = useCart();
+
+    // Função auxiliar para obter o preço do primeiro SKU disponível
+    const getFirstSkuPrice = (product?: Product): number | null => {
+        if (!product?.skus || product.skus.length === 0) return null;
+        const firstSku = product.skus[0];
+        return firstSku?.price || firstSku?.sellPrice || null;
+    };
+
+    // Função auxiliar para formatar preço
+    const formatPrice = (price: number | null): string => {
+        if (price === null || price === undefined) return 'Preço não disponível';
+        return `R$ ${Number(price).toFixed(2).replace('.', ',')}`;
+    };
     const [loadBtn, setLoadBtn] = useState(false);
     const [isPromoProd, setIsPromoProd] = useState(false);
     const [selectedImg, setSelectedImg] = useState('');
@@ -63,7 +73,7 @@ const ProductPage = () => {
 
     const loadRelatedProducts = async () => {
         try {
-            const dataRelatedProducts = await fetchAllProducts();
+            const dataRelatedProducts = await fetchAllProducts({ categories: [], brands: [], term: '' }, { offset: 0, limit: 12 });
             setProdsRelation(dataRelatedProducts.items);
             console.log('produtos relacionados:', dataRelatedProducts.items);
             console.log('produtos relacionados2:', prodsRelation);
@@ -75,7 +85,8 @@ const ProductPage = () => {
     useEffect(() => {
         loadProduct();
         loadRelatedProducts();
-    }, []);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [slug]);
 
     const responsiveOptions = [
         { breakpoint: "1400px", numVisible: 4, numScroll: 2 },
@@ -93,31 +104,60 @@ const ProductPage = () => {
 
     const handleAddToCart = async () => {
         setLoadBtn(true);
-        if(!addToCart(product, isActiveColorId)) {
-            showToast('O produto já existe no carrinho!','error')
-            setLoadBtn(false);
-        }
-        else {
+        
+        try {
+            if (!product) {
+                showToast('Produto não carregado.', 'error');
+                setLoadBtn(false);
+                return;
+            }
+            
+            // Encontrar o primeiro SKU ativo do produto
+            const activeSku = product.skus?.find(sku => sku.active) || product.skus?.[0];
+            
+            if (!activeSku) {
+                showToast('Produto sem SKU disponível.', 'error');
+                setLoadBtn(false);
+                return;
+            }
+            
+            await addItem(activeSku.id);
             setTimeout(() => {
-                setLoadBtn(false)
-                showToast('O produto foi adicionado ao carrinho!','success')
+                setLoadBtn(false);
+                showToast('O produto foi adicionado ao carrinho!', 'success');
                 setOpenedCart(true);
-            }, 500)
+            }, 500);
+        } catch (error) {
+            console.error('Erro ao adicionar produto ao carrinho:', error);
+            showToast('Erro ao adicionar produto ao carrinho.', 'error');
+            setLoadBtn(false);
         }
     }
 
     const productTemplate = (product) => {
         const handleAddToCart = async () => {
             setLoadingProduct(product.id);
-            if(!addToCart(product, null)) {
-                showToast('O produto já existe no carrinho!', 'error');
-                setLoadingProduct(null);
-            } else {
+            
+            try {
+                // Encontrar o primeiro SKU ativo do produto
+                const activeSku = product.skus?.find(sku => sku.active) || product.skus?.[0];
+                
+                if (!activeSku) {
+                    showToast('Produto sem SKU disponível.', 'error');
+                    setLoadingProduct(null);
+                    return;
+                }
+                
+                await addItem(activeSku.id);
                 setTimeout(() => {
                     setLoadingProduct(null);
                     showToast('O produto foi adicionado ao carrinho!', 'success');
                     setOpenedCart(true);
                 }, 500);
+            } catch (error) {
+                console.error('Erro ao adicionar produto ao carrinho:', error);
+                showToast('Erro ao adicionar produto ao carrinho.', 'error');
+                setLoadingProduct(null);
             }
         };
 
@@ -128,10 +168,12 @@ const ProductPage = () => {
                 </div>
                 <a href={`/produto/${product.slug}`}>
                     <Image
-                            src={product.images[0].url}
+                            src={product?.images && product.images.length > 0 ? 
+                                (product.images[0].url || product.images[0].standardUrl || product.images[0].originalImage) : 
+                                HeadphoneImg.src}
                             width={200}
                             height={200}
-                            alt="Headphone"
+                            alt="Produto"
                             layout="responsive"
                             unoptimized={true}
                     />
@@ -170,7 +212,7 @@ const ProductPage = () => {
                     {productDescription(product.model)}
                 </div>
                 <div className="price">
-                    {product.skus[0].price}
+                    {formatPrice(getFirstSkuPrice(product))}
                     <div className="discount">
                         (5% OFF)
                     </div>
@@ -190,7 +232,12 @@ const ProductPage = () => {
     }
 
     const changePicture = (id) => {
-        setSelectedImg(product.images.find((image) => image.id === id).url)
+        if (product?.images && product.images.length > 0) {
+            const foundImage = product.images.find((image) => image.id === id);
+            if (foundImage) {
+                setSelectedImg(foundImage.url || foundImage.standardUrl || foundImage.originalImage || '');
+            }
+        }
     }
 
     const buscarEndereco = async (cep: string) => {
@@ -225,15 +272,23 @@ const ProductPage = () => {
                             
                             if (frete && frete.data && frete.data.data) {
                                 setFreteNome('PAC');
-                                setFretePreco(frete.data.data.totalPreco);
-                                setPrazo(frete.data.data.maiorPrazo);
+                                setFretePreco(frete.data.data.totalPreco || 0);
+                                setPrazo(frete.data.data.maiorPrazo || 0);
                             } else {
                                 console.error('Resposta inválida da API de frete:', frete);
                                 setFreteError('Não foi possível calcular o frete para este produto.');
+                                // Limpa os dados de frete anteriores
+                                setFreteNome('');
+                                setFretePreco(0);
+                                setPrazo(0);
                             }
                         } catch (freteError) {
                             console.error('Erro ao calcular frete:', freteError);
                             setFreteError('Erro ao calcular o frete. Tente novamente.');
+                            // Limpa os dados de frete anteriores
+                            setFreteNome('');
+                            setFretePreco(0);
+                            setPrazo(0);
                         }
                     }
                     setLoadingCep(false);
@@ -266,7 +321,6 @@ const ProductPage = () => {
                 <Cart cartOpened={openedCart} onCartToggle={setOpenedCart}/>
                 <Header cartOpened={openedCart} onCartToggle={setOpenedCart} />
             </ClientOnly>
-            <ScrollTopButton/>
             {/* TODO:TRATAR ERRO DE CARREGAMENTO DA API */}
             {loading ? (
                 <main>
@@ -315,34 +369,43 @@ const ProductPage = () => {
                                 <h2>{product.title}</h2>
                                 <span className='sku'>{product.model}</span>
                                 <div className="nav-product">
-                                    <div className="button-nav" onClick={() => scrollTo('caracteristicas')}><b>Características</b></div>
-                                    <div className="button-nav" onClick={() => scrollTo('especificacoes')}><b>Especificações Técnicas</b></div>
-                                    <div className="button-nav" onClick={() => scrollTo('tabs')}><b>Avaliações</b></div>
+                                    <div className="button-nav" onClick={() => {}}><b>Características</b></div>
+                                    <div className="button-nav" onClick={() => {}}><b>Especificações Técnicas</b></div>
+                                    <div className="button-nav" onClick={() => {}}><b>Avaliações</b></div>
                                 </div>
                             </div>
                             <div className="col-lg-6 d-flex" style={{paddingLeft: '80px'}}>
                                 <div className="price-info-head col-lg-6">
                                     <span className='price'>
-                                        {product?.skus[0]?.price ? (
-                                            isPromoProd ? ( 
-                                                <span>R$ {Number(product.skus[0].price).toFixed(2).replace('.',',')}</span>
-                                            ) 
-                                            : (
-                                                <>
-                                                    <span>De <b style={{textDecoration: 'line-through'}}>R$ {Number(product.skus[0].price).toFixed(2).replace('.',',')}</b></span>
-                                                    <span>Por <b>R$ {Number(product.skus[0].price).toFixed(2).replace('.',',')}</b></span>
-                                                </>
-                                            )
-                                        ) : (
-                                            <span>Preço não disponível</span>
-                                        )}
+                                        {(() => {
+                                            const price = getFirstSkuPrice(product);
+                                            if (price === null) {
+                                                return <span>Preço não disponível</span>;
+                                            }
+                                            
+                                            if (isPromoProd) {
+                                                return <span>{formatPrice(price)}</span>;
+                                            } else {
+                                                return (
+                                                    <>
+                                                        <span>De <b style={{textDecoration: 'line-through'}}>{formatPrice(price)}</b></span>
+                                                        <span>Por <b>{formatPrice(price)}</b></span>
+                                                    </>
+                                                );
+                                            }
+                                        })()}
                                     </span>
-                                    {product?.skus[0]?.price && (
-                                        <>
-                                            <span>Em até 12x de <b>R$ {(Number(product.skus[0].price) / 12).toFixed(2).replace('.',',')}</b></span>
-                                            <span>ou <span style={{textDecoration: 'underline'}}>R$ {Number(product.skus[0].price).toFixed(2).replace('.',',')}</span> no pagamento pix</span>
-                                        </>
-                                    )}
+                                    {(() => {
+                                        const price = getFirstSkuPrice(product);
+                                        if (price === null) return null;
+                                        
+                                        return (
+                                            <>
+                                                <span>Em até 12x de <b>R$ {(price / 12).toFixed(2).replace('.',',')}</b></span>
+                                                <span>ou <span style={{textDecoration: 'underline'}}>{formatPrice(price)}</span> no pagamento pix</span>
+                                            </>
+                                        );
+                                    })()}
                                 </div>
                                 <div className="button-buy col-lg-6 d-flex align-items-center justify-content-center">
                                     <button type='button'
@@ -376,12 +439,11 @@ const ProductPage = () => {
                                 />
                             </div>
                             <div className="carrousel mt-4">
-                                {product.images.map((p) => (
-                                    <div className="img-carrousel">
+                                {product?.images && product.images.length > 0 ? product.images.map((p) => (
+                                    <div className="img-carrousel" key={p.id}>
                                         <Image
-                                            key={p.id}
-                                            src={p.url}
-                                            alt="Headphone"
+                                            src={p.url || p.standardUrl || p.originalImage}
+                                            alt="Produto"
                                             width={150}
                                             height={150}
                                             unoptimized={true}
@@ -393,7 +455,22 @@ const ProductPage = () => {
                                             onClick={() => changePicture(p.id)}
                                         />
                                     </div>
-                                ))}
+                                )) : (
+                                    <div className="img-carrousel">
+                                        <Image
+                                            src={HeadphoneImg}
+                                            alt="Produto"
+                                            width={150}
+                                            height={150}
+                                            unoptimized={true}
+                                            style={{
+                                                width: '100%',
+                                                height: 'auto',
+                                                objectFit: 'contain'
+                                            }}
+                                        />
+                                    </div>
+                                )}
                             </div>
                         </div>
                         <div className="content-infoprod">
@@ -477,29 +554,38 @@ const ProductPage = () => {
                                                     <div className="frete">
                                                         <div className='text-frete'>
                                                             <span>{freteNome} {'(até '+prazo+' dias úteis)'} </span>
-                                                            <span className="price">R$ {fretePreco.toFixed(2).replace('.',',')}</span>
+                                                            <span className="price">
+                                                                R$ {(fretePreco || 0).toFixed(2).replace('.',',')}
+                                                            </span>
                                                         </div>
                                                     </div>
                                                 </div>
                                             </>
                                         }
                                     </div>
-                                    {product?.skus?.[0]?.price ? (
-                                        <>
-                                            <span className="price text-center">
-                                                R$ {Number(product.skus[0].price).toFixed(2).replace('.',',')}
-                                            </span>
-                                            <span className="card-info">
-                                                Até 12x no cartão
-                                            </span>
-                                            <span>Em até 12x de <b>R$ {(Number(product.skus[0].price) / 12).toFixed(2).replace('.',',')}</b></span>
-                                            <span>ou <span style={{textDecoration: 'underline'}}>R$ {(Number(product.skus[0].price) - 5).toFixed(2).replace('.',',')}</span> no pagamento pix</span>
-                                        </>
-                                    ) : (
-                                        <span className="price text-center">
-                                            Preço não disponível
-                                        </span>
-                                    )}
+                                    {(() => {
+                                        const price = getFirstSkuPrice(product);
+                                        if (price === null) {
+                                            return (
+                                                <span className="price text-center">
+                                                    Preço não disponível
+                                                </span>
+                                            );
+                                        }
+                                        
+                                        return (
+                                            <>
+                                                <span className="price text-center">
+                                                    {formatPrice(price)}
+                                                </span>
+                                                <span className="card-info">
+                                                    Até 12x no cartão
+                                                </span>
+                                                <span>Em até 12x de <b>R$ {(price / 12).toFixed(2).replace('.',',')}</b></span>
+                                                <span>ou <span style={{textDecoration: 'underline'}}>R$ {(price - 5).toFixed(2).replace('.',',')}</span> no pagamento pix</span>
+                                            </>
+                                        );
+                                    })()}
                                     <button type='button'
                                         onClick={handleAddToCart}
                                         className='btn-buy-primary mt-3'
@@ -529,21 +615,6 @@ const ProductPage = () => {
                         </div>
                     </div>
                 </section>
-                {/* <section id="banner_prod">
-                    <div className="container">
-                        <Image
-                            height={500}
-                            src={BannerProd}
-                            alt="Banner"
-                            unoptimized={true}
-                            style={{
-                                width: '100%',
-                                height: 'auto',
-                                objectFit: 'cover'
-                            }}
-                        />
-                    </div>
-                </section> */}
                 <section id='especificacoes' style={{margin: '25px 0px'}}>
                     <div className="container">
                         <div className="title-section">
@@ -554,11 +625,8 @@ const ProductPage = () => {
                             <p><strong>Descrição Técnica:</strong> {stringTester}</p>
                             <p><strong>Modelo Comercial:</strong> {stringTester}</p>
                             <p><strong>Marca:</strong> {product.brand.name}</p>
-                            {/* <p><strong>Apresentação:</strong></p> */}
-                            {/* <div style={{marginLeft: '20px'}}>{productDescription(product.description)}</div> */}
-                            {/* <p><strong>Tipo Giro:</strong> {product.pro_descricao}</p> */}
                             <p><strong>DUN14:</strong> {stringTester}</p>
-                            <p><strong>Prazo de Garantia:</strong> {stringTester}</p>
+                            <p><strong>Prazo de Garantia:</strong> {product.warrantyTime} {product.warrantyText ? `(${product.warrantyText})` : ''}</p>
                             <p><strong>Conteúdo Embalagem:</strong> {stringTester}</p>
                         </div>
                     </div>
@@ -758,7 +826,7 @@ const ProductPage = () => {
                                             </svg>
                                         </div>
                                         <div className="text">
-                                            <p>Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.
+                                            <p>Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry&apos;s standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.
 
                                             </p>
                                         </div>
@@ -894,7 +962,7 @@ const ProductPage = () => {
                                             </svg>
                                         </div>
                                         <div className="text">
-                                            <p>Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.
+                                            <p>Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry&apos;s standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.
 
                                             </p>
                                         </div>

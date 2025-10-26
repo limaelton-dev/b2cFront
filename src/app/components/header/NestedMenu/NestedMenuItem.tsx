@@ -6,7 +6,7 @@ import Collapse from "@mui/material/Collapse";
 import ExpandLess from "@mui/icons-material/ExpandLess";
 import ExpandMore from "@mui/icons-material/ExpandMore";
 import { useMenu } from "./MenuContext";
-import { Category } from "../../../types/category";
+import { Category } from "../../../api/categories/types/category";
 
 interface NestedMenuItemProps {
     category: Category;

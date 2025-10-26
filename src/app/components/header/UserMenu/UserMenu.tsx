@@ -1,19 +1,29 @@
 'use client';
 
 import Image from 'next/image';
+import Link from 'next/link';
 import PersonOutlineOutlinedIcon from '@mui/icons-material/PersonOutlineOutlined';
 import UserImg from '../../../assets/img/user.jpg';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '../../../context/AuthProvider';
 
 type User = { name?: string; email?: string };
+
 export default function UserMenu({ user }: { user: User }) {
   const router = useRouter();
+  const { logout } = useAuth(); // centraliza a lógica
 
   const goAccount = () => router.push('/minhaconta');
   const goLogin = () => router.push('/login');
-  const logout = async () => { 
-    const { logout: logoutService } = await import('../../../services/auth');
-    logoutService();
+
+  const onLogout = async () => {
+    try {
+      await logout();          // limpa token + estado global
+      router.push('/');        // navega (ou /login, sua escolha)
+    } catch (e) {
+      console.error('Falha ao sair:', e);
+      // opcional: toast
+    }
   };
 
   return (
@@ -25,6 +35,7 @@ export default function UserMenu({ user }: { user: User }) {
           <PersonOutlineOutlinedIcon />
         )}
       </div>
+
       <div className="content-text">
         {user?.name ? (
           <>
@@ -32,12 +43,13 @@ export default function UserMenu({ user }: { user: User }) {
             <p className="email">{user.email || ''}</p>
             <div className="d-flex">
               <button className="acc-button" onClick={goAccount}>Minha Conta</button>
-              <button className="logout-button" onClick={logout}>Sair</button>
+              <button className="logout-button" onClick={onLogout}>Sair</button>
             </div>
           </>
         ) : (
           <div className="entre-cad">
-            <a href="/login">Entre</a> ou<br /><a href="/register">Cadastre-se</a>
+            <Link href="/login">Entre</Link> ou<br />
+            <Link href="/register">Cadastre-se</Link>
           </div>
         )}
       </div>

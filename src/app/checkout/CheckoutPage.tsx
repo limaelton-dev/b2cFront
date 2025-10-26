@@ -15,7 +15,7 @@ import HeadphoneImg from '../assets/img/headphone.png';
 import '../assets/css/checkout.css';
 
 // Componentes
-import Cart from '../components/cart';
+import Cart from '../components/Cart';
 import PersonalInfoForm from './components/PersonalInfoForm';
 import AddressForm from './components/AddressForm';
 import PaymentForm from './components/PaymentForm';
@@ -24,9 +24,9 @@ import Footer from '../footer';
 // Hooks e Utils
 import { useCheckoutForm } from './hooks/useCheckoutForm';
 import { useCheckoutPricing } from './hooks/useCheckoutPricing';
-import { useCart } from '../context/cart';
+import { useCart } from '../context/CartProvider';
 import { useCoupon } from '../context/coupon';
-import { useToastSide } from '../context/toastSide';
+import { useToastSide } from '../context/ToastSideProvider';
 import { detectCardBrand } from './utils/validation';
 
 // Serviços
@@ -369,22 +369,71 @@ const CheckoutPage = () => {
                                 return (
                                 <div className="prod" key={`${itemId}-${index}`}>
                                     <Image
-                                        src={product.imagens && product.imagens[0] ? product.imagens[0].url : HeadphoneImg}
-                                        alt={product.pro_descricao || "Produto"}
+                                        src={(() => {
+                                            // Nova estrutura: usar a imagem principal ou a primeira imagem
+                                            if (product.images && Array.isArray(product.images) && product.images.length > 0) {
+                                                const mainImage = product.images.find(img => img.main) || product.images[0];
+                                                if (mainImage) {
+                                                    return mainImage.standardUrl || mainImage.originalImage || mainImage.url;
+                                                }
+                                            }
+                                            
+                                            // Compatibilidade: estrutura antiga
+                                            if (product.imagens && Array.isArray(product.imagens) && product.imagens.length > 0) {
+                                                return product.imagens[0].url;
+                                            }
+
+                                            if (product.pro_imagem) {
+                                                return product.pro_imagem;
+                                            }
+                                            
+                                            return HeadphoneImg;
+                                        })()}
+                                        alt={product.title || product.name || product.pro_descricao || "Produto"}
                                         layout="responsive"
                                         width={200}
                                         height={200}
+                                        unoptimized={true}
                                     />
                                     <div className="info-prod">
-                                        <span className='title-prod'>{product.pro_descricao}</span>
+                                        <span className='title-prod'>{product.title || product.name || product.pro_descricao || "Produto"}</span>
                                         <div className="more-info">
-                                            <span className='sku'>{product.pro_referencia || 'Sem referência'}</span>
-                                            {product.tipo && (
-                                                <div style={{display: 'flex'}}>
-                                                    <span style={{marginRight: '8px'}}>Categoria: </span>
-                                                    <span>{product.tipo.tpo_descricao}</span>
-                                                </div>
-                                            )}
+                                            <span className='sku'>SKU: {(() => {
+                                                // Nova estrutura: usar o SKU ativo ou o primeiro
+                                                if (product.skus && Array.isArray(product.skus) && product.skus.length > 0) {
+                                                    const activeSku = product.skus.find(sku => sku.active) || product.skus[0];
+                                                    if (activeSku && activeSku.partnerId) {
+                                                        return activeSku.partnerId;
+                                                    }
+                                                }
+                                                
+                                                // Compatibilidade: estrutura antiga
+                                                return product.pro_referencia || 'Sem referência';
+                                            })()}</span>
+                                            <span className='quantity'>Qtd: {item.qty || item.quantity || 1}</span>
+                                            {(() => {
+                                                // Nova estrutura
+                                                if (product.category && product.category.name) {
+                                                    return (
+                                                        <div style={{display: 'flex'}}>
+                                                            <span style={{marginRight: '8px'}}>Categoria: </span>
+                                                            <span>{product.category.name}</span>
+                                                        </div>
+                                                    );
+                                                }
+                                                
+                                                // Compatibilidade: estrutura antiga
+                                                if (product.tipo && product.tipo.tpo_descricao) {
+                                                    return (
+                                                        <div style={{display: 'flex'}}>
+                                                            <span style={{marginRight: '8px'}}>Categoria: </span>
+                                                            <span>{product.tipo.tpo_descricao}</span>
+                                                        </div>
+                                                    );
+                                                }
+                                                
+                                                return null;
+                                            })()}
                                         </div>
                                     </div>
                                 </div>

@@ -4,30 +4,26 @@ import '../assets/css/login.css';
 import AlternateEmailIcon from '@mui/icons-material/AlternateEmail';
 import LockIcon from '@mui/icons-material/Lock';
 import { useState } from 'react';
-import { register } from '../services/auth';
-import { CookiesProvider, useCookies } from 'react-cookie';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Logo from '../assets/img/logo_coletek_white.png';
-import svgG from '../assets/img/svg/google.svg';
-import svgF from '../assets/img/svg/facebook.svg';
-import { useAuth } from '../context/auth';
+import { useAuth } from '../context/AuthProvider';
 import KeyIcon from '@mui/icons-material/Key';
 import PersonIcon from '@mui/icons-material/Person';
 import BusinessIcon from '@mui/icons-material/Business';
 import BadgeIcon from '@mui/icons-material/Badge';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import WcIcon from '@mui/icons-material/Wc';
-import { useToastSide } from '../context/toastSide';
+import { useToastSide } from '../context/ToastSideProvider';
+import { ProfileType } from '../api/auth/types/AuthUser';
+import type { RegisterRequest } from '../api/auth/types/Register';
 
 export default function RegisterPage() {
     const router = useRouter();
-    const { setUserFn } = useAuth();
-    const [cookies, setCookie] = useCookies(['jwt','user']);
-    const [isLoading, setIsLoading] = useState(false);
+    const { register, loading } = useAuth();
     const [textError, setTextError] = useState('');
     const { showToast } = useToastSide();
-    const [profileType, setProfileType] = useState('PF');
+    const [profileType, setProfileType] = useState<'PF' | 'PJ'>('PF');
 
     const [formData, setFormData] = useState({
         // Campos comuns
@@ -78,7 +74,7 @@ export default function RegisterPage() {
 
     const submit = async (e: any) => {
         e.preventDefault();
-        setIsLoading(true);
+        setTextError('');
         
         let newErrors = {
             email: !formData.email.trim(),
@@ -93,74 +89,53 @@ export default function RegisterPage() {
         setErrors(newErrors);
 
         if (Object.values(newErrors).some((error) => error)) {
-            setIsLoading(false);
             setTextError('Por favor, preencha os campos obrigatórios!');
             return;
         }
         
         if(formData.repassword !== formData.password) {
-            setIsLoading(false);
             setTextError('As senhas não condizem.\nPor favor, preencha corretamente.');
             return;
         }
         
         // Verificação adicional para garantir que o nome completo tenha pelo menos um espaço (nome e sobrenome)
         if (profileType === 'PF' && !formData.fullName.trim().includes(' ')) {
-            setIsLoading(false);
             setTextError('Por favor, informe nome e sobrenome.');
             return;
         }
 
         try {
-            const response = await register(formData);
-            
-            if (response && response.access_token) {
-                // Configurar o usuário no contexto de autenticação
-                const user = response.user;
-                const userData = {
-                    id: user.id,
-                    email: user.email,
-                    profileId: user.profileId,
-                    profileType: user.profileType,
-                    name: user.profileType === 'PF' 
-                        ? (user.profile?.firstName && user.profile?.lastName)
-                            ? `${user.profile.firstName} ${user.profile.lastName}`
-                            : user.profile?.fullName || ''
-                        : user.profile?.companyName || '',
-                    profile: user.profile
-                };
-                
-                // Atualizar o usuário no contexto de autenticação
-                setUserFn(userData);
-                
-                // Configurar o cookie JWT
-                setCookie('jwt', response.access_token);
-                
-                // Redirecionar para a página inicial
-                router.push('/');
-                showToast('Você se cadastrou com sucesso!', 'success');
-            } else {
-                setIsLoading(false);
-                
-                if (response.response && response.response.data && response.response.data.message) {
-                    setTextError(response.response.data.message);
-                } else if (response.code === 'ERR_NETWORK') {
-                    setTextError('Erro de conexão com o servidor.\nPor favor, tente novamente mais tarde');
-                } else if (response.code === 'ERR_BAD_REQUEST') {
-                    setTextError('Erro nos dados enviados. Verifique os campos e tente novamente.');
-                } else {
-                    setTextError('Houve um erro ao criar usuário');
+            // Construir payload conforme o tipo de perfil
+            const payload: RegisterRequest = profileType === 'PF' 
+                ? {
+                    email: formData.email,
+                    password: formData.password,
+                    profileType: ProfileType.PF,
+                    fullName: formData.fullName,
+                    cpf: formData.cpf,
+                    birthDate: formData.birthDate || undefined,
+                    gender: formData.gender || null
                 }
-            }
-        }
-        catch(error) {
-            setIsLoading(false);
+                : {
+                    email: formData.email,
+                    password: formData.password,
+                    profileType: ProfileType.PJ,
+                    companyName: formData.companyName,
+                    cnpj: formData.cnpj,
+                    tradingName: formData.tradingName || undefined,
+                    stateRegistration: formData.stateRegistration || undefined,
+                    municipalRegistration: formData.municipalRegistration || undefined
+                };
+
+            await register(payload);
             
-            if (error.response && error.response.data && error.response.data.message) {
-                setTextError(error.response.data.message);
-            } else {
-                setTextError('Houve um erro ao criar usuário');
-            }
+            // Se chegou aqui, cadastro foi bem-sucedido
+            showToast('Você se cadastrou com sucesso!', 'success');
+            router.push('/');
+        }
+        catch(error: any) {
+            console.error('Erro durante o cadastro:', error);
+            setTextError(error?.message || 'Houve um erro ao criar usuário');
         }
     }
 
@@ -275,8 +250,8 @@ export default function RegisterPage() {
                                             </>
                                         )}
                                         
-                                        <button type="submit" style={{backgroundColor: isLoading ? '#8cad8b' : '#349131', pointerEvents: isLoading ? 'none': 'all'}} onClick={submit} className="btn btn-primary btn-auth d-flex">
-                                            {isLoading ? 
+                                        <button type="submit" style={{backgroundColor: loading ? '#8cad8b' : '#349131', pointerEvents: loading ? 'none': 'all'}} onClick={submit} className="btn btn-primary btn-auth d-flex">
+                                            {loading ? 
                                                 <div className="spinner-border text-light" style={{fontSize: '8px',width: '24px',height: '24px'}} role="status"><span className="visually-hidden"></span></div>
                                                 :
                                                 <p style={{marginBottom: '0px', padding: '0px 0px'}}>Cadastrar</p>

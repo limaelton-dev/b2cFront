@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { fetchUser, fetchWithDetails } from "../services/user";
-import { User } from "../types/user";
+import { fetchUser, fetchWithDetails } from "../api/user/services/user";
+import { User } from "../api/user/types/user";
 import { getToken } from "../utils/auth";
 
 interface UseUserOptions {

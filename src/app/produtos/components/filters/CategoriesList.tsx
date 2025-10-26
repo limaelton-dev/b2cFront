@@ -1,33 +1,8 @@
 import { Accordion, AccordionDetails, AccordionSummary, Typography, FormGroup, FormControlLabel, Checkbox } from "@mui/material";
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
-import { useEffect, useState } from "react";
-import { fetchRootCategories } from "../../../services/category";
+import { Category } from "../../../api/categories/types/category";
 
-const getRootCategories = async () => {
-    try {
-        const dataCategories = await fetchRootCategories();
-        return dataCategories.content;
-    } catch (e) {
-        console.log('deu pau: ', e)
-    }
-}
-
-export default function CategoriesList() {
-    const [categories, setCategories] = useState([]);
-    const loadCategories = async () => {
-        try {
-            const rootCategories = await getRootCategories();
-            setCategories(rootCategories);
-        } catch (error) {
-            console.log('Deu algum erro: ', error);
-            setCategories([]);
-        }
-    };
-
-    useEffect(() => {
-        loadCategories()
-    }, [])
-
+export default function CategoriesList({ categories, filters, setFilters }: { categories: Category[], filters: string[], setFilters: (filters: string[]) => void }) {
     return (
         <div>
             <Accordion defaultExpanded>
@@ -47,6 +22,11 @@ export default function CategoriesList() {
                                     control={
                                         <Checkbox
                                             size='small'
+                                            checked={filters.includes(category.id.toString())}
+                                            onChange={(event) => setFilters(
+                                                event.target.checked 
+                                                ? [...filters, category.id.toString()] 
+                                                : filters.filter((id) => id !== category.id.toString()))}
                                         />
                                     }
                                     label={category.name}

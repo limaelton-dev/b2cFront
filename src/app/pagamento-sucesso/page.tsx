@@ -4,8 +4,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { Box, Button, Container, Typography, Paper, CircularProgress, Divider } from '@mui/material';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
-import { useAuth } from '../context/auth';
-import { useToastSide } from '../context/toastSide';
+import { useAuth } from '../context/AuthProvider';
+import { useToastSide } from '../context/ToastSideProvider';
 import '../assets/css/checkout.css';
 
 const PagamentoSucessoPage = () => {

@@ -1,5 +1,5 @@
 // src/app/utils/category-utils.ts
-import { Category } from '../types/category';
+import { Category } from '../api/categories/types/category';
 
 export function processCategories(categories: Category[]): Category[] {
   return categories.map(category => enrichCategory(category));

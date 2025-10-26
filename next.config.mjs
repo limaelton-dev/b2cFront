@@ -18,6 +18,12 @@ const nextConfig = {
                 port: '',
                 pathname: '/imagens/**',
             },
+            {
+                protocol: 'https',
+                hostname: 'coletek.eccosys.com.br',
+                port: '',
+                pathname: '/anexos/produtos/imagens/**',
+            },
         ],
     },
 };

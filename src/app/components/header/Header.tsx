@@ -2,13 +2,13 @@
 
 import { useRouter, usePathname } from 'next/navigation';
 import TopBar from './TopBar';
-import Logo from '../header/Logo';
-import SearchBox from '../header/SearchBox/SearchBox';
-import UserMenu from '../header/UserMenu/UserMenu';
-import CartButton from '../header/CartButton/CartButton';
-import CategoriesNav from '../header/CategoriesNav/CategoriesNav';
-import { useCart } from '../../context/cart';
-import { useAuth } from '../../context/auth';
+import Logo from './Logo';
+import SearchBox from './SearchBox/SearchBox';
+import UserMenu from './UserMenu/UserMenu';
+import CartButton from './CartButton/CartButton';
+import CategoriesNav from './CategoriesNav/CategoriesNav';
+import { useCart } from '../../context/CartProvider';
+import { useAuth } from '../../context/AuthProvider';
 
 type Props = {
   cartOpened: boolean;
@@ -18,7 +18,7 @@ type Props = {
 export default function Header({ cartOpened, onCartToggle }: Props) {
   const router = useRouter();
   const pathname = usePathname();
-  const { cartItems } = useCart();
+  const { cart } = useCart();
   const { user } = useAuth();
 
   const handleSubmitSearch = (term: string) => {
@@ -41,7 +41,7 @@ export default function Header({ cartOpened, onCartToggle }: Props) {
           <div className="user-preference">
             <UserMenu user={user} />
             <CartButton
-              count={cartItems?.length ?? 0}
+              count={cart?.items?.length || 0}
               onClick={() => onCartToggle(!cartOpened)}
             />
           </div>

@@ -1,7 +1,13 @@
 import { Accordion, AccordionDetails, AccordionSummary, Typography, FormGroup, FormControlLabel, Switch } from "@mui/material";
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+import { Filters } from "../../../types/filters";
 
-export default function OthersList(props) {
+interface OthersListProps {
+    filters: Filters;
+    setFilters: (filters: Filters) => void;
+}
+
+export default function OthersList({ filters, setFilters }: OthersListProps) {
     return (
         <div>
             <Accordion defaultExpanded>
@@ -15,7 +21,7 @@ export default function OthersList(props) {
                 <AccordionDetails>
                     <FormGroup sx={{display: 'flex', justifyContent: 'flex-start'}}>
                         <FormControlLabel control={<Switch defaultChecked={false} />} labelPlacement="start" label="Frete Grátis" />
-                        {/* <FormControlLabel control={<Switch defaultChecked={offer == 'sim'} />} labelPlacement="start" label="Promoção" /> */}
+                        <FormControlLabel control={<Switch defaultChecked={true} />} labelPlacement="start" label="Promoção" />
                     </FormGroup>
                 </AccordionDetails>
             </Accordion>
