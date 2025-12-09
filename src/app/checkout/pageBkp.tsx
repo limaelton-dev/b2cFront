@@ -117,7 +117,7 @@ const CheckoutPage = () => {
     const [openedCart, setOpenedCart] = useState(false);
     const [telCelular, setTelCelular] = useState("");
     const [cpf, setCpf] = useState('');
-    const { cartItems, cartData, removeItems } = useCart();
+    const { cart } = useCart();
     const [discountPix, setDiscountPix] = useState(5);
     const { user, setUserFn } = useAuth();
     const [nameUser, setNameUser] = useState('');
@@ -162,7 +162,7 @@ const CheckoutPage = () => {
             setNameUser(user.name);
             setEmailUser(user.email);
             setDisabledUser(true);
-            setProfileId(user.profileId);
+            setProfileId(Number(user.profileId));
             // Não vamos desabilitar todos os campos automaticamente
             // Os campos serão desabilitados apenas se tiverem valores válidos
         }
@@ -185,9 +185,6 @@ const CheckoutPage = () => {
         // Nova estrutura: usar o preço do primeiro SKU ativo
         if (product.skus && Array.isArray(product.skus) && product.skus.length > 0) {
             const activeSku = product.skus.find(sku => sku.active) || product.skus[0];
-            if (activeSku && activeSku.sellPrice && !isNaN(Number(activeSku.sellPrice))) {
-                return Number(activeSku.sellPrice) * quantity;
-            }
             if (activeSku && activeSku.price && !isNaN(Number(activeSku.price))) {
                 return Number(activeSku.price) * quantity;
             }
@@ -213,14 +210,14 @@ const CheckoutPage = () => {
 
     // Função para calcular o subtotal do carrinho
     const calculateSubtotal = () => {
-        if (!cartItems || !cartData || cartItems.length === 0 || cartData.length === 0) {
+        if (!cart || cart.length === 0) {
             return "0.00";
         }
 
         // Calcular o valor base dos produtos usando a função getProductPrice
-        const baseTotal = cartData.reduce((total, item) => {
+        const baseTotal = cart.reduce((total, item) => {
             const itemId = item.id || item.produto_id || item.productId;
-            const product = cartItems.find(p => p && (p.id == itemId || p.pro_codigo == itemId));
+            const product = cart.find(p => p && (p.id == itemId || p.pro_codigo == itemId));
             
             if (product) {
                 const price = getProductPrice(product, item);

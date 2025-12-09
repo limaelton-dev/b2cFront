@@ -20,7 +20,7 @@ export default function Header({ cartOpened, onCartToggle }: HeaderProps) {
     const pathname = usePathname();
     const router = useRouter();
     const { user } = useAuth();
-    const { cartItems } = useCart();
+    const { cart } = useCart();
 
     const handleSubmitSearch = (term: string) => {
         if (pathname === '/produtos') {
@@ -54,7 +54,7 @@ export default function Header({ cartOpened, onCartToggle }: HeaderProps) {
                         <div className="user-preference">
                             <UserMenu user={user} />
                             <CartButton 
-                                count={cartItems?.length || 0} 
+                                count={cart?.items?.length || 0} 
                                 onClick={handleCartToggle} 
                             />
                         </div>

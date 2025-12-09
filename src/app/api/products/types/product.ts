@@ -29,6 +29,20 @@ export interface Characteristics {
     value: string;
 }
 
+// Interface para tipo de variação
+export interface VariationType {
+    id: number;
+    name: string;
+    visualVariation: boolean;
+}
+
+// Interface para variação de SKU
+export interface SkuVariation {
+    id: number;
+    description: string;
+    type: VariationType;
+}
+
 // Nova interface para as imagens do backend
 export interface ProductImageNew {
     id: number;
@@ -39,12 +53,14 @@ export interface ProductImageNew {
     lowResolutionUrl: string;
     standardUrl: string;
     originalImage: string;
+    variation?: string; // Ex: "Preto", "Branco"
     status: string;
     standardWidth: number;
     standardHeight: number;
     originalWidth: number;
     originalHeight: number;
     productId: number;
+    idVariation?: number;
 }
 
 // Nova interface para SKUs do backend
@@ -54,9 +70,9 @@ export interface ProductSkuNew {
     partnerId: string;
     ean: string;
     price: number;
-    sellPrice: number;
     amount: number;
     additionalTime: number;
+    variations?: SkuVariation[]; // Variações do SKU (ex: cor, tamanho)
     stockLocalId: number;
     active: boolean;
     volumes: number;

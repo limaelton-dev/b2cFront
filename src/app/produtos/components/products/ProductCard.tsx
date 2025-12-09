@@ -38,9 +38,6 @@ export default function ProductCard({ product, loadingProducts, handleAddToCart,
         // Nova estrutura: usar o preço do primeiro SKU ativo
         if (product.skus && Array.isArray(product.skus) && product.skus.length > 0) {
             const activeSku = product.skus.find(sku => sku.active) || product.skus[0];
-            if (activeSku && activeSku.sellPrice && !isNaN(Number(activeSku.sellPrice))) {
-                return `R$ ${Number(activeSku.sellPrice).toFixed(2).replace('.', ',')}`;
-            }
             if (activeSku && activeSku.price && !isNaN(Number(activeSku.price))) {
                 return `R$ ${Number(activeSku.price).toFixed(2).replace('.', ',')}`;
             }
@@ -56,7 +53,7 @@ export default function ProductCard({ product, loadingProducts, handleAddToCart,
 
     // Função para obter o nome do produto
     const getProductName = (product: Product) => {
-        return product.title || product.name || product.pro_descricao || "Produto";
+        return product.title || product.name || "Produto";
     };
 
     return (

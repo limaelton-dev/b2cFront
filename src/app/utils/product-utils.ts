@@ -17,8 +17,8 @@ export function normalizeProduct(product: Product): Product {
     // Calcular preço de venda do primeiro SKU ativo
     if (product.skus && Array.isArray(product.skus) && product.skus.length > 0 && !normalized.pro_precovenda) {
         const activeSku = product.skus.find(sku => sku.active) || product.skus[0];
-        if (activeSku && activeSku.sellPrice) {
-            normalized.pro_precovenda = activeSku.sellPrice;
+        if (activeSku && activeSku.price) {
+            normalized.pro_precovenda = activeSku.price;
         }
     }
 
@@ -36,7 +36,14 @@ export function normalizeProduct(product: Product): Product {
             id: img.id,
             productId: img.productId,
             url: img.standardUrl || img.originalImage || img.url,
-            isMain: img.main
+            main: img.main,
+            status: img.status ?? 'ACTIVE',
+            standardWidth: img.standardWidth ?? null,
+            standardHeight: img.standardHeight ?? null,
+            originalWidth: img.originalWidth ?? null,
+            originalHeight: img.originalHeight ?? null,
+            originalImage: img.originalImage ?? null,
+            standardUrl: img.standardUrl ?? null,
         }));
     }
 
@@ -50,28 +57,6 @@ export function normalizeProducts(products: Product[]): Product[] {
     if (!Array.isArray(products)) return products;
     
     return products.map(product => normalizeProduct(product));
-}
-
-/**
- * Obtém o preço de venda de um produto
- */
-export function getProductSellPrice(product: Product): number {
-    if (!product) return 0;
-
-    // Nova estrutura: usar o preço do primeiro SKU ativo
-    if (product.skus && Array.isArray(product.skus) && product.skus.length > 0) {
-        const activeSku = product.skus.find(sku => sku.active) || product.skus[0];
-        if (activeSku && activeSku.sellPrice) {
-            return Number(activeSku.sellPrice);
-        }
-    }
-
-    // Compatibilidade: usar campos antigos
-    if (product.pro_precovenda) {
-        return Number(product.pro_precovenda);
-    }
-
-    return 0;
 }
 
 /**

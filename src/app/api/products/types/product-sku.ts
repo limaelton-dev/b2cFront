@@ -4,7 +4,6 @@ export interface ProductSku {
     partnerId: string;
     ean: string;
     price: number;
-    sellPrice: number;
     amount: number;
     additionalTime: number;
     stockLocalId: number;

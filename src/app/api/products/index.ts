@@ -5,7 +5,6 @@ export {
   fetchProductsByTerm,
   fetchProductById,
   fetchProductsByIds,
-  fetchSkusByIds,
 } from "./services/product";
 
 // Types

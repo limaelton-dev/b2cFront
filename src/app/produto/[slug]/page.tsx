@@ -31,7 +31,13 @@ const ProductPage = () => {
     const getFirstSkuPrice = (product?: Product): number | null => {
         if (!product?.skus || product.skus.length === 0) return null;
         const firstSku = product.skus[0];
-        return firstSku?.price || firstSku?.sellPrice || null;
+        return firstSku?.price || null;
+    };
+
+    // Função para obter o preço do SKU selecionado
+    const getSelectedSkuPrice = (): number | null => {
+        const selectedSku = getSelectedSku();
+        return selectedSku?.price || null;
     };
 
     // Função auxiliar para formatar preço
@@ -55,14 +61,27 @@ const ProductPage = () => {
     const [freteError, setFreteError] = useState('');
     const [loading, setLoading] = useState(true);
     const [openedCart, setOpenedCart] = useState(false);
+    const [selectedSkuId, setSelectedSkuId] = useState<number | null>(null);
     console.log('slug', slug);
     const loadProduct = async () => {
         try {
             const dataProduct = await fetchProductBySlug(slug as string);
             setProduct(dataProduct);
-            if (dataProduct?.images?.length > 0) {
-                const mainImage = dataProduct.images.find((image) => image.main === true);
-                setSelectedImg(mainImage?.url || dataProduct.images[0]?.url || '');
+            
+            // Selecionar o primeiro SKU ativo por padrão
+            if (dataProduct?.skus && dataProduct.skus.length > 0) {
+                const firstActiveSku = dataProduct.skus.find(sku => sku.active) || dataProduct.skus[0];
+                setSelectedSkuId(firstActiveSku.id);
+                
+                // Buscar imagem principal para a variação selecionada
+                if (dataProduct?.images?.length > 0) {
+                    const firstVariation = firstActiveSku.variations?.[0]?.description;
+                    const variationImage = dataProduct.images.find(
+                        (image) => image.variation === firstVariation && image.main === true
+                    );
+                    const fallbackImage = dataProduct.images.find((image) => image.main === true);
+                    setSelectedImg(variationImage?.url || fallbackImage?.url || dataProduct.images[0]?.url || '');
+                }
             }
         } catch (error) {
             console.error('Erro ao buscar produto:', error);
@@ -81,6 +100,55 @@ const ProductPage = () => {
             console.error('Erro ao buscar produtos relacionados:', error);
         }
     }
+
+    // Obtém o SKU atualmente selecionado
+    const getSelectedSku = () => {
+        if (!product?.skus || !selectedSkuId) return product?.skus?.[0];
+        return product.skus.find(sku => sku.id === selectedSkuId) || product.skus[0];
+    };
+
+    // Obtém as imagens filtradas pela variação selecionada
+    const getFilteredImages = () => {
+        if (!product?.images || product.images.length === 0) return [];
+        
+        const selectedSku = getSelectedSku();
+        if (!selectedSku?.variations || selectedSku.variations.length === 0) {
+            // Se não tem variação, retorna todas as imagens
+            return product.images;
+        }
+        
+        const variationDescription = selectedSku.variations[0].description;
+        
+        // Filtra imagens que correspondem à variação selecionada
+        const variationImages = product.images.filter(
+            img => img.variation === variationDescription
+        );
+        
+        // Se encontrou imagens da variação, retorna elas, senão retorna todas
+        return variationImages.length > 0 ? variationImages : product.images;
+    };
+
+    // Função para trocar de variação
+    const handleVariationChange = (variationValue: string) => {
+        if (!product?.skus) return;
+        
+        const selectedSku = product.skus.find(sku => 
+            sku.variations?.some(v => v.description === variationValue)
+        );
+        
+        if (selectedSku) {
+            setSelectedSkuId(selectedSku.id);
+            
+            // Atualizar imagem para a variação selecionada
+            if (product.images && product.images.length > 0) {
+                const variationImage = product.images.find(
+                    (image) => image.variation === variationValue && image.main === true
+                );
+                const fallbackImage = product.images.find((image) => image.main === true);
+                setSelectedImg(variationImage?.url || fallbackImage?.url || product.images[0]?.url || '');
+            }
+        }
+    };
     
     useEffect(() => {
         loadProduct();
@@ -112,16 +180,17 @@ const ProductPage = () => {
                 return;
             }
             
-            // Encontrar o primeiro SKU ativo do produto
-            const activeSku = product.skus?.find(sku => sku.active) || product.skus?.[0];
+            // Usar o SKU selecionado
+            const selectedSku = getSelectedSku();
             
-            if (!activeSku) {
+            if (!selectedSku) {
                 showToast('Produto sem SKU disponível.', 'error');
                 setLoadBtn(false);
                 return;
             }
             
-            await addItem(activeSku.id);
+            // Adiciona SKU ID e Product ID ao carrinho
+            await addItem(selectedSku.id, product.id);
             setTimeout(() => {
                 setLoadBtn(false);
                 showToast('O produto foi adicionado ao carrinho!', 'success');
@@ -148,7 +217,8 @@ const ProductPage = () => {
                     return;
                 }
                 
-                await addItem(activeSku.id);
+                // Adiciona SKU ID e Product ID ao carrinho
+                await addItem(activeSku.id, product.id);
                 setTimeout(() => {
                     setLoadingProduct(null);
                     showToast('O produto foi adicionado ao carrinho!', 'success');
@@ -378,7 +448,7 @@ const ProductPage = () => {
                                 <div className="price-info-head col-lg-6">
                                     <span className='price'>
                                         {(() => {
-                                            const price = getFirstSkuPrice(product);
+                                            const price = getSelectedSkuPrice();
                                             if (price === null) {
                                                 return <span>Preço não disponível</span>;
                                             }
@@ -396,7 +466,7 @@ const ProductPage = () => {
                                         })()}
                                     </span>
                                     {(() => {
-                                        const price = getFirstSkuPrice(product);
+                                        const price = getSelectedSkuPrice();
                                         if (price === null) return null;
                                         
                                         return (
@@ -439,38 +509,41 @@ const ProductPage = () => {
                                 />
                             </div>
                             <div className="carrousel mt-4">
-                                {product?.images && product.images.length > 0 ? product.images.map((p) => (
-                                    <div className="img-carrousel" key={p.id}>
-                                        <Image
-                                            src={p.url || p.standardUrl || p.originalImage}
-                                            alt="Produto"
-                                            width={150}
-                                            height={150}
-                                            unoptimized={true}
-                                            style={{
-                                                width: '100%',
-                                                height: 'auto',
-                                                objectFit: 'contain'
-                                            }}
-                                            onClick={() => changePicture(p.id)}
-                                        />
-                                    </div>
-                                )) : (
-                                    <div className="img-carrousel">
-                                        <Image
-                                            src={HeadphoneImg}
-                                            alt="Produto"
-                                            width={150}
-                                            height={150}
-                                            unoptimized={true}
-                                            style={{
-                                                width: '100%',
-                                                height: 'auto',
-                                                objectFit: 'contain'
-                                            }}
-                                        />
-                                    </div>
-                                )}
+                                {(() => {
+                                    const filteredImages = getFilteredImages();
+                                    return filteredImages.length > 0 ? filteredImages.map((p) => (
+                                        <div className="img-carrousel" key={p.id}>
+                                            <Image
+                                                src={p.url || p.standardUrl || p.originalImage}
+                                                alt="Produto"
+                                                width={150}
+                                                height={150}
+                                                unoptimized={true}
+                                                style={{
+                                                    width: '100%',
+                                                    height: 'auto',
+                                                    objectFit: 'contain'
+                                                }}
+                                                onClick={() => changePicture(p.id)}
+                                            />
+                                        </div>
+                                    )) : (
+                                        <div className="img-carrousel">
+                                            <Image
+                                                src={HeadphoneImg}
+                                                alt="Produto"
+                                                width={150}
+                                                height={150}
+                                                unoptimized={true}
+                                                style={{
+                                                    width: '100%',
+                                                    height: 'auto',
+                                                    objectFit: 'contain'
+                                                }}
+                                            />
+                                        </div>
+                                    );
+                                })()}
                             </div>
                         </div>
                         <div className="content-infoprod">
@@ -502,6 +575,55 @@ const ProductPage = () => {
                                     {productDescription(product.description)}
                                 </div>
                                 <hr />
+                                {/* Seletor de Variações */}
+                                {product.hasVariations && product.skus && product.skus.length > 1 && (
+                                    <div className="variations-selector" style={{ marginBottom: '20px' }}>
+                                        {(() => {
+                                            // Extrair tipos de variação únicos
+                                            const variationTypes = new Map();
+                                            product.skus.forEach(sku => {
+                                                sku.variations?.forEach(variation => {
+                                                    if (!variationTypes.has(variation.type.name)) {
+                                                        variationTypes.set(variation.type.name, []);
+                                                    }
+                                                    if (!variationTypes.get(variation.type.name).some((v: any) => v.description === variation.description)) {
+                                                        variationTypes.get(variation.type.name).push(variation);
+                                                    }
+                                                });
+                                            });
+
+                                            return Array.from(variationTypes.entries()).map(([typeName, variations]: [string, any[]]) => (
+                                                <div key={typeName} style={{ marginBottom: '15px' }}>
+                                                    <h6 style={{ marginBottom: '10px' }}>{typeName}:</h6>
+                                                    <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                                                        {variations.map((variation) => {
+                                                            const selectedSku = getSelectedSku();
+                                                            const isSelected = selectedSku?.variations?.some(v => v.description === variation.description);
+                                                            return (
+                                                                <button
+                                                                    key={variation.id}
+                                                                    onClick={() => handleVariationChange(variation.description)}
+                                                                    style={{
+                                                                        padding: '8px 16px',
+                                                                        border: isSelected ? '2px solid #007bff' : '1px solid #ccc',
+                                                                        borderRadius: '4px',
+                                                                        backgroundColor: isSelected ? '#007bff' : 'white',
+                                                                        color: isSelected ? 'white' : '#333',
+                                                                        cursor: 'pointer',
+                                                                        fontWeight: isSelected ? 'bold' : 'normal',
+                                                                        transition: 'all 0.2s'
+                                                                    }}
+                                                                >
+                                                                    {variation.description}
+                                                                </button>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            ));
+                                        })()}
+                                    </div>
+                                )}
                                 <div className="content-price d-flex flex-direction-column align-items-center">
                                     <h6>Calcule o Frete:</h6>
                                     <div className="frete" style={{marginBottom: '15px'}}>
@@ -564,7 +686,7 @@ const ProductPage = () => {
                                         }
                                     </div>
                                     {(() => {
-                                        const price = getFirstSkuPrice(product);
+                                        const price = getSelectedSkuPrice();
                                         if (price === null) {
                                             return (
                                                 <span className="price text-center">

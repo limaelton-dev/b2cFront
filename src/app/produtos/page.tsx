@@ -206,7 +206,8 @@ export default function ProductsPage() {
                   return;
               }
               
-              await addItem(activeSku.id);
+              // Adiciona SKU ID e Product ID ao carrinho
+              await addItem(activeSku.id, product.id);
               showToast?.("Produto adicionado ao carrinho!", "success");
               
               // Abrir o carrinho após adicionar o produto

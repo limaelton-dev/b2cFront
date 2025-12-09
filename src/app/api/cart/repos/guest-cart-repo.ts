@@ -1,56 +1,96 @@
-
 import { CartRepo } from "../ports/cart-repo";
-import { Cart } from "../types/Cart";
+import { Cart, CartItem } from "../types/Cart";
 import { loadGuestCart, saveGuestCart, clearGuestCart } from "../../../utils/cart-storage";
+import { previewCartDetailsAPI } from "../services/cart-service";
 
-const empty: Cart = { id: "guest", items: [], subtotal: 0, total: 0 };
+const empty: Cart = { id: "guest", items: [], subtotal: 0 };
+
+/** Carrinho básico salvo no localStorage (apenas IDs e quantidades) */
+interface LocalCart {
+    items: { skuId: number; productId?: number; quantity: number }[];
+}
 
 export class GuestCartRepo implements CartRepo {
-    private getSnapshot(): Cart {
-        return loadGuestCart() ?? { ...empty };
+    private getLocalSnapshot(): LocalCart {
+        const saved = loadGuestCart();
+        if (!saved?.items) return { items: [] };
+        
+        // Extrair apenas os campos necessários para o localStorage
+        return {
+            items: saved.items.map(item => ({
+                skuId: item.skuId,
+                productId: item.productId,
+                quantity: item.quantity
+            }))
+        };
+    }
+
+    private saveLocal(items: { skuId: number; productId?: number; quantity: number }[]): void {
+        saveGuestCart({ id: "guest", items, subtotal: 0 } as Cart);
+    }
+
+    /** Busca detalhes enriquecidos via API preview */
+    private async getEnriched(items: { skuId: number; productId?: number; quantity: number }[]): Promise<Cart> {
+        if (items.length === 0) {
+            return { ...empty };
+        }
+        
+        try {
+            return await previewCartDetailsAPI(items);
+        } catch (error) {
+            console.error("Erro ao buscar preview do carrinho:", error);
+            // Fallback: retorna carrinho básico sem enriquecimento
+            return { 
+                id: "guest", 
+                items: items.map(item => ({ ...item, id: `guest-${item.skuId}` })), 
+                subtotal: 0 
+            };
+        }
     }
 
     async get(): Promise<Cart> {
-        return this.getSnapshot();
+        const local = this.getLocalSnapshot();
+        return await this.getEnriched(local.items);
     }
 
-    async addItem(skuId: number): Promise<Cart> {
-        const cart = this.getSnapshot();
-        const item = cart.items.find(i => i.skuId === skuId);
+    async addItem(skuId: number, productId?: number): Promise<Cart> {
+        const local = this.getLocalSnapshot();
+        const item = local.items.find(i => i.skuId === skuId);
 
         if (item) {
             item.quantity += 1;
         } else {
-            cart.items.push({ skuId, quantity: 1 });
+            local.items.push({ skuId, productId, quantity: 1 });
         }
 
-        saveGuestCart(cart);
-        return cart;
+        this.saveLocal(local.items);
+        return await this.getEnriched(local.items);
     }
 
     async setItemQuantity(skuId: number, quantity: number): Promise<Cart> {
-        const cart = this.getSnapshot();
-        const item = cart.items.find(i => i.skuId === skuId);
+        const local = this.getLocalSnapshot();
+        const item = local.items.find(i => i.skuId === skuId);
 
         if (!item) {
-            return cart;
+            return await this.getEnriched(local.items);
         }
+
         if (quantity <= 0) {
-            cart.items = cart.items.filter(i => i.skuId !== skuId);
+            local.items = local.items.filter(i => i.skuId !== skuId);
         } else {
             item.quantity = quantity;
         }
 
-        saveGuestCart(cart);
-        return cart;
+        this.saveLocal(local.items);
+        return await this.getEnriched(local.items);
     }
 
     async removeItem(skuId: number): Promise<Cart> {
-        const cart = this.getSnapshot();
-        cart.items = cart.items.filter(i => i.skuId !== skuId);
+        const local = this.getLocalSnapshot();
+        local.items = local.items.filter(i => i.skuId !== skuId);
 
-        saveGuestCart(cart);
-        return cart;
+        this.saveLocal(local.items);
+        return await this.getEnriched(local.items);
     }
 
     async clear(): Promise<Cart> {

@@ -6,7 +6,7 @@ export interface CartContextType {
   error?: string;
   fetchCart: () => void;
   changeItemQuantity: (skuId: number, newQuantity: number) => void;
-  addItem: (skuId: number) => void;
+  addItem: (skuId: number, productId?: number) => void;
   removeItem: (skuId: number) => void;
   clearItems: () => void;
 }

@@ -31,8 +31,6 @@ const getProdutosPage = async (limit: number = 12) => {
         let products = [];
         if (resp.items && Array.isArray(resp.items)) {
             products = resp.items;
-        } else if (resp.data && Array.isArray(resp.data)) {
-            products = resp.data;
         } else if (Array.isArray(resp)) {
             products = resp;
         }
@@ -109,7 +107,8 @@ export default function HomePage() {
                     return;
                 }
                 
-                await addItem(activeSku.id);
+                // Adiciona SKU ID e Product ID ao carrinho
+                await addItem(activeSku.id, product.id);
                 setTimeout(() => {
                     setLoadingProduct(null);
                     showToast('O produto foi adicionado ao carrinho!', 'success');
@@ -149,9 +148,6 @@ export default function HomePage() {
             // Nova estrutura: usar o preço do primeiro SKU ativo
             if (product.skus && Array.isArray(product.skus) && product.skus.length > 0) {
                 const activeSku = product.skus.find(sku => sku.active) || product.skus[0];
-                if (activeSku && activeSku.sellPrice && !isNaN(Number(activeSku.sellPrice))) {
-                    return `R$ ${Number(activeSku.sellPrice).toFixed(2).replace('.', ',')}`;
-                }
                 if (activeSku && activeSku.price && !isNaN(Number(activeSku.price))) {
                     return `R$ ${Number(activeSku.price).toFixed(2).replace('.', ',')}`;
                 }
