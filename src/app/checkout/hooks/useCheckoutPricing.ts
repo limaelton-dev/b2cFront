@@ -1,138 +1,76 @@
 "use client";
-import { useState } from 'react';
-import { applyDiscounts, applyPixDiscount, formatPrice } from '../utils/pricing';
-import axios from 'axios';
-import { valorFrete, valorFreteDeslogado } from '../../services/checkout';
+import { useState, useCallback } from 'react';
+import { CartItem } from '../../api/cart/types/Cart';
+import { 
+    calculateShippingAuthenticated, 
+    calculateShippingGuest 
+} from '../../api/checkout';
 
-/**
- * Hook para gerenciar cálculos de preço e frete no checkout
- */
-export const useCheckoutPricing = (cartItems: any[], cartData: any[]) => {
-    // Estados relacionados ao frete
-    const [freteNome, setFreteNome] = useState('');
-    const [fretePreco, setFretePreco] = useState(0);
-    const [prazo, setPrazo] = useState(0);
-    
-    // Desconto para pagamentos com PIX (5%)
-    const [discountPix] = useState(5);
-    
-    /**
-     * Calcula o subtotal do carrinho, aplicando descontos
-     * @param couponDiscount Percentual de desconto do cupom
-     * @returns String formatado com o subtotal
-     */
-    const calculateSubtotal = (couponDiscount?: number) => {
-        // Calcular o valor base dos produtos com verificações robustas
-        const baseTotal = cartItems.reduce((total, item) => {
-            const index = cartData.findIndex(i => i.id === item.id || i.produto_id === item.pro_codigo);
-            const qty = index >= 0 ? (cartData[index].qty || cartData[index].quantity || 1) : 1;
-            const price = item.pro_precovenda || 0;
-            return total + (price * qty);
-        }, 0);
+const PIX_DISCOUNT_PERCENT = 5;
 
-        // Aplicar descontos
-        const discountedTotal = applyDiscounts(baseTotal, couponDiscount);
-        
-        // Adicionar custo de entrega e formatar
-        return (Number(discountedTotal.toFixed(2)) + Number(fretePreco)).toFixed(2);
-    };
-    
-    /**
-     * Calcula o valor do carrinho sem descontos
-     * @returns Valor bruto calculado
-     */
-    const calculateRawTotal = () => {
+export const useCheckoutPricing = (cartItems: CartItem[]) => {
+    const [shippingName, setShippingName] = useState('');
+    const [shippingPrice, setShippingPrice] = useState(0);
+    const [deliveryTime, setDeliveryTime] = useState(0);
+
+    const calculateRawTotal = useCallback(() => {
         return cartItems.reduce((total, item) => {
-            const index = cartData.findIndex(i => i.id === item.id || i.produto_id === item.pro_codigo);
-            const qty = index >= 0 ? (cartData[index].qty || cartData[index].quantity || 1) : 1;
-            const price = item.pro_precovenda || 0;
-            return total + (price * qty);
-        }, 0).toFixed(2).replace('.', ',');
-    };
-    
-    /**
-     * Obtém o preço formatado com desconto PIX
-     * @param couponDiscount Percentual de desconto do cupom
-     * @returns String formatado com o preço com desconto PIX
-     */
-    const getPixDiscountedPrice = (couponDiscount?: number) => {
-        const subtotal = parseFloat(calculateSubtotal(couponDiscount));
-        return formatPrice(applyPixDiscount(subtotal, discountPix, couponDiscount));
-    };
-    
-    /**
-     * Calcula o frete com base no CEP usando a nova API
-     * @param postalCode CEP para cálculo do frete
-     * @param isAuthenticated Flag indicando se o usuário está autenticado
-     * 
-     * Para usuários autenticados, usa a função valorFrete que inclui o token de autenticação.
-     * Para usuários não autenticados, usa a função valorFreteDeslogado que não requer autenticação.
-     * Ambas funções usam o mesmo endpoint /cart/shipping, mas com headers diferentes.
-     */
-    const calculateShipping = async (postalCode: string, isAuthenticated: boolean) => {
+            const price = item.sku?.price ?? 0;
+            return total + (price * item.quantity);
+        }, 0);
+    }, [cartItems]);
+
+    const calculateSubtotal = useCallback(() => {
+        return (calculateRawTotal() + shippingPrice).toFixed(2);
+    }, [calculateRawTotal, shippingPrice]);
+
+    const getPixDiscountedPrice = useCallback(() => {
+        const subtotal = parseFloat(calculateSubtotal());
+        const discounted = subtotal * (1 - PIX_DISCOUNT_PERCENT / 100);
+        return discounted.toFixed(2).replace('.', ',');
+    }, [calculateSubtotal]);
+
+    const calculateShipping = useCallback(async (postalCode: string, isAuthenticated: boolean) => {
         if (!postalCode || postalCode.length !== 9) return;
         
-        // Remover máscara do CEP
         const cleanPostalCode = postalCode.replace('-', '');
         
         try {
-            let response;
+            const response = isAuthenticated
+                ? await calculateShippingAuthenticated(cleanPostalCode)
+                : await calculateShippingGuest(cleanPostalCode, cartItems.map(item => ({
+                    id: item.productId || item.skuId,
+                    produto_id: item.productId || item.skuId,
+                    quantity: item.quantity
+                })));
             
-            // Usar funções específicas com base no status de autenticação
-            if (isAuthenticated) {
-                // Usuário autenticado - usa valorFrete
-                response = await valorFrete(cleanPostalCode);
+            if (response?.success && response.data?.availableServices?.length) {
+                const service = response.data.availableServices[0];
+                setShippingName(service.serviceName);
+                setShippingPrice(service.price);
+                setDeliveryTime(service.deliveryTime);
             } else {
-                // Usuário não autenticado - usa valorFreteDeslogado
-                
-                // Formatar os dados dos produtos para o serviço
-                const formattedProducts = cartData.map(item => ({
-                    id: item.id || item.produto_id,
-                    produto_id: item.produto_id || item.id,
-                    quantity: item.qty || item.quantity || 1
-                }));
-                
-                response = await valorFreteDeslogado(cleanPostalCode, formattedProducts);
-            }
-            
-            
-            // Processar a resposta no novo formato
-            if (response?.data && response?.data.success) {
-                const { data } = response.data;
-                
-                // Definir o serviço de frete selecionado - pegamos o primeiro disponível
-                if (data.availableServices && data.availableServices.length > 0) {
-                    const selectedService = data.availableServices[0];
-                    setFreteNome(selectedService.serviceName);
-                    setFretePreco(selectedService.price);
-                    setPrazo(selectedService.deliveryTime);
-                } else {
-                    // Se não houver serviços disponíveis, definir valores padrão
-                    setFreteNome('');
-                    setFretePreco(0);
-                    setPrazo(0);
-                }
-            } else {
-                throw new Error('Falha ao calcular o frete');
+                setShippingName('');
+                setShippingPrice(0);
+                setDeliveryTime(0);
             }
         } catch (error) {
             console.error('Erro ao calcular frete:', error);
-            // Resetar valores em caso de erro
-            setFreteNome('');
-            setFretePreco(0);
-            setPrazo(0);
+            setShippingName('');
+            setShippingPrice(0);
+            setDeliveryTime(0);
             throw error;
         }
-    };
+    }, [cartItems]);
     
     return {
-        freteNome,
-        fretePreco,
-        prazo,
-        discountPix,
+        shippingName,
+        shippingPrice,
+        deliveryTime,
+        pixDiscount: PIX_DISCOUNT_PERCENT,
         calculateSubtotal,
-        calculateRawTotal,
+        calculateRawTotal: useCallback(() => calculateRawTotal().toFixed(2).replace('.', ','), [calculateRawTotal]),
         getPixDiscountedPrice,
         calculateShipping
     };
-}; 
+};
