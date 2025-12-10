@@ -16,7 +16,7 @@ import {
   SelectChangeEvent
 } from '@mui/material';
 import { DadosPessoaisType } from '../../types';
-import { useNotificationContext } from '../../context/NotificationContext';
+import { useToastSide } from '@/context/ToastSideProvider';
 import { formatCPF, formatDateForInput, formatDateForAPI } from '../../utils/formatters';
 
 interface EditProfileModalProps {
@@ -36,7 +36,7 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
 }) => {
   const [formData, setFormData] = useState<Partial<DadosPessoaisType>>({});
   const [activeTab, setActiveTab] = useState<'profile' | 'user'>('profile');
-  const { showError } = useNotificationContext();
+  const { showToast } = useToastSide();
 
   useEffect(() => {
     if (open) {
@@ -74,7 +74,7 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
       // Validar campos obrigatórios
       if (activeTab === 'profile') {
         if (!formData.full_name?.trim()) {
-          showError('Nome completo é obrigatório');
+          showToast('Nome completo é obrigatório', 'error');
           return;
         }
         
@@ -87,12 +87,12 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
         await onSave(dataToSave, 'profile');
       } else {
         if (!formData.email?.trim()) {
-          showError('E-mail é obrigatório');
+          showToast('E-mail é obrigatório', 'error');
           return;
         }
         
         if (!formData.username?.trim()) {
-          showError('Nome de usuário é obrigatório');
+          showToast('Nome de usuário é obrigatório', 'error');
           return;
         }
         

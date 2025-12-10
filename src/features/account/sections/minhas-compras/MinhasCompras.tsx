@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { Box, Typography, Tabs, Tab, InputBase, IconButton, Paper } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
-import OrderCard from '../../components/ui/OrderCard';
-import { CompraType } from '../../types';
-import headphoneImage from '../../../assets/img/headphone.png';
+import OrderCard from '@/features/account/components/layout/ui/OrderCard';
+import { CompraType } from '@/features/account/types';
+import headphoneImage from '@/assets/img/headphone.png';
 
 interface TabPanelProps {
   children?: React.ReactNode;

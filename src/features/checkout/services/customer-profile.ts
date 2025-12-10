@@ -1,4 +1,4 @@
-import { addAddress, addPhone, addCard, updateProfile } from '@/app/minhaconta/services/userAccount';
+import { addAddress, addPhone, addCard, updateProfile } from '@/features/account/services/userAccount';
 import { splitFullName, cleanPhoneNumber } from '@/utils/formatters';
 
 interface ProfileData {

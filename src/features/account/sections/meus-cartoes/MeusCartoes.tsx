@@ -13,8 +13,8 @@ import {
   Alert
 } from '@mui/material';
 import { Add as AddIcon } from '@mui/icons-material';
-import CreditCard from '../../components/ui/CreditCard';
-import useUserCards from '../../hooks/useUserCards';
+import CreditCard from '../../components/layout/ui/CreditCard';
+import { useUserCards } from '../../hooks/useUserCards';
 import CardFormModal from './CardFormModal';
 import { CartaoType } from '../../types';
 

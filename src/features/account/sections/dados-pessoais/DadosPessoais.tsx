@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Box, Typography, Button, Tooltip } from '@mui/material';
-import InfoCard from '../../components/ui/InfoCard';
-import LoadingState from '../../components/ui/LoadingState';
+import InfoCard from '@/features/account/components/layout/ui/InfoCard';
+import LoadingState from '@/features/account/components/layout/ui/LoadingState';
 import PersonIcon from '@mui/icons-material/Person';
 import EmailIcon from '@mui/icons-material/Email';
 import PhoneIcon from '@mui/icons-material/Phone';
@@ -9,8 +9,8 @@ import BadgeIcon from '@mui/icons-material/Badge';
 import CakeIcon from '@mui/icons-material/Cake';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import WcIcon from '@mui/icons-material/Wc';
-import useUserPersonalData from '../../hooks/useUserPersonalData';
-import { DadosPessoaisType } from '../../types';
+import { useUserPersonalData } from '@/features/account/hooks/useUserPersonalData';
+import { DadosPessoaisType } from '@/features/account/types';
 import EditProfileModal from './EditProfileModal';
 
 // Componente para exibir mensagem quando um campo está vazio

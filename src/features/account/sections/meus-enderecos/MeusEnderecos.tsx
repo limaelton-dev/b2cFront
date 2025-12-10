@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { Box, Typography, Grid, Button } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
-import AddressCard from '../../components/ui/AddressCard';
-import LoadingState from '../../components/ui/LoadingState';
-import useUserAddresses from '../../hooks/useUserAddresses';
+import AddressCard from '../../components/layout/ui/AddressCard';
+import LoadingState from '../../components/layout/ui/LoadingState';
+import { useUserAddresses } from '../../hooks/useUserAddresses';
 import AddressFormModal from './AddressFormModal';
 import { EnderecoType } from '../../types';
 

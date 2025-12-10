@@ -19,8 +19,8 @@ import {
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import { EnderecoType } from '../../types';
-import { useNotificationContext } from '../../context/NotificationContext';
-import { fetchAddressByCEP } from '../../services/userAccount';
+import { useToastSide } from '@/context/ToastSideProvider';
+import { fetchAddressByPostalCode } from '@/api/address/services/cep';
 
 interface AddressFormModalProps {
   open: boolean;
@@ -56,7 +56,7 @@ const AddressFormModal: React.FC<AddressFormModalProps> = ({
   });
   
   const [searchingCEP, setSearchingCEP] = useState(false);
-  const { showError, showSuccess } = useNotificationContext();
+  const { showToast } = useToastSide();
   const isEditing = !!address;
 
   useEffect(() => {
@@ -132,13 +132,13 @@ const AddressFormModal: React.FC<AddressFormModalProps> = ({
     const cep = formData.postal_code;
     
     if (!cep || cep.replace(/\D/g, '').length !== 8) {
-      showError('Digite um CEP válido com 8 dígitos.');
+      showToast('Digite um CEP válido com 8 dígitos.', 'error');
       return;
     }
     
     try {
       setSearchingCEP(true);
-      const addressData = await fetchAddressByCEP(cep);
+      const addressData = await fetchAddressByPostalCode(cep);
       
       setFormData(prev => ({
         ...prev,
@@ -148,12 +148,12 @@ const AddressFormModal: React.FC<AddressFormModalProps> = ({
         state: addressData.state
       }));
       
-      showSuccess('Endereço encontrado com sucesso!');
+      showToast('Endereço encontrado com sucesso!', 'success');
     } catch (error: any) {
       if (error.message) {
-        showError(error.message);
+        showToast(error.message, 'error');
       } else {
-        showError('Não foi possível encontrar o endereço. Verifique o CEP e tente novamente.');
+        showToast('Não foi possível encontrar o endereço. Verifique o CEP e tente novamente.', 'error');
       }
     } finally {
       setSearchingCEP(false);
@@ -164,32 +164,32 @@ const AddressFormModal: React.FC<AddressFormModalProps> = ({
     try {
       // Validar campos obrigatórios
       if (!formData.street?.trim()) {
-        showError('Rua/Avenida é obrigatória');
+        showToast('Rua/Avenida é obrigatória', 'error');
         return;
       }
       
       if (!formData.number?.trim()) {
-        showError('Número é obrigatório');
+        showToast('Número é obrigatório', 'error');
         return;
       }
       
       if (!formData.neighborhood?.trim()) {
-        showError('Bairro é obrigatório');
+        showToast('Bairro é obrigatório', 'error');
         return;
       }
       
       if (!formData.city?.trim()) {
-        showError('Cidade é obrigatória');
+        showToast('Cidade é obrigatória', 'error');
         return;
       }
       
       if (!formData.state?.trim()) {
-        showError('Estado é obrigatório');
+        showToast('Estado é obrigatório', 'error');
         return;
       }
       
       if (!formData.postal_code?.trim()) {
-        showError('CEP é obrigatório');
+        showToast('CEP é obrigatório', 'error');
         return;
       }
       
