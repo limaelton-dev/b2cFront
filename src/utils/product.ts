@@ -154,6 +154,31 @@ export function getActiveSku(product: Product): any | null {
     return product.skus.find(sku => sku.active) || product.skus[0] || null;
 }
 
+/**
+ * Obtém um SKU específico por ID, ou retorna o SKU ativo se não encontrar
+ */
+export function getSkuById(product: Product, skuId: number | null): any | null {
+    if (!product?.skus || !skuId) return getActiveSku(product);
+    return product.skus.find(sku => sku.id === skuId) || getActiveSku(product);
+}
+
+/**
+ * Obtém o preço de um SKU específico
+ */
+export function getSkuPrice(sku: any): number | null {
+    if (!sku) return null;
+    return sku?.price || null;
+}
+
+/**
+ * Obtém o preço do primeiro SKU ativo do produto
+ */
+export function getFirstSkuPrice(product?: Product): number | null {
+    if (!product) return null;
+    const sku = getActiveSku(product);
+    return getSkuPrice(sku);
+}
+
 // ============================================================================
 // FUNÇÕES DE PREÇO
 // ============================================================================
