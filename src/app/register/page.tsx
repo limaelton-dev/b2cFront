@@ -7,16 +7,16 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Logo from '../assets/img/logo_coletek_white.png';
-import { useAuth } from '../context/AuthProvider';
+import { useAuth } from '../../context/AuthProvider';
 import KeyIcon from '@mui/icons-material/Key';
 import PersonIcon from '@mui/icons-material/Person';
 import BusinessIcon from '@mui/icons-material/Business';
 import BadgeIcon from '@mui/icons-material/Badge';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import WcIcon from '@mui/icons-material/Wc';
-import { useToastSide } from '../context/ToastSideProvider';
-import { ProfileType } from '../api/auth/types/AuthUser';
-import type { RegisterRequest } from '../api/auth/types/Register';
+import { useToastSide } from '../../context/ToastSideProvider';
+import { ProfileType } from '../../api/auth/types/AuthUser';
+import type { RegisterRequest } from '../../api/auth/types/Register';
 
 export default function RegisterPage() {
     const router = useRouter();

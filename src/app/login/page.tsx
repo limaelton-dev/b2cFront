@@ -7,7 +7,7 @@ import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Logo from '../assets/img/logo_coletek_white.png';
-import { useAuth } from '../context/AuthProvider';
+import { useAuth } from '../../context/AuthProvider';
 import { GoogleLogin } from '@react-oauth/google';
 
 export default function LoginPage() {

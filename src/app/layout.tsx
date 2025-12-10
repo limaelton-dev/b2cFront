@@ -4,10 +4,10 @@ import { Inter } from "next/font/google";
 import Head from 'next/head';
 import 'bootstrap/dist/css/bootstrap.css';
 import { GeistSans } from 'geist/font/sans';
-import { CartProvider } from "./context/CartProvider";
-import { AlertDialogProvider } from "./context/AlertDialogProvider";
-import { AuthProvider } from "./context/AuthProvider";
-import { ToastSideProvider } from "./context/ToastSideProvider";
+import { CartProvider } from "../context/CartProvider";
+import { AlertDialogProvider } from "../context/AlertDialogProvider";
+import { AuthProvider } from "../context/AuthProvider";
+import { ToastSideProvider } from "../context/ToastSideProvider";
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { CookiesProvider } from 'react-cookie';
 

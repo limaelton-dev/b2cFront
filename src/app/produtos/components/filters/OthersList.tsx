@@ -1,6 +1,6 @@
 import { Accordion, AccordionDetails, AccordionSummary, Typography, FormGroup, FormControlLabel, Switch } from "@mui/material";
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
-import { Filters } from "../../../types/filters";
+import { Filters } from "../../../../types/filters";
 
 interface OthersListProps {
     filters: Filters;

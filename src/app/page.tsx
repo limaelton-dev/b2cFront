@@ -1,23 +1,24 @@
 "use client"
 import React from 'react';
 import Image from 'next/image';
-import './assets/css/home.css';
-import LogoColetek from './assets/img/logo_coletek.png';
-import bgNewsletter from './assets/img/background.png';
-import Banner1 from './assets/img/132.jpg';
-import HeadphoneImg from './assets/img/headphone.png';
+import '@/assets/css/home.css';
+import LogoColetek from '@/assets/img/logo_coletek.png';
+import bgNewsletter from '@/assets/img/background.png';
+import Banner1 from '@/assets/img/132.jpg';
+import HeadphoneImg from '@/assets/img/headphone.png';
 import { useEffect, useState, useRef } from 'react';
 import Header from './header';
 import Footer from './footer';
-import Cart from './components/Cart';
+import Cart from '../components/Cart';
 import { Carousel } from 'primereact/carousel';
 import { Radio, Typography } from '@mui/material';
-import { useCart } from './context/CartProvider';
-import { useToastSide } from './context/ToastSideProvider';
+import { useCart } from '../context/CartProvider';
+import { useToastSide } from '../context/ToastSideProvider';
 import Checkbox, { checkboxClasses } from '@mui/joy/Checkbox';
-import ClientOnly from './components/ClientOnly';
-import { fetchAllProducts } from './api/products/services/product';
-import { Product } from './api/products/types/product';
+import ClientOnly from '../components/ClientOnly';
+import { fetchAllProducts } from '../api/products/services/product';
+import { Product } from '../api/products/types/product';
+import { getProductImage, getProductPrice, getProductName, getActiveSku } from '@/utils/product';
 
 const getProdutosPage = async (limit: number = 12) => {
     try {
@@ -99,7 +100,7 @@ export default function HomePage() {
             
             try {
                 // Encontrar o primeiro SKU ativo do produto
-                const activeSku = product.skus?.find(sku => sku.active) || product.skus?.[0];
+                const activeSku = getActiveSku(product);
                 
                 if (!activeSku) {
                     showToast('Produto sem SKU disponível.', 'error');
@@ -119,51 +120,6 @@ export default function HomePage() {
                 showToast('Erro ao adicionar produto ao carrinho.', 'error');
                 setLoadingProduct(null);
             }
-        };
-
-        // Função para obter a imagem do produto
-        const getProductImage = (product) => {
-            // Nova estrutura: usar a imagem principal ou a primeira imagem
-            if (product.images && Array.isArray(product.images) && product.images.length > 0) {
-                const mainImage = product.images.find(img => img.main) || product.images[0];
-                if (mainImage) {
-                    return mainImage.standardUrl || mainImage.originalImage || mainImage.url;
-                }
-            }
-            
-            // Compatibilidade: estrutura antiga
-            if (product.imagens && Array.isArray(product.imagens) && product.imagens.length > 0) {
-                return product.imagens[0].url;
-            }
-
-            if (product.pro_imagem) {
-                return product.pro_imagem;
-            }
-            
-            return HeadphoneImg;
-        };
-
-        // Função para obter o preço do produto
-        const getProductPrice = (product) => {
-            // Nova estrutura: usar o preço do primeiro SKU ativo
-            if (product.skus && Array.isArray(product.skus) && product.skus.length > 0) {
-                const activeSku = product.skus.find(sku => sku.active) || product.skus[0];
-                if (activeSku && activeSku.price && !isNaN(Number(activeSku.price))) {
-                    return `R$ ${Number(activeSku.price).toFixed(2).replace('.', ',')}`;
-                }
-            }
-            
-            // Compatibilidade: usar campos antigos
-            if (product.pro_precovenda && !isNaN(Number(product.pro_precovenda))) {
-                return `R$ ${Number(product.pro_precovenda).toFixed(2).replace('.', ',')}`;
-            }
-            
-            return 'Preço não disponível';
-        };
-
-        // Função para obter o nome do produto
-        const getProductName = (product) => {
-            return product.title || product.name || product.pro_descricao || "Produto";
         };
 
         return (

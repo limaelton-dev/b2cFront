@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import { Typography, CircularProgress } from '@mui/material';
-import { Product } from '../../../api/products/types/product';
-import NoImage from '../../../assets/img/noimage.png';
+import { Product } from '@/api/products/types/product';
+import { getProductImage, getProductPrice, getProductName } from '@/utils/product';
 
 interface ProductCardProps {
     product: Product;
@@ -11,51 +11,6 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product, loadingProducts, handleAddToCart, handleImageError }: ProductCardProps) {
-    // Função para obter a imagem do produto
-    const getProductImage = (product: Product) => {
-        // Nova estrutura: usar a imagem principal ou a primeira imagem
-        if (product.images && Array.isArray(product.images) && product.images.length > 0) {
-            const mainImage = product.images.find(img => img.main) || product.images[0];
-            if (mainImage) {
-                return mainImage.standardUrl || mainImage.originalImage || mainImage.url;
-            }
-        }
-        
-        // Compatibilidade: estrutura antiga
-        if (product.imagens && Array.isArray(product.imagens) && product.imagens.length > 0) {
-            return product.imagens[0].url;
-        }
-
-        if (product.pro_imagem) {
-            return product.pro_imagem;
-        }
-        
-        return NoImage.src;
-    };
-
-    // Função para obter o preço do produto
-    const getProductPrice = (product: Product) => {
-        // Nova estrutura: usar o preço do primeiro SKU ativo
-        if (product.skus && Array.isArray(product.skus) && product.skus.length > 0) {
-            const activeSku = product.skus.find(sku => sku.active) || product.skus[0];
-            if (activeSku && activeSku.price && !isNaN(Number(activeSku.price))) {
-                return `R$ ${Number(activeSku.price).toFixed(2).replace('.', ',')}`;
-            }
-        }
-        
-        // Compatibilidade: usar campos antigos
-        if (product.pro_precovenda && !isNaN(Number(product.pro_precovenda))) {
-            return `R$ ${Number(product.pro_precovenda).toFixed(2).replace('.', ',')}`;
-        }
-        
-        return 'Preço não disponível';
-    };
-
-    // Função para obter o nome do produto
-    const getProductName = (product: Product) => {
-        return product.title || product.name || "Produto";
-    };
-
     return (
         <div className="product" key={product.slug}>
             <div className="wishlist-button"></div>

@@ -7,7 +7,7 @@ import DadosPessoais from './features/dados-pessoais/DadosPessoais';
 import MeusEnderecos from './features/meus-enderecos/MeusEnderecos';
 import MeusCartoes from './features/meus-cartoes/MeusCartoes';
 import MinhasCompras from './features/minhas-compras/MinhasCompras';
-import Cart from '../components/Cart';
+import Cart from '../../components/Cart';
 import { useNotificationContext } from './context/NotificationContext';
 import { MainItemType } from './types';
 

@@ -1,6 +1,6 @@
 import { ReadonlyURLSearchParams } from "next/navigation";
-import { Filters } from "../types/filters";
-import { Pagination } from "../types/pagination";
+import { Filters } from "../../types/filters";
+import { Pagination } from "../../types/pagination";
 
 export function toOffsetLimit(page: number, size: number): Pagination {
   const limit = Math.max(1, size);

@@ -11,29 +11,29 @@ import React, {
 import { useRouter, useSearchParams } from "next/navigation";
 import { Pagination, Typography } from "@mui/material";
 
-import "../assets/css/produtos.css";
-import Cart from "../components/Cart";
-import ClientOnly from "../components/ClientOnly";
-import Header from "../header";
-import Footer from "../footer";
-import NoImage from "../assets/img/noimage.png";
+import "@/assets/css/produtos.css";
+import Cart from "../../components/Cart";
+import ClientOnly from "../../components/ClientOnly";
+import Header from "@/app/header";
+import Footer from "@/app/footer";
+import NoImage from "@/assets/img/noimage.png";
 
-import { useCart } from "../context/CartProvider";
-import { useToastSide } from "../context/ToastSideProvider";
+import { useCart } from "@/context/CartProvider";
+import { useToastSide } from "@/context/ToastSideProvider";
 
-import { fetchRootCategories } from "../api/categories/services/categories-service";
-import { fetchBrands } from "../api/brands/services/brand-service";
-import { fetchAllProducts } from "../api/products/services/product";
+import { fetchRootCategories } from "@/api/categories/services/categories-service";
+import { fetchBrands } from "@/api/brands/services/brand-service";
+import { fetchAllProducts } from "@/api/products/services/product";
 
 import ProductsGrid from "./components/products/ProductsGrid";
 import FiltersContainer from "./components/filters/FiltersContainer";
 import BreadCrumbsPage from "./components/breadcrumbs/BreadCrumbsPage";
 
-import type { Product } from "../api/products/types/product";
-import type { Category } from "../api/categories/types/category";
-import type { Brand } from "../api/brands/types/brand";
-import type { PaginatedProducts } from "../api/products/types/paginetad-products";
-import { DEFAULT_LIMIT } from "../types/pagination";
+import type { Product } from "@/api/products/types/product";
+import type { Category } from "@/api/categories/types/category";
+import type { Brand } from "../../api/brands/types/brand";
+import type { PaginatedProducts } from "@/api/products/types/paginetad-products";
+import { DEFAULT_LIMIT } from "@/types/pagination";
 
 import {
     buildQueryString,
@@ -41,7 +41,7 @@ import {
     toOffsetLimit,
     PaginationState,
 } from "./utils";
-import { Filters } from "../types/filters";
+import { Filters } from "../../types/filters";
 
 function fallbackPaginated(): PaginatedProducts {
     return { 

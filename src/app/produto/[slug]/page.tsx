@@ -1,27 +1,27 @@
 "use client"
 import React from 'react';
 import { useParams } from 'next/navigation';
-import '../../assets/css/produto.css';
+import '@/assets/css/produto.css';
 import Image from 'next/image';
-import LogoColetek from '../../assets/img/logo_coletek.png';
-import HeadphoneImg from '../../assets/img/headphone.png';
-import BannerProd from '../../assets/img/banner_mouse.png';
+import LogoColetek from '@/assets/img/logo_coletek.png';
+import HeadphoneImg from '@/assets/img/headphone.png';
+import BannerProd from '@/assets/img/banner_mouse.png';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import { useEffect, useState } from 'react';
-import Cart from '../../components/Cart';
-import ClientOnly from '../../components/ClientOnly';
-import Header from '../../header';
-import { useCart } from '../../context/CartProvider';
+import Cart from '../../../components/Cart';
+import ClientOnly from '@/components/ClientOnly';
+import Header from '@/app/header';
+import { useCart } from '@/context/CartProvider';
 import { Alert, Snackbar, Slide, Button, CircularProgress, Typography, TextField, Checkbox, Breadcrumbs, Link } from '@mui/material';
-import { useToastSide } from '../../context/ToastSideProvider';
-import Footer from '../../footer';
+import { useToastSide } from '@/context/ToastSideProvider';
+import Footer from '@/app/footer';
 import { Carousel } from 'primereact/carousel';
 import ReactInputMask from 'react-input-mask';
 import axios from 'axios';
-import { valorFreteDeslogado } from '../../api/checkout/services/checkout';
+import { valorFreteDeslogado } from '@/api/checkout/services/checkout';
 import HomeIcon from '@mui/icons-material/Home';
-import { Product } from '../../api/products/types/product';
-import { fetchAllProducts, fetchProductBySlug } from '../../api/products/services/product';
+import { Product } from '@/api/products/types/product';
+import { fetchAllProducts, fetchProductBySlug } from '@/api/products/services/product';
 
 const ProductPage = () => {
     const { showToast } = useToastSide();

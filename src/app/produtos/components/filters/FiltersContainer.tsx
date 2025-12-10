@@ -1,6 +1,6 @@
 import { Brand } from "../../../api/brands/types/brand";
 import { Category } from "../../../api/categories/types/category";
-import { Filters } from "../../../types/filters";
+import { Filters } from "../../../../types/filters";
 import BrandsList from "./BrandsList";
 import CategoriesList from "./CategoriesList";
 import OthersList from "./OthersList";

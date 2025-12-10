@@ -1,5 +1,5 @@
 "use client"
-import CheckoutPage from './CheckoutPage';
+import { CheckoutPage } from '@/features/checkout';
 
 export default function Page() {
     return <CheckoutPage />;

@@ -1,5 +1,5 @@
 import Image from 'next/image';
-import LogoColetek from './assets/img/logo_coletek.png';
+import LogoColetek from '@/assets/img/logo_coletek.png';
 
 export default function Footer() {
     return (
