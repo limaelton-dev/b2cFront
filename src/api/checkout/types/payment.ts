@@ -1,8 +1,13 @@
 export interface CreditCardPaymentRequest {
-    cardNumber: string;
+    // Opção 1: Pagamento com token (cartão novo)
+    token?: string;
+    // Opção 2: Pagamento com cartão salvo
+    savedCardId?: number;
+    // Dados do cartão (apenas para fallback se backend não suportar token)
+    cardNumber?: string;
     holder: string;
-    expirationDate: string;
-    securityCode: string;
+    expirationDate?: string;
+    securityCode?: string;
     brand: string;
     description: string;
     installments: number;
@@ -10,6 +15,7 @@ export interface CreditCardPaymentRequest {
     customerData: {
         name: string;
         email: string;
+        cpf: string;
     };
 }
 
@@ -20,6 +26,7 @@ export interface PixPaymentRequest {
     customerData: {
         name: string;
         email: string;
+        cpf: string;
     };
 }
 

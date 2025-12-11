@@ -13,16 +13,6 @@ export function formatPhoneNumber(num: string): string {
     return num;
 }
 
-export function splitFullName(fullName: string): { firstName: string; lastName: string } {
-    const trimmedName = fullName.trim();
-    const parts = trimmedName.split(' ');
-    
-    return {
-        firstName: parts[0] || '',
-        lastName: parts.slice(1).join(' ') || ''
-    };
-}
-
 export function formatDateBR(dateString: string): string {
     if (!dateString) return '';
     const date = new Date(dateString);

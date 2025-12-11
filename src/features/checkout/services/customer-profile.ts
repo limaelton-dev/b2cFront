@@ -1,8 +1,9 @@
 import { addAddress, addPhone, addCard, updateProfile } from '@/features/account/services/userAccount';
-import { splitFullName, cleanPhoneNumber } from '@/utils/formatters';
+import { cleanPhoneNumber } from '@/utils/formatters';
 
 interface ProfileData {
-    fullName: string;
+    firstName: string;
+    lastName: string;
     cpf?: string;
     cnpj?: string;
     tradingName?: string;
@@ -28,7 +29,6 @@ interface CardData {
     cardNumber: string;
     holderName: string;
     expirationDate: string;
-    cvv: string;
 }
 
 export async function saveCustomerProfile(profileId: number, data: ProfileData): Promise<void> {
@@ -38,10 +38,9 @@ export async function saveCustomerProfile(profileId: number, data: ProfileData):
     };
     
     if (data.profileType === 'PF') {
-        const { firstName, lastName } = splitFullName(data.fullName);
         profileUpdateData.cpf = cleanPhoneNumber(data.cpf || '');
-        profileUpdateData.firstName = firstName;
-        profileUpdateData.lastName = lastName;
+        profileUpdateData.firstName = data.firstName;
+        profileUpdateData.lastName = data.lastName;
     } else {
         profileUpdateData.cnpj = cleanPhoneNumber(data.cnpj || '');
         profileUpdateData.trading_name = data.tradingName;
@@ -72,10 +71,9 @@ export async function saveCustomerAddress(profileId: number, data: AddressData):
 
 export async function saveCustomerCard(profileId: number, data: CardData): Promise<void> {
     await addCard({
-        card_number: cleanPhoneNumber(data.cardNumber),
+        card_number: data.cardNumber.replace(/\D/g, ''),
         holder_name: data.holderName,
         expiration_date: data.expirationDate,
-        cvv: data.cvv,
         is_default: true,
         profile_id: profileId
     });

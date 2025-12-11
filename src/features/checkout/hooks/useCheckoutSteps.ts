@@ -75,13 +75,13 @@ export function useCheckoutSteps(formData: CheckoutFormData, isAuthenticated: bo
         const isPF = formData.profileType === PROFILE_TYPE.PF;
         
         if (isPF) {
-            if (!formData.name || !formData.email || !formData.cpf || (!formData.phone && !isAuthenticated) || errors.cpf || errors.email) {
+            if (!formData.firstName || !formData.lastName || !formData.email || !formData.cpf || (!formData.phone && !isAuthenticated) || errors.cpf || errors.email) {
                 showToast('Preencha todos os campos de dados pessoais corretamente', 'error');
                 setCurrentStep(1);
                 return false;
             }
         } else {
-            if (!formData.name || !formData.email || !formData.cnpj || (!formData.phone && !isAuthenticated) || !formData.tradingName || !formData.stateRegistration) {
+            if (!formData.firstName || !formData.lastName || !formData.email || !formData.cnpj || (!formData.phone && !isAuthenticated) || !formData.tradingName || !formData.stateRegistration) {
                 showToast('Preencha todos os campos de dados pessoais corretamente', 'error');
                 setCurrentStep(1);
                 return false;
@@ -94,8 +94,33 @@ export function useCheckoutSteps(formData: CheckoutFormData, isAuthenticated: bo
             return false;
         }
         
-        if (!isAuthenticated && (!formData.password || !formData.confirmPassword)) {
-            showToast('Preencha os campos de senha', 'error');
+        // Validação de senhas e data de nascimento para usuários não autenticados
+        if (!isAuthenticated) {
+            if (!formData.password || !formData.confirmPassword) {
+                showToast('Preencha os campos de senha', 'error');
+                setCurrentStep(1);
+                return false;
+            }
+            
+            const passwordValidation = validatePasswords(formData.password, formData.confirmPassword);
+            if (!passwordValidation.isValid) {
+                showToast(passwordValidation.errorMessage, 'error');
+                setErrors(prev => ({ ...prev, passwords: true, passwordsMessage: passwordValidation.errorMessage }));
+                setCurrentStep(1);
+                return false;
+            }
+            
+            // Validar data de nascimento para PF
+            if (isPF && (!formData.birthDate || formData.birthDate.length !== 10)) {
+                showToast('Informe sua data de nascimento', 'error');
+                setCurrentStep(1);
+                return false;
+            }
+        }
+        
+        // Validação de política de privacidade (obrigatória)
+        if (!formData.acceptPrivacyPolicy) {
+            showToast('Você precisa aceitar a Política de Privacidade para continuar', 'error');
             setCurrentStep(1);
             return false;
         }

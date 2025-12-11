@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/context/AuthProvider';
 import { useToastSide } from '@/context/ToastSideProvider';
 import { prefillCustomerData } from '../services/prefill-customer-data';
@@ -9,10 +9,12 @@ export const PAYMENT_METHOD = { CREDIT_CARD: '1', PIX: '2' } as const;
 
 export interface CheckoutFormData {
     profileType: string;
-    name: string;
+    firstName: string;
+    lastName: string;
     email: string;
     phone: string;
     cpf: string;
+    birthDate: string;  // Data de nascimento (DD/MM/AAAA)
     password: string;
     confirmPassword: string;
     cnpj: string;
@@ -27,6 +29,7 @@ export interface CheckoutFormData {
     state: string;
     paymentMethod: string;
     cardNumber: string;
+    cardHolderName: string;
     cardExpirationDate: string;
     cardCVV: string;
     saveCard: boolean;
@@ -37,10 +40,12 @@ export interface CheckoutFormData {
 
 const initialFormData: CheckoutFormData = {
     profileType: PROFILE_TYPE.PF,
-    name: '',
+    firstName: '',
+    lastName: '',
     email: '',
     phone: '',
     cpf: '',
+    birthDate: '',
     password: '',
     confirmPassword: '',
     cnpj: '',
@@ -55,6 +60,7 @@ const initialFormData: CheckoutFormData = {
     state: '',
     paymentMethod: PAYMENT_METHOD.CREDIT_CARD,
     cardNumber: '',
+    cardHolderName: '',
     cardExpirationDate: '',
     cardCVV: '',
     saveCard: false,
@@ -63,13 +69,12 @@ const initialFormData: CheckoutFormData = {
     acceptPrivacyPolicy: false
 };
 
-export function useCheckoutCustomer() {
-    const { user } = useAuth();
+export function useCheckoutCustomer(onAddressLoaded?: (postalCode: string) => void) {
+    const { user, isAuthenticated } = useAuth();
     const { showToast } = useToastSide();
     const [formData, setFormData] = useState<CheckoutFormData>(initialFormData);
     const [loadingAddress, setLoadingAddress] = useState(false);
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [maskedCard, setMaskedCard] = useState({ isMasked: false, finalDigits: '', cardHolder: '', expiration: '' });
+    const [maskedCard, setMaskedCard] = useState({ isMasked: false, cardId: 0, finalDigits: '', cardHolder: '', expiration: '', brand: '' });
     
     const [disabledFields, setDisabledFields] = useState({
         user: false,
@@ -78,17 +83,23 @@ export function useCheckoutCustomer() {
         address: false
     });
     
+    // Ref para evitar atualizações de estado após desmontagem ou mudança de usuário
+    const prefillRequestRef = useRef(0);
+    
     useEffect(() => {
         if (!user?.id) return;
         
-        setIsAuthenticated(true);
+        const currentRequest = ++prefillRequestRef.current;
         
         prefillCustomerData(user).then(data => {
+            // Ignorar resposta se houve nova requisição ou componente desmontou
+            if (currentRequest !== prefillRequestRef.current) return;
             if (!data) return;
             
             setFormData(prev => ({
                 ...prev,
-                name: data.name,
+                firstName: data.firstName,
+                lastName: data.lastName,
                 email: data.email,
                 phone: data.phone,
                 profileType: data.profileType === 'PJ' ? PROFILE_TYPE.PJ : PROFILE_TYPE.PF,
@@ -107,23 +118,35 @@ export function useCheckoutCustomer() {
             
             if (data.address) {
                 setFormData(prev => ({ ...prev, ...data.address }));
+                // Notificar que endereço foi carregado para calcular frete
+                if (data.address.postalCode && onAddressLoaded) {
+                    onAddressLoaded(data.address.postalCode);
+                }
             }
             
             if (data.card) {
                 setMaskedCard({
                     isMasked: true,
+                    cardId: data.card.cardId,
                     finalDigits: data.card.finalDigits,
                     cardHolder: data.card.holderName,
-                    expiration: data.card.expiration
+                    expiration: data.card.expiration,
+                    brand: data.card.brand
                 });
                 setFormData(prev => ({
                     ...prev,
                     cardNumber: data.card!.maskedNumber,
-                    cardExpirationDate: 'XX/XX',
-                    cardCVV: 'XXX'
+                    cardHolderName: data.card!.holderName,
+                    cardExpirationDate: data.card!.expiration,
+                    cardCVV: ''  // CVV não é armazenado - usuário deve informar novamente
                 }));
             }
         });
+        
+        // Cleanup: invalida a requisição atual ao desmontar ou quando user.id mudar
+        return () => {
+            prefillRequestRef.current++;
+        };
     }, [user?.id]);
     
     const updateField = useCallback((field: keyof CheckoutFormData, value: any) => {

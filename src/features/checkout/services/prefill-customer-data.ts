@@ -3,7 +3,8 @@ import type { ProfileDetails, ProfilePF, ProfilePJ } from '@/api/user';
 import { formatPhoneNumber } from '@/utils/formatters';
 
 export interface CustomerData {
-    name: string;
+    firstName: string;
+    lastName: string;
     email: string;
     phone: string;
     cpf: string;
@@ -21,10 +22,12 @@ export interface CustomerData {
         state: string;
     };
     card?: {
+        cardId: number;
         maskedNumber: string;
         finalDigits: string;
         holderName: string;
         expiration: string;
+        brand: string;
     };
 }
 
@@ -43,7 +46,8 @@ export async function prefillCustomerData(user: any): Promise<CustomerData | nul
     const isPJ = profileData.profileType === 'PJ';
     
     const data: CustomerData = {
-        name: user.name,
+        firstName: '',
+        lastName: '',
         email: user.email,
         phone: '',
         cpf: '',
@@ -55,6 +59,8 @@ export async function prefillCustomerData(user: any): Promise<CustomerData | nul
     
     if (!isPJ && profileData.profile) {
         const pf = profileData.profile as ProfilePF;
+        data.firstName = pf.firstName || '';
+        data.lastName = pf.lastName || '';
         data.cpf = pf.cpf || '';
     } else if (isPJ && profileData.profile) {
         const pj = profileData.profile as ProfilePJ;
@@ -87,10 +93,12 @@ export async function prefillCustomerData(user: any): Promise<CustomerData | nul
         const card = profileData.cards.find(c => c.isDefault) || profileData.cards[0];
         const lastFour = card.cardNumber.slice(-4);
         data.card = {
-            maskedNumber: `XXXX XXXX XXXX ${lastFour}`,
+            cardId: card.id,
+            maskedNumber: `**** **** **** ${lastFour}`,
             finalDigits: lastFour,
             holderName: card.holderName,
-            expiration: card.expirationDate
+            expiration: card.expirationDate,
+            brand: card.brand
         };
     }
     

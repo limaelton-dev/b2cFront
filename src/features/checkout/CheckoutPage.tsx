@@ -1,5 +1,5 @@
 "use client"
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Box, Breadcrumbs, Typography } from '@mui/material';
@@ -50,6 +50,28 @@ const CheckoutPage = () => {
     }, [cartLoading, cart, cartItems.length]);
     
     const {
+        shippingName,
+        shippingPrice,
+        deliveryTime,
+        pixDiscount,
+        calculateSubtotal,
+        calculateRawTotal,
+        getPixDiscountedPrice,
+        calculateShipping
+    } = useCheckoutPricing(cartItems);
+    
+    // Callback para calcular frete quando endereço for carregado automaticamente
+    const handleAddressLoaded = useCallback(async (postalCode: string) => {
+        if (postalCode?.length >= 8) {
+            try {
+                await calculateShipping(postalCode, true);
+            } catch {
+                // Erro silencioso - frete será calculado manualmente se necessário
+            }
+        }
+    }, [calculateShipping]);
+    
+    const {
         formData,
         updateField,
         isAuthenticated,
@@ -57,7 +79,7 @@ const CheckoutPage = () => {
         disabledFields,
         loadingAddress,
         autoFillAddressByPostalCode
-    } = useCheckoutCustomer();
+    } = useCheckoutCustomer(handleAddressLoaded);
     
     const {
         currentStep,
@@ -69,17 +91,6 @@ const CheckoutPage = () => {
         validatePhoneField,
         validatePasswordFields
     } = useCheckoutSteps(formData, isAuthenticated);
-    
-    const {
-        shippingName,
-        shippingPrice,
-        deliveryTime,
-        pixDiscount,
-        calculateSubtotal,
-        calculateRawTotal,
-        getPixDiscountedPrice,
-        calculateShipping
-    } = useCheckoutPricing(cartItems);
 
     const cardFlag = useMemo(() => {
         const brand = detectCardBrand(formData.cardNumber);
@@ -134,8 +145,22 @@ const CheckoutPage = () => {
     };
     
     const handlePaymentSubmit = async () => {
-        if (!maskedCard.isMasked && formData.paymentMethod === PAYMENT_METHOD.CREDIT_CARD && (!formData.cardNumber || !formData.cardCVV || !formData.cardExpirationDate)) {
-            showToast('Preencha os dados do cartão de crédito', 'error');
+        // Validação de cartão de crédito
+        if (formData.paymentMethod === PAYMENT_METHOD.CREDIT_CARD) {
+            if (!maskedCard.isMasked && (!formData.cardNumber || !formData.cardExpirationDate || !formData.cardHolderName)) {
+                showToast('Preencha todos os dados do cartão de crédito', 'error');
+                return;
+            }
+            // CVV é sempre obrigatório, mesmo com cartão salvo
+            if (!formData.cardCVV) {
+                showToast('Informe o CVV do cartão', 'error');
+                return;
+            }
+        }
+        
+        // Validação de autorização PJ
+        if (formData.profileType === '2' && !formData.companyPurchaseAuthorization) {
+            showToast('Você precisa confirmar que está autorizado a comprar em nome da empresa', 'error');
             return;
         }
         
@@ -143,7 +168,10 @@ const CheckoutPage = () => {
         
         try {
             const registerCustomer = async (customerData: any) => {
-                const response = await createGuestAccount(customerData);
+                const response = await createGuestAccount({
+                    ...customerData,
+                    birthDate: formData.birthDate
+                });
                 await refreshProfile();
                 return response;
             };
@@ -201,9 +229,9 @@ const CheckoutPage = () => {
             </header>
             
             <div className="container">
-                {!maskedCard.isMasked && formData.paymentMethod === PAYMENT_METHOD.CREDIT_CARD && !formData.cardNumber && !formData.cardCVV && !formData.cardExpirationDate && (
+                {!maskedCard.isMasked && formData.paymentMethod === PAYMENT_METHOD.CREDIT_CARD && !formData.cardNumber && !formData.cardHolderName && (
                     <div className="alert-message" style={{ backgroundColor: '#f8f9fa', padding: '12px', borderRadius: '4px', marginBottom: '20px', color: '#0d6efd', textAlign: 'center' }}>
-                        <span>Você precisa cadastrar um cartão para continuar</span>
+                        <span>Preencha os dados do cartão para continuar</span>
                     </div>
                 )}
                 

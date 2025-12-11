@@ -77,14 +77,10 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
   // boot inicial
   useEffect(() => {
     (async () => {
-      try {
-        // Se há token, tenta carregar o perfil
-        if (isClientAuthenticated()) {
-          await refreshProfile();
-        }
-      } finally {
-        setLoading(false);
+      if (isClientAuthenticated()) {
+        await refreshProfile();
       }
+      setLoading(false);
     })();
   }, [refreshProfile]);
 

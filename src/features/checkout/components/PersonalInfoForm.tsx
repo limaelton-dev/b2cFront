@@ -74,11 +74,19 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
                 </RadioGroup>
                 
                 <TextField 
-                    sx={{ width: '100%', mb: '12px' }} 
-                    onChange={(e) => onUpdateField('name', e.target.value)} 
-                    value={formData.name} 
+                    sx={{ width: '48%', mb: '12px' }} 
+                    onChange={(e) => onUpdateField('firstName', e.target.value)} 
+                    value={formData.firstName} 
                     disabled={disabledFields.user} 
-                    label="Nome Completo*" 
+                    label="Nome*" 
+                    variant="standard" 
+                />
+                <TextField 
+                    sx={{ width: '48%', mb: '12px' }} 
+                    onChange={(e) => onUpdateField('lastName', e.target.value)} 
+                    value={formData.lastName} 
+                    disabled={disabledFields.user} 
+                    label="Sobrenome*" 
                     variant="standard" 
                 />
                 
@@ -163,18 +171,31 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
                 )}
                 
                 {formData.profileType === PROFILE_TYPE.PF && (
-                    <MaskedTextField
-                        mask="999.999.999-99"
-                        value={formData.cpf}
-                        onChange={(e) => onUpdateField('cpf', e.target.value)}
-                        onBlur={() => onValidateCPF(formData.cpf)}
-                        disabled={disabledFields.personalPF}
-                        label="CPF*"
-                        error={errors.cpf}
-                        helperText={errors.cpf ? "CPF inválido ou já cadastrado" : ''}
-                        variant="standard"
-                        sx={{ width: '100%', mb: '8px' }}
-                    />
+                    <>
+                        <MaskedTextField
+                            mask="999.999.999-99"
+                            value={formData.cpf}
+                            onChange={(e) => onUpdateField('cpf', e.target.value)}
+                            onBlur={() => onValidateCPF(formData.cpf)}
+                            disabled={disabledFields.personalPF}
+                            label="CPF*"
+                            error={errors.cpf}
+                            helperText={errors.cpf ? "CPF inválido ou já cadastrado" : ''}
+                            variant="standard"
+                            sx={{ width: '48%', mb: '8px' }}
+                        />
+                        {!isAuthenticated && (
+                            <MaskedTextField
+                                mask="99/99/9999"
+                                value={formData.birthDate}
+                                onChange={(e) => onUpdateField('birthDate', e.target.value)}
+                                label="Data de Nascimento*"
+                                variant="standard"
+                                placeholder="DD/MM/AAAA"
+                                sx={{ width: '48%', mb: '8px' }}
+                            />
+                        )}
+                    </>
                 )}
                 
                 <div className='mb-3 mt-3'>
