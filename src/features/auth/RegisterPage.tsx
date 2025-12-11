@@ -12,8 +12,7 @@ import WcIcon from '@mui/icons-material/Wc';
 import { useAuth } from '@/context/AuthProvider';
 import { useToastSide } from '@/context/ToastSideProvider';
 import { useAuthForm } from '@/hooks/useAuthForm';
-import { ProfileType } from '@/api/auth/types/AuthUser';
-import type { RegisterRequest } from '@/api/auth/types/Register';
+import type { RegisterRequest } from '@/api/auth';
 
 import { AuthLayout } from './components/AuthLayout';
 import { AuthButton } from './components/AuthButton';
@@ -77,25 +76,33 @@ export default function RegisterPage() {
         }
 
         try {
+            const [firstName, ...lastNameParts] = formData.fullName.trim().split(' ');
+            const lastName = lastNameParts.join(' ');
+            
             const payload: RegisterRequest = profileType === 'PF'
                 ? {
                     email: formData.email,
                     password: formData.password,
-                    profileType: ProfileType.PF,
-                    fullName: formData.fullName,
-                    cpf: formData.cpf,
-                    birthDate: formData.birthDate || undefined,
-                    gender: formData.gender || null
+                    profileType: 'PF',
+                    profile: {
+                        firstName,
+                        lastName,
+                        cpf: formData.cpf,
+                        birthDate: formData.birthDate || new Date().toISOString().split('T')[0],
+                        gender: formData.gender || null
+                    }
                 }
                 : {
                     email: formData.email,
                     password: formData.password,
-                    profileType: ProfileType.PJ,
-                    companyName: formData.companyName,
-                    cnpj: formData.cnpj,
-                    tradingName: formData.tradingName || undefined,
-                    stateRegistration: formData.stateRegistration || undefined,
-                    municipalRegistration: formData.municipalRegistration || undefined
+                    profileType: 'PJ',
+                    profile: {
+                        companyName: formData.companyName,
+                        cnpj: formData.cnpj,
+                        tradingName: formData.tradingName || undefined,
+                        stateRegistration: formData.stateRegistration || undefined,
+                        municipalRegistration: formData.municipalRegistration || undefined
+                    }
                 };
 
             await register(payload);

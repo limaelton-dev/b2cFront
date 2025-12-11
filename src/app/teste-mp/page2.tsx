@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Button, CircularProgress, Box, Typography, Paper } from '@mui/material';
-import { testGenerateToken } from '../services/mercadoPagoTest';
+import { loadMercadoPagoSDK, generateCardToken, prepareCardData } from '@/api/checkout/services/mercado-pago';
 
 const TesteMercadoPago = () => {
   const [loading, setLoading] = useState(false);
@@ -13,9 +13,15 @@ const TesteMercadoPago = () => {
     setLoading(true);
     setError(null);
     try {
-      const testResult = await testGenerateToken();
-      setResult(testResult);
-      console.log('Resultado do teste:', testResult);
+      await loadMercadoPagoSDK();
+      const cardData = prepareCardData();
+      const cardToken = await generateCardToken(cardData);
+      
+      setResult({
+        success: true,
+        cardToken,
+        message: 'Token gerado com sucesso'
+      });
     } catch (err) {
       console.error('Erro ao testar:', err);
       setError('Erro ao testar a integração. Verifique o console para mais detalhes.');
@@ -37,12 +43,11 @@ const TesteMercadoPago = () => {
         
         <Typography variant="body1" paragraph>
           Ao clicar no botão abaixo, o sistema irá:
-          <ol>
-            <li>Carregar o SDK do Mercado Pago</li>
-            <li>Gerar um token para um cartão de teste</li>
-            <li>Enviar uma requisição de pagamento para o backend</li>
-          </ol>
         </Typography>
+        <ol>
+          <li>Carregar o SDK do Mercado Pago</li>
+          <li>Gerar um token para um cartão de teste</li>
+        </ol>
         
         <Button 
           variant="contained" 
@@ -84,4 +89,4 @@ const TesteMercadoPago = () => {
   );
 };
 
-export default TesteMercadoPago; 
+export default TesteMercadoPago;

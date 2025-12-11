@@ -1,30 +1,28 @@
-import axios from 'axios';
-
-export interface Address {
+export interface CepAddress {
     street: string;
     neighborhood: string;
     city: string;
     state: string;
 }
 
-export async function fetchAddressByPostalCode(cep: string): Promise<Address> {
+export async function fetchAddressByCep(cep: string): Promise<CepAddress> {
     const cleanCEP = cep.replace(/\D/g, '');
     
     if (cleanCEP.length !== 8) {
         throw new Error('CEP inválido');
     }
     
-    const response = await axios.get(`https://viacep.com.br/ws/${cleanCEP}/json/`);
+    const response = await fetch(`https://viacep.com.br/ws/${cleanCEP}/json/`);
+    const data = await response.json();
     
-    if (response.data.erro) {
+    if (data.erro) {
         throw new Error('CEP não encontrado');
     }
     
     return {
-        street: response.data.logradouro || '',
-        neighborhood: response.data.bairro || '',
-        city: response.data.localidade || '',
-        state: response.data.uf || ''
+        street: data.logradouro || '',
+        neighborhood: data.bairro || '',
+        city: data.localidade || '',
+        state: data.uf || ''
     };
 }
-

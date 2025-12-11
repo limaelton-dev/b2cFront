@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { fetchAddressByPostalCode, AddressData } from '@/api/address/services/cep';
+import { fetchAddressByCep, CepAddress } from '@/api/address/services/cep';
 import { calculateShippingForAuthenticatedUser, calculateShippingForGuest, ShippingProduct } from '@/api/shipping';
 
 export interface ShippingInfo {
@@ -13,7 +13,7 @@ export function useShipping() {
     const [loadingCep, setLoadingCep] = useState(false);
     const [loadingShipping, setLoadingShipping] = useState(false);
     const [shippingInfo, setShippingInfo] = useState<ShippingInfo | null>(null);
-    const [addressData, setAddressData] = useState<AddressData | null>(null);
+    const [addressData, setAddressData] = useState<CepAddress | null>(null);
     const [error, setError] = useState('');
 
     const lookupAddressByPostalCode = useCallback(async (cep: string) => {
@@ -28,7 +28,7 @@ export function useShipping() {
         setError('');
 
         try {
-            const address = await fetchAddressByPostalCode(cep);
+            const address = await fetchAddressByCep(cep);
             setAddressData(address);
             return address;
         } catch (err) {

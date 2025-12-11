@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/context/AuthProvider';
 import { useToastSide } from '@/context/ToastSideProvider';
 import { prefillCustomerData } from '../services/prefill-customer-data';
-import { fetchAddressByPostalCode } from '@/api/address/services/cep';
+import { fetchAddressByCep } from '@/api/address/services/cep';
 
 export const PROFILE_TYPE = { PF: '1', PJ: '2' } as const;
 export const PAYMENT_METHOD = { CREDIT_CARD: '1', PIX: '2' } as const;
@@ -136,7 +136,7 @@ export function useCheckoutCustomer() {
         setLoadingAddress(true);
         
         try {
-            const address = await fetchAddressByPostalCode(formData.postalCode);
+            const address = await fetchAddressByCep(formData.postalCode);
             setFormData(prev => ({
                 ...prev,
                 street: address.street,

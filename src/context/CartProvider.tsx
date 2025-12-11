@@ -17,10 +17,10 @@ export const useCart = () => {
 };
 
 export const CartProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, loading: authLoading } = useAuth();
   const cartRepo: CartRepo = useMemo(() => makeCartRepo(isAuthenticated), [isAuthenticated]);
   const [cart, setCart] = useState<Cart | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | undefined>();
   const [hasMigrated, setHasMigrated] = useState(false);
 
@@ -34,7 +34,7 @@ export const CartProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
     }
     catch (e: any) { 
       setError(e?.message ?? "Erro de comunicação");
-      throw e; // Relançar erro para que o componente possa tratá-lo
+      throw e;
     }
     finally { 
       setLoading(false); 
@@ -47,15 +47,17 @@ export const CartProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
   const removeItem = useCallback((skuId: number) => wrap(() => cartRepo.removeItem(skuId)), [wrap, cartRepo]);
   const clearItems = useCallback(() => wrap(() => cartRepo.clear()), [wrap, cartRepo]);
 
-  // Buscar carrinho ao montar ou quando mudar a autenticação
   useEffect(() => { 
+    if (authLoading) {
+      return;
+    }
+    
     fetchCart(); 
-    setHasMigrated(false); // Reset flag ao trocar de repo
-  }, [fetchCart]);
+    setHasMigrated(false);
+  }, [fetchCart, authLoading]);
 
-  // Migrar carrinho local para servidor após login
   useEffect(() => {
-    if (!isAuthenticated || hasMigrated) return;
+    if (authLoading || !isAuthenticated || hasMigrated) return;
 
     const migrateGuestCart = async () => {
       try {
@@ -67,33 +69,39 @@ export const CartProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
 
         setLoading(true);
         
-        // Adicionar cada item do carrinho local ao servidor
         for (const item of guestCart.items) {
           try {
             await cartRepo.addItem(item.skuId, item.productId);
           } catch (itemError) {
             console.warn(`Erro ao migrar item ${item.skuId}:`, itemError);
-            // Continua com os próximos itens mesmo se um falhar
           }
         }
 
-        // Limpar carrinho local após migração
         clearGuestCart();
         setHasMigrated(true);
         
-        // Recarregar carrinho do servidor (já enriquecido)
         await fetchCart();
       } catch (e) {
         console.error("Erro ao migrar carrinho local:", e);
-        setHasMigrated(true); // Evitar loop infinito
+        setHasMigrated(true);
       } finally {
         setLoading(false);
       }
     };
 
     migrateGuestCart();
-  }, [isAuthenticated, hasMigrated, cartRepo, fetchCart]);
+  }, [isAuthenticated, authLoading, hasMigrated, cartRepo, fetchCart]);
 
-  const value: CartContextType = { cart, loading, error, fetchCart, changeItemQuantity, addItem, removeItem, clearItems };
+  const value: CartContextType = { 
+    cart, 
+    loading: loading || authLoading,
+    error, 
+    fetchCart, 
+    changeItemQuantity, 
+    addItem, 
+    removeItem, 
+    clearItems 
+  };
+  
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 };

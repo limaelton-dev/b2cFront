@@ -1,5 +1,5 @@
-import { register } from '@/api/auth/services/auth-service';
-import { ProfileType } from '@/api/auth/types/AuthUser';
+import { register } from '@/api/auth';
+import type { RegisterRequestPF } from '@/api/auth';
 import { splitFullName, cleanPhoneNumber } from '@/utils/formatters';
 import { getToken, saveToken } from '@/utils/auth';
 
@@ -13,13 +13,16 @@ interface GuestCustomer {
 export async function createGuestAccount(customer: GuestCustomer) {
     const { firstName, lastName } = splitFullName(customer.fullName);
     
-    const userData = {
-        profileType: ProfileType.PF,
-        firstName,
-        lastName,
+    const userData: RegisterRequestPF = {
         email: customer.email,
         password: customer.password,
-        cpf: cleanPhoneNumber(customer.cpf)
+        profileType: 'PF',
+        profile: {
+            firstName,
+            lastName,
+            cpf: cleanPhoneNumber(customer.cpf),
+            birthDate: new Date().toISOString().split('T')[0]
+        }
     };
     
     const response = await register(userData);

@@ -1,7 +1,5 @@
 // src/context/interfaces/AuthContextType.ts
-import { AuthUser } from "../../api/auth/types/AuthUser";
-import { RegisterRequest } from "../../api/auth/types/Register";
-import { LoginRequest } from "../../api/auth/types/Login";
+import type { AuthUser, RegisterRequest, LoginRequest } from "../../api/auth";
 
 export interface AuthContextType {
   user: AuthUser | null;

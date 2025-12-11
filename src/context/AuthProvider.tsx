@@ -3,10 +3,14 @@
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 import type { AuthContextType } from "./interfaces/AuthContextType";
-import type { AuthUser } from "../api/auth/types/AuthUser";
-import type { RegisterRequest } from "../api/auth/types/Register";
-import type { LoginRequest } from "../api/auth/types/Login";
-import { login as svcLogin, logout as svcLogout, register as svcRegister, getUserProfile, isClientAuthenticated } from "../api/auth/services/auth-service";
+import type { AuthUser, RegisterRequest, LoginRequest } from "../api/auth";
+import {
+  login as svcLogin,
+  logout as svcLogout,
+  register as svcRegister,
+  getUserProfile,
+  isClientAuthenticated,
+} from "../api/auth";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 

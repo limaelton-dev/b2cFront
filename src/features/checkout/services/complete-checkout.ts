@@ -1,4 +1,4 @@
-import { getUserPersonalData } from '@/api/user/profile/services/profile';
+import { getProfileDetails } from '@/api/user';
 import { saveCustomerProfile, saveCustomerPhone, saveCustomerAddress, saveCustomerCard } from './customer-profile';
 import { processCreditCardPayment, processPixPayment } from '@/api/checkout/services/checkout-service';
 import { CheckoutFormData } from '../hooks/useCheckoutCustomer';
@@ -17,16 +17,16 @@ async function getCustomerProfileId(isAuthenticated: boolean, customerData: any,
         
         await new Promise(resolve => setTimeout(resolve, 500));
         
-        const profileResponse = await getUserPersonalData();
-        if (!profileResponse?.id) throw new Error('Não foi possível obter perfil');
+        const profileResponse = await getProfileDetails();
+        if (!profileResponse?.profileId) throw new Error('Não foi possível obter perfil');
         
-        return profileResponse.id;
+        return profileResponse.profileId;
     }
     
-    const profileResponse = await getUserPersonalData();
-    if (!profileResponse?.id) throw new Error('Não foi possível obter perfil');
+    const profileResponse = await getProfileDetails();
+    if (!profileResponse?.profileId) throw new Error('Não foi possível obter perfil');
     
-    return profileResponse.id;
+    return profileResponse.profileId;
 }
 
 async function saveAllCustomerData(

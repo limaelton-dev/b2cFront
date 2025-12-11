@@ -1,3 +1,5 @@
+import { detectCardBrand as detectBrand } from '@/utils/formatters';
+
 export const validateCPF = (cpf: string): boolean => {
     cpf = cpf.replace(/\D/g, '');
 
@@ -42,16 +44,4 @@ export const validatePasswords = (password: string, confirmPassword: string): { 
     return { isValid: true, errorMessage: '' };
 };
 
-export const detectCardBrand = (cardNumber: string): string => {
-    const n = cardNumber.replace(/\D/g, '');
-    
-    if (/^4/.test(n)) return 'Visa';
-    if (/^5[1-5]/.test(n)) return 'Mastercard';
-    if (/^3[47]/.test(n)) return 'American Express';
-    if (/^(6011|65)/.test(n)) return 'Discover';
-    if (/^606282/.test(n)) return 'Hipercard';
-    if (/^(401178|401179|438935|457631|457632|431274|451416|457393|504175|627780|636297|636368)/.test(n)) return 'Elo';
-    
-    return 'Desconhecido';
-};
-
+export const detectCardBrand = detectBrand;

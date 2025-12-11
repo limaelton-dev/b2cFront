@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useToastSide } from '@/context/ToastSideProvider';
 import { validateCPF, validatePhone, validatePasswords } from '../utils/validation';
-import { checkIfCPFAlreadyRegistered, checkIfEmailAlreadyRegistered } from '@/api/user/services/identity';
+import { checkEmailAvailability, checkCpfAvailability } from '@/api/user';
 import { PROFILE_TYPE, CheckoutFormData } from './useCheckoutCustomer';
 
 export type { CheckoutFormData } from './useCheckoutCustomer';
@@ -30,7 +30,7 @@ export function useCheckoutSteps(formData: CheckoutFormData, isAuthenticated: bo
     const [errors, setErrors] = useState<FormErrors>(initialErrors);
     const [validatingCPF, setValidatingCPF] = useState(false);
     
-    const checkCPFAvailability = useCallback(async (cpfValue: string) => {
+    const checkCPFAvailabilityFn = useCallback(async (cpfValue: string) => {
         if (cpfValue.length !== 14 || !validateCPF(cpfValue)) {
             setErrors(prev => ({ ...prev, cpf: true }));
             return;
@@ -39,16 +39,24 @@ export function useCheckoutSteps(formData: CheckoutFormData, isAuthenticated: bo
         if (isAuthenticated) return;
         
         setValidatingCPF(true);
-        const isRegistered = await checkIfCPFAlreadyRegistered(cpfValue);
-        setErrors(prev => ({ ...prev, cpf: isRegistered }));
+        try {
+            const result = await checkCpfAvailability(cpfValue);
+            setErrors(prev => ({ ...prev, cpf: !result.available }));
+        } catch {
+            setErrors(prev => ({ ...prev, cpf: false }));
+        }
         setValidatingCPF(false);
     }, [isAuthenticated]);
     
-    const checkEmailAvailability = useCallback(async () => {
+    const checkEmailAvailabilityFn = useCallback(async () => {
         if (!formData.email || isAuthenticated) return;
         
-        const isRegistered = await checkIfEmailAlreadyRegistered(formData.email);
-        setErrors(prev => ({ ...prev, email: isRegistered }));
+        try {
+            const result = await checkEmailAvailability(formData.email);
+            setErrors(prev => ({ ...prev, email: !result.available }));
+        } catch {
+            setErrors(prev => ({ ...prev, email: false }));
+        }
     }, [formData.email, isAuthenticated]);
     
     const validatePhoneField = useCallback((phoneValue: string) => {
@@ -117,8 +125,8 @@ export function useCheckoutSteps(formData: CheckoutFormData, isAuthenticated: bo
         goToStep,
         errors,
         validatingCPF,
-        checkCPFAvailability,
-        checkEmailAvailability,
+        checkCPFAvailability: checkCPFAvailabilityFn,
+        checkEmailAvailability: checkEmailAvailabilityFn,
         validatePhoneField,
         validatePasswordFields
     };

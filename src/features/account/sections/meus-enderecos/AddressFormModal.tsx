@@ -20,7 +20,7 @@ import {
 import SearchIcon from '@mui/icons-material/Search';
 import { EnderecoType } from '../../types';
 import { useToastSide } from '@/context/ToastSideProvider';
-import { fetchAddressByPostalCode } from '@/api/address/services/cep';
+import { fetchAddressByCep } from '@/api/address/services/cep';
 
 interface AddressFormModalProps {
   open: boolean;
@@ -138,7 +138,7 @@ const AddressFormModal: React.FC<AddressFormModalProps> = ({
     
     try {
       setSearchingCEP(true);
-      const addressData = await fetchAddressByPostalCode(cep);
+      const addressData = await fetchAddressByCep(cep);
       
       setFormData(prev => ({
         ...prev,

@@ -1,4 +1,5 @@
-import { getProfileUser, getUserPersonalData } from '@/api/user/profile/services/profile';
+import { getProfileDetails } from '@/api/user';
+import type { ProfileDetails, ProfilePF, ProfilePJ } from '@/api/user';
 import { formatPhoneNumber } from '@/utils/formatters';
 
 export interface CustomerData {
@@ -30,12 +31,16 @@ export interface CustomerData {
 export async function prefillCustomerData(user: any): Promise<CustomerData | null> {
     if (!user?.id) return null;
     
-    const [profileData, userData] = await Promise.all([
-        getProfileUser(),
-        getUserPersonalData()
-    ]);
+    let profileData: ProfileDetails | null = null;
+    try {
+        profileData = await getProfileDetails();
+    } catch {
+        return null;
+    }
     
     if (!profileData) return null;
+    
+    const isPJ = profileData.profileType === 'PJ';
     
     const data: CustomerData = {
         name: user.name,
@@ -45,28 +50,30 @@ export async function prefillCustomerData(user: any): Promise<CustomerData | nul
         cnpj: '',
         tradingName: '',
         stateRegistration: '',
-        profileType: profileData.profile_type === 'PJ' ? 'PJ' : 'PF'
+        profileType: isPJ ? 'PJ' : 'PF'
     };
     
-    if (data.profileType === 'PF') {
-        data.cpf = profileData.cpf || '';
-    } else {
-        data.cnpj = profileData.cnpj || '';
-        data.tradingName = profileData.trading_name || '';
-        data.stateRegistration = profileData.state_registration || '';
+    if (!isPJ && profileData.profile) {
+        const pf = profileData.profile as ProfilePF;
+        data.cpf = pf.cpf || '';
+    } else if (isPJ && profileData.profile) {
+        const pj = profileData.profile as ProfilePJ;
+        data.cnpj = pj.cnpj || '';
+        data.tradingName = pj.tradingName || '';
+        data.stateRegistration = pj.stateRegistration || '';
     }
     
-    if (userData?.phones?.length > 0) {
-        const primaryPhone = userData.phones.find((p: any) => p.is_primary) || userData.phones[0];
+    if (profileData.phones && profileData.phones.length > 0) {
+        const primaryPhone = profileData.phones.find(p => p.isDefault) || profileData.phones[0];
         if (primaryPhone) {
-            data.phone = formatPhoneNumber(primaryPhone.number);
+            data.phone = formatPhoneNumber(`${primaryPhone.ddd}${primaryPhone.number}`);
         }
     }
     
-    if (profileData.addresses?.length > 0) {
-        const addr = profileData.addresses[0];
+    if (profileData.addresses && profileData.addresses.length > 0) {
+        const addr = profileData.addresses.find(a => a.isDefault) || profileData.addresses[0];
         data.address = {
-            postalCode: addr.postal_code || '',
+            postalCode: addr.zipCode || '',
             street: addr.street || '',
             number: addr.number || '',
             complement: addr.complement || '',
@@ -76,14 +83,14 @@ export async function prefillCustomerData(user: any): Promise<CustomerData | nul
         };
     }
     
-    if (profileData.cards?.length > 0) {
-        const card = profileData.cards[0];
-        const lastFour = card.card_number.slice(-4);
+    if (profileData.cards && profileData.cards.length > 0) {
+        const card = profileData.cards.find(c => c.isDefault) || profileData.cards[0];
+        const lastFour = card.cardNumber.slice(-4);
         data.card = {
             maskedNumber: `XXXX XXXX XXXX ${lastFour}`,
             finalDigits: lastFour,
-            holderName: card.holder_name,
-            expiration: card.expiration_date
+            holderName: card.holderName,
+            expiration: card.expirationDate
         };
     }
     
