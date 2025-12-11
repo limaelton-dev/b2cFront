@@ -7,6 +7,7 @@ import { GoogleLogin } from '@react-oauth/google';
 
 import { useAuth } from '@/context/AuthProvider';
 import { useAuthForm } from '@/hooks/useAuthForm';
+import { useToastSide } from '@/context/ToastSideProvider';
 import { AuthLayout } from './components/AuthLayout';
 import { AuthButton } from './components/AuthButton';
 import { AuthFormField } from './components/AuthFormField';
@@ -17,6 +18,7 @@ export default function LoginPage() {
     const searchParams = useSearchParams();
     const redirect = searchParams.get('redirect');
     const { login, loading } = useAuth();
+    const { showToast } = useToastSide();
 
     const {
         formData,
@@ -30,27 +32,52 @@ export default function LoginPage() {
     });
 
     const handleGoogleSuccess = async (credentialResponse: any) => {
-        setErrorMessage('Login com Google ainda não implementado na nova arquitetura');
-        // TODO: Implementar loginWithGoogle na nova arquitetura
+        const msg = 'Login com Google ainda não implementado na nova arquitetura';
+        setErrorMessage(msg);
+        showToast(msg, 'warning');
     };
 
     const handleGoogleError = () => {
-        setErrorMessage('Erro ao fazer login com Google');
+        const msg = 'Erro ao fazer login com Google';
+        setErrorMessage(msg);
+        showToast(msg, 'error');
     };
 
     const handleSubmit = async (e: React.MouseEvent<HTMLButtonElement>) => {
         e.preventDefault();
         clearError();
         
+        if (!formData.email || !formData.password) {
+            const msg = 'Por favor, preencha email e senha';
+            setErrorMessage(msg);
+            showToast(msg, 'warning');
+            return;
+        }
+        
         try {
             await login({ email: formData.email, password: formData.password });
             
-            // Redireciona para a página solicitada ou para home
+            showToast('Login realizado com sucesso!', 'success');
+            
             const redirectPath = redirect || '/';
             router.push(redirectPath);
         } catch (err: any) {
             console.error('Erro durante o login:', err);
-            setErrorMessage(err?.message || 'Email ou senha incorretos');
+            
+            let errorMsg = 'Não foi possível fazer login';
+            
+            if (err?.message?.includes('Network') || err?.code === 'ECONNREFUSED') {
+                errorMsg = 'Serviço temporariamente indisponível. Tente novamente.';
+            } else if (err?.response?.status === 401) {
+                errorMsg = 'Email ou senha incorretos';
+            } else if (err?.response?.status === 500) {
+                errorMsg = 'Erro no servidor. Tente novamente mais tarde.';
+            } else if (err?.message) {
+                errorMsg = err.message;
+            }
+            
+            setErrorMessage(errorMsg);
+            showToast(errorMsg, 'error');
         }
     };
 

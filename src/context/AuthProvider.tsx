@@ -43,6 +43,7 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
     } catch (e: any) {
       setError(e?.message ?? "Falha no login");
       setUser(null);
+      throw e;
     } finally {
       setLoading(false);
     }
@@ -57,6 +58,7 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
     } catch (e: any) {
       setError(e?.message ?? "Falha no cadastro");
       setUser(null);
+      throw e;
     } finally {
       setLoading(false);
     }

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAsyncState } from '@/hooks/useAsyncState';
 import { useToastSide } from '@/context/ToastSideProvider';
 import { 
@@ -23,12 +23,15 @@ export function useUserPersonalData() {
     const { showToast } = useToastSide();
     const { data: dadosPessoais, loading, error, execute, setData } = useAsyncState<DadosPessoaisType>(initialData);
     const [updating, setUpdating] = useState(false);
+    
+    const showToastRef = useRef(showToast);
+    showToastRef.current = showToast;
 
     const fetchUserData = useCallback(async () => {
         await execute(getUserPersonalData, {
-            onError: () => showToast('Não foi possível carregar seus dados pessoais.', 'error')
+            onError: () => showToastRef.current('Não foi possível carregar seus dados pessoais.', 'error')
         });
-    }, [execute, showToast]);
+    }, [execute]);
 
     const updateData = useCallback(async (data: Partial<DadosPessoaisType>, type: 'profile' | 'user') => {
         setUpdating(true);
@@ -40,15 +43,15 @@ export function useUserPersonalData() {
             }
 
             setData({ ...dadosPessoais, ...data });
-            showToast('Dados atualizados com sucesso!', 'success');
+            showToastRef.current('Dados atualizados com sucesso!', 'success');
             await fetchUserData();
         } catch (err) {
             console.error(`Erro ao atualizar dados de ${type}:`, err);
-            showToast('Não foi possível atualizar seus dados.', 'error');
+            showToastRef.current('Não foi possível atualizar seus dados.', 'error');
         } finally {
             setUpdating(false);
         }
-    }, [setData, showToast, fetchUserData]);
+    }, [setData, dadosPessoais, fetchUserData]);
 
     useEffect(() => {
         fetchUserData();
@@ -63,4 +66,3 @@ export function useUserPersonalData() {
         updateData
     };
 }
-
