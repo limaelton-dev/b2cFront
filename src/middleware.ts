@@ -46,6 +46,6 @@ export const config = {
     '/cadastro', 
     '/minhaconta/:path*',
     '/pedidos/:path*',
-    '/checkout/:path*',
+    // '/checkout/:path*' - Removido: checkout permite guest
   ],
 };

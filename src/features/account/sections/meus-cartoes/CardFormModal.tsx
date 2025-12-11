@@ -141,7 +141,8 @@ const CardFormModal: React.FC<CardFormModalProps> = ({
   isLoading,
   title
 }) => {
-  const [formData, setFormData] = useState<Partial<CartaoType>>({
+  // Estado interno usa expiration_date para UX (MM/AA), convertido para month/year no submit
+  const [formData, setFormData] = useState<Partial<CartaoType> & { expiration_date?: string }>({
     holder_name: '',
     card_number: '',
     expiration_date: '',
@@ -158,10 +159,16 @@ const CardFormModal: React.FC<CardFormModalProps> = ({
 
   useEffect(() => {
     if (initialData) {
+      // Converter expiration_month/year para expiration_date (MM/AA) para exibição
+      const expirationDisplay = initialData.expiration_month && initialData.expiration_year
+        ? `${initialData.expiration_month}/${initialData.expiration_year.slice(-2)}`
+        : '';
+      
       setFormData({
         ...initialData,
-        // Se estiver editando, não mostrar o número completo do cartão
-        card_number: initialData.card_number || `**** **** **** ${initialData.last_four_digits || ''}`,
+        // Se estiver editando, mostrar o cartão mascarado
+        card_number: `**** **** **** ${initialData.last_four_digits || ''}`,
+        expiration_date: expirationDisplay,
       });
     } else {
       setFormData({
@@ -312,11 +319,18 @@ const CardFormModal: React.FC<CardFormModalProps> = ({
     
     try {
       // Preparar os dados para envio
-      const dataToSubmit = { ...formData };
+      const dataToSubmit: Partial<CartaoType> = { ...formData };
       
       // Detectar o tipo do cartão com base no número
       if (dataToSubmit.card_number && !dataToSubmit.card_type) {
         dataToSubmit.card_type = detectCardType(dataToSubmit.card_number);
+      }
+      
+      // Converter expiration_date (MM/AA) para expiration_month e expiration_year
+      if (formData.expiration_date) {
+        const [month, year] = formData.expiration_date.split('/');
+        dataToSubmit.expiration_month = month;
+        dataToSubmit.expiration_year = year.length === 2 ? `20${year}` : year;
       }
       
       await onSubmit(dataToSubmit);

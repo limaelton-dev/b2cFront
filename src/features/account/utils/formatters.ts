@@ -1,11 +1,11 @@
 /**
- * Formata um número de cartão de crédito para exibição
- * @param cardNumber Número do cartão
+ * Formata os últimos 4 dígitos do cartão para exibição
+ * @param lastFourDigits Últimos 4 dígitos do cartão
  * @returns Número formatado com máscara
  */
-export const formatCreditCardNumber = (cardNumber: string): string => {
-  if (!cardNumber) return '';
-  return '**** '.repeat(3) + cardNumber.slice(-4);
+export const formatCreditCardNumber = (lastFourDigits: string): string => {
+  if (!lastFourDigits) return '';
+  return `**** **** **** ${lastFourDigits}`;
 };
 
 /**

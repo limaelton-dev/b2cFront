@@ -71,13 +71,13 @@ export const getUserPersonalData = async (): Promise<DadosPessoaisType> => {
 };
 
 export const updateProfile = async (data: any): Promise<void> => {
-  const profileData = await getProfileDetails();
+  const profile = await getProfileDetails();
   
-  if (!profileData.profileId) {
+  if (!profile?.id) {
     throw new Error('Perfil não encontrado');
   }
   
-  if (profileData.profileType === 'PF') {
+  if (profile.profileType === 'PF') {
     const pfData: Partial<Omit<ProfilePF, 'id'>> = {};
     if (data.firstName !== undefined) pfData.firstName = data.firstName;
     if (data.lastName !== undefined) pfData.lastName = data.lastName;
@@ -90,7 +90,7 @@ export const updateProfile = async (data: any): Promise<void> => {
     if (data.birth_date !== undefined) pfData.birthDate = data.birth_date;
     if (data.gender !== undefined) pfData.gender = data.gender;
     
-    await updateProfilePF(profileData.profileId, pfData);
+    await updateProfilePF(profile.id, pfData);
   } else {
     const pjData: Partial<Omit<ProfilePJ, 'id'>> = {};
     if (data.companyName !== undefined) pjData.companyName = data.companyName;
@@ -99,7 +99,7 @@ export const updateProfile = async (data: any): Promise<void> => {
     if (data.stateRegistration !== undefined) pjData.stateRegistration = data.stateRegistration;
     if (data.municipalRegistration !== undefined) pjData.municipalRegistration = data.municipalRegistration;
     
-    await updateProfilePJ(profileData.profileId, pjData);
+    await updateProfilePJ(profile.id, pjData);
   }
 };
 
@@ -188,9 +188,10 @@ export const addCard = async (cardData: Partial<CartaoType>): Promise<CartaoType
   const payload: CreateCardRequest = {
     cardNumber: (cardData.card_number || '').replace(/\s+/g, ''),
     holderName: cardData.holder_name || '',
-    expirationDate: cardData.expiration_date || '',
+    expirationMonth: cardData.expiration_month || '',
+    expirationYear: cardData.expiration_year || '',
+    cvv: cardData.cvv || '',
     brand: cardData.card_type || detectCardBrand(cardData.card_number || ''),
-    cvv: parseInt(cardData.cvv || '0', 10),
     isDefault: cardData.is_default,
   };
   
@@ -204,12 +205,7 @@ export const updateCard = async (
 ): Promise<CartaoType> => {
   const payload: UpdateCardRequest = {};
   
-  if (cardData.card_number !== undefined) {
-    payload.cardNumber = cardData.card_number.replace(/\s+/g, '');
-  }
   if (cardData.holder_name !== undefined) payload.holderName = cardData.holder_name;
-  if (cardData.expiration_date !== undefined) payload.expirationDate = cardData.expiration_date;
-  if (cardData.card_type !== undefined) payload.brand = cardData.card_type;
   if (cardData.is_default !== undefined) payload.isDefault = cardData.is_default;
   
   const updated = await updateCardApi(cardId, payload);
@@ -268,12 +264,13 @@ function mapCardToCartao(card: Card): CartaoType {
   return {
     id: card.id,
     profile_id: 0,
-    card_number: card.cardNumber,
     holder_name: card.holderName,
-    expiration_date: card.expirationDate,
+    expiration_month: card.expirationMonth,
+    expiration_year: card.expirationYear,
     is_default: card.isDefault,
     card_type: card.brand,
-    last_four_digits: card.cardNumber.slice(-4),
+    last_four_digits: card.lastFourDigits,
+    card_token: card.cardToken,
     created_at: '',
     updated_at: '',
   };

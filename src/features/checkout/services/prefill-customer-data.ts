@@ -91,13 +91,12 @@ export async function prefillCustomerData(user: any): Promise<CustomerData | nul
     
     if (profileData.cards && profileData.cards.length > 0) {
         const card = profileData.cards.find(c => c.isDefault) || profileData.cards[0];
-        const lastFour = card.cardNumber.slice(-4);
         data.card = {
             cardId: card.id,
-            maskedNumber: `**** **** **** ${lastFour}`,
-            finalDigits: lastFour,
+            maskedNumber: `**** **** **** ${card.lastFourDigits}`,
+            finalDigits: card.lastFourDigits,
             holderName: card.holderName,
-            expiration: card.expirationDate,
+            expiration: `${card.expirationMonth}/${card.expirationYear.slice(-2)}`,
             brand: card.brand
         };
     }

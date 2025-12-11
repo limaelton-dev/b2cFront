@@ -5,7 +5,7 @@ import 'react-credit-cards-2/dist/es/styles-compiled.css';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import EditIcon from '@mui/icons-material/Edit';
 import StarIcon from '@mui/icons-material/Star';
-import { CartaoType } from '../../types';
+import { CartaoType } from '../../../types';
 
 interface CreditCardProps {
   card: CartaoType;
@@ -20,8 +20,11 @@ const CreditCard: React.FC<CreditCardProps> = ({
   onDelete,
   onSetDefault
 }) => {
-  const { card_number, holder_name, expiration_date, is_default, card_type } = card;
+  const { holder_name, expiration_month, expiration_year, is_default, card_type, last_four_digits } = card;
   const [isHovered, setIsHovered] = useState(false);
+  
+  // Formatar expiração para MMYY
+  const formattedExpiry = `${expiration_month}${expiration_year.slice(-2)}`;
   
   // Função para obter o ícone da bandeira do cartão
   const getCardBrand = (type: string) => {
@@ -42,7 +45,7 @@ const CreditCard: React.FC<CreditCardProps> = ({
   };
   
   // Formatar o número do cartão para exibição
-  const maskedNumber = `**** **** **** ${card.last_four_digits}`;
+  const maskedNumber = `**** **** **** ${last_four_digits}`;
   
   return (
     <Box
@@ -134,7 +137,7 @@ const CreditCard: React.FC<CreditCardProps> = ({
       <Cards
         number={maskedNumber}
         name={holder_name}
-        expiry={expiration_date.replace('/', '')}
+        expiry={formattedExpiry}
         cvc="***"
         focused=""
         preview={true}

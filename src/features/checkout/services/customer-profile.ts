@@ -28,7 +28,9 @@ interface AddressData {
 interface CardData {
     cardNumber: string;
     holderName: string;
-    expirationDate: string;
+    expirationMonth: string;
+    expirationYear: string;
+    cvv: string;
 }
 
 export async function saveCustomerProfile(profileId: number, data: ProfileData): Promise<void> {
@@ -73,7 +75,9 @@ export async function saveCustomerCard(profileId: number, data: CardData): Promi
     await addCard({
         card_number: data.cardNumber.replace(/\D/g, ''),
         holder_name: data.holderName,
-        expiration_date: data.expirationDate,
+        expiration_month: data.expirationMonth,
+        expiration_year: data.expirationYear,
+        cvv: data.cvv,
         is_default: true,
         profile_id: profileId
     });

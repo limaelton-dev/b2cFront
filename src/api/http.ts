@@ -9,6 +9,10 @@ import { getToken } from "../utils/auth";
 
 const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
+if (!BASE_URL) {
+  console.warn('[HTTP] NEXT_PUBLIC_BACKEND_URL não está definido. As requisições podem falhar.');
+}
+
 // ---------- Tipos ----------
 export interface ApiError {
   status: number;

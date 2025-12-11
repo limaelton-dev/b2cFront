@@ -41,6 +41,15 @@ export const validatePasswords = (password: string, confirmPassword: string): { 
     if (password.length < 6) {
         return { isValid: false, errorMessage: 'A senha deve ter pelo menos 6 caracteres' };
     }
+    if (!/[A-Z]/.test(password)) {
+        return { isValid: false, errorMessage: 'A senha deve conter pelo menos uma letra maiúscula' };
+    }
+    if (!/[a-z]/.test(password)) {
+        return { isValid: false, errorMessage: 'A senha deve conter pelo menos uma letra minúscula' };
+    }
+    if (!/[0-9]/.test(password)) {
+        return { isValid: false, errorMessage: 'A senha deve conter pelo menos um número' };
+    }
     return { isValid: true, errorMessage: '' };
 };
 

@@ -13,7 +13,7 @@ export const AUTH_ONLY_ROUTES = [
 export const PROTECTED_ROUTES = [
   '/minhaconta',
   '/pedidos',
-  '/checkout',
+  // '/checkout' - Removido: checkout permite guest (cadastro acontece na própria página)
 ] as const;
 
 /** Rota padrão para redirect após login */

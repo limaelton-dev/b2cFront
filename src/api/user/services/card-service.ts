@@ -1,7 +1,7 @@
 import { get, post, patch, del } from "../../http";
 import { Card, CreateCardRequest, UpdateCardRequest } from "../types";
 
-const BASE_PATH = "/user/profile/card";
+const BASE_PATH = "/card";
 
 export async function getCards(): Promise<Card[]> {
   return get<Card[]>(BASE_PATH);

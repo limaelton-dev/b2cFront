@@ -29,9 +29,9 @@ const RETRY_DELAY_MS = 300;
 async function waitForProfile(maxRetries = MAX_PROFILE_RETRIES): Promise<number> {
     for (let attempt = 0; attempt < maxRetries; attempt++) {
         try {
-            const profileResponse = await getProfileDetails();
-            if (profileResponse?.profileId) {
-                return profileResponse.profileId;
+            const profile = await getProfileDetails();
+            if (profile?.id) {
+                return profile.id;
             }
         } catch {
             // Perfil ainda não disponível, tentar novamente
@@ -54,14 +54,13 @@ async function getCustomerProfileId(
         const registerResponse = await onRegister(customerData);
         if (!registerResponse) throw new Error('Falha ao criar conta');
         
-        // Usar polling em vez de delay fixo
         return waitForProfile();
     }
     
-    const profileResponse = await getProfileDetails();
-    if (!profileResponse?.profileId) throw new Error('Não foi possível obter perfil');
+    const profile = await getProfileDetails();
+    if (!profile?.id) throw new Error('Não foi possível obter perfil');
     
-    return profileResponse.profileId;
+    return profile.id;
 }
 
 async function saveAllCustomerData(
@@ -96,10 +95,13 @@ async function saveAllCustomerData(
     });
     
     if (!maskedCard.isMasked && shouldSaveCard && formData.cardNumber) {
+        const [expMonth, expYear] = formData.cardExpirationDate.split('/');
         await saveCustomerCard(profileId, {
             cardNumber: formData.cardNumber,
-            holderName: formData.cardHolderName,
-            expirationDate: formData.cardExpirationDate
+            holderName: formData.cardHolderName || `${formData.firstName} ${formData.lastName}`.trim(),
+            expirationMonth: expMonth,
+            expirationYear: expYear.length === 2 ? `20${expYear}` : expYear,
+            cvv: formData.cardCVV
         });
     }
 }

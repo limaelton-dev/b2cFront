@@ -39,7 +39,6 @@ export interface User {
 }
 
 export interface UserWithProfile extends User {
-  profileId?: number;
   profileType?: ProfileType;
   profile?: Profile;
 }
@@ -118,27 +117,27 @@ export interface UpdatePhoneRequest {
 // -----------------------------------------------------------------------------
 export interface Card {
   id: number;
-  cardNumber: string;
+  lastFourDigits: string;
   holderName: string;
-  expirationDate: string;
+  expirationMonth: string;
+  expirationYear: string;
   brand: string;
   isDefault: boolean;
+  cardToken?: string | null;
 }
 
 export interface CreateCardRequest {
   cardNumber: string;
   holderName: string;
-  expirationDate: string;
+  expirationMonth: string;
+  expirationYear: string;
+  cvv: string;
   brand: string;
-  cvv: number;
   isDefault?: boolean;
 }
 
 export interface UpdateCardRequest {
-  cardNumber?: string;
   holderName?: string;
-  expirationDate?: string;
-  brand?: string;
   isDefault?: boolean;
 }
 

@@ -32,14 +32,17 @@ export interface EnderecoType {
 export interface CartaoType {
   id: number;
   profile_id: number;
-  card_number: string;
   holder_name: string;
-  expiration_date: string;
+  expiration_month: string;
+  expiration_year: string;
   is_default: boolean;
   card_type: string;
   last_four_digits: string;
+  card_token?: string | null;
   created_at: string;
   updated_at: string;
+  // Campos usados apenas para criação de token (não retornados pelo backend)
+  card_number?: string;
   cvv?: string;
 }
 
