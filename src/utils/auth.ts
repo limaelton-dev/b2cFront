@@ -18,7 +18,9 @@ export type CookieOptions = {
 
 export const JWT_COOKIE_NAME = "jwt";
 
-/** Lê o token JWT do cookie (client ou SSR se ctx fornecido). */
+/**
+ * Lê o token JWT do cookie (client ou SSR se ctx fornecido).
+ */
 export function getToken(ctx?: CookieCtx): string | null {
   const raw: CookieValueTypes = getCookie(JWT_COOKIE_NAME, {
     req: ctx?.req,
@@ -28,25 +30,57 @@ export function getToken(ctx?: CookieCtx): string | null {
   return raw;
 }
 
-/** Retorna o header Authorization se houver token. */
+/**
+ * Retorna o header Authorization se houver token.
+ */
 export function getAuthHeader(ctx?: CookieCtx): Record<string, string> {
   const token = getToken(ctx);
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
-/** Verifica se há um JWT com formato válido (3 partes). */
-export function isAuthenticated(ctx?: CookieCtx): boolean {
-  const token = getToken(ctx);
-  if (!token) return false;
+/**
+ * Decodifica o payload de um JWT sem verificar a assinatura.
+ * Útil para verificações básicas no client-side.
+ */
+function decodeJwtPayload(token: string): Record<string, any> | null {
   try {
     const parts = token.split(".");
-    return parts.length === 3;
+    if (parts.length !== 3) return null;
+    
+    const base64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+    const jsonPayload = atob(base64);
+    return JSON.parse(jsonPayload);
   } catch {
-    return false;
+    return null;
   }
 }
 
-/** Salva o token em cookie (não httpOnly). */
+/**
+ * Verifica se o token JWT está expirado.
+ */
+function isTokenExpired(payload: Record<string, any>): boolean {
+  if (!payload.exp || typeof payload.exp !== "number") return false;
+  const now = Math.floor(Date.now() / 1000);
+  return payload.exp <= now;
+}
+
+/**
+ * Verifica se há um JWT válido (formato correto e não expirado).
+ * Esta é a função central de validação de autenticação.
+ */
+export function isAuthenticated(ctx?: CookieCtx): boolean {
+  const token = getToken(ctx);
+  if (!token) return false;
+  
+  const payload = decodeJwtPayload(token);
+  if (!payload) return false;
+  
+  return !isTokenExpired(payload);
+}
+
+/**
+ * Salva o token em cookie.
+ */
 export function saveToken(
   token: string,
   options?: CookieOptions,
@@ -68,7 +102,9 @@ export function saveToken(
   );
 }
 
-/** Remove o token do cookie. */
+/**
+ * Remove o token do cookie.
+ */
 export function removeToken(options?: CookieOptions, ctx?: CookieCtx): void {
   deleteCookie(
     JWT_COOKIE_NAME,
@@ -81,7 +117,9 @@ export function removeToken(options?: CookieOptions, ctx?: CookieCtx): void {
   );
 }
 
-/** Opcional: injeta Authorization num AxiosRequestConfig. */
+/**
+ * Injeta Authorization header em um AxiosRequestConfig.
+ */
 export function withAuthHeader<T = any>(
   config: AxiosRequestConfig<T> = {},
   ctx?: CookieCtx

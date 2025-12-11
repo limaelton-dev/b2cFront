@@ -45,11 +45,9 @@ export default function LoginPage() {
         try {
             await login({ email: formData.email, password: formData.password });
             
-            if (redirect === 'checkout') {
-                router.push('/checkout');
-            } else {
-                router.push('/');
-            }
+            // Redireciona para a página solicitada ou para home
+            const redirectPath = redirect || '/';
+            router.push(redirectPath);
         } catch (err: any) {
             console.error('Erro durante o login:', err);
             setErrorMessage(err?.message || 'Email ou senha incorretos');

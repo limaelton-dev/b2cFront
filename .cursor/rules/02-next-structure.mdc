@@ -1,0 +1,175 @@
+---
+description: "Padrões de arquitetura e semântica para o front B2C em Next.js 14 (App Router)."
+globs:
+  - "src/app/**/*.{ts,tsx}"
+  - "src/components/**/*.{ts,tsx}"
+  - "src/hooks/**/*.{ts,tsx}"
+  - "src/features/**/*.{ts,tsx}"
+  - "src/utils/**/*.{ts,tsx}"
+  - "src/types/**/*.{ts,tsx}"
+  - "src/middleware*.ts"
+alwaysApply: false
+---
+
+# Padrões específicos para Next.js (front B2C)
+
+## Objetivo geral
+
+Sempre que estiver trabalhando em arquivos de Next.js neste projeto, seguir estes princípios:
+
+- **Semântica forte** em nomes de pastas, arquivos, componentes, hooks e funções.
+- **Simplicidade** na arquitetura e nas implementações.
+- **Facilidade de leitura e manutenção** acima de qualquer otimização prematura.
+- **Arquivos e componentes finos**, com responsabilidade clara e única.
+- **Aderência ao modelo de rotas do App Router** (segmentos, layouts, server/client components).
+
+---
+
+## 1. Organização de rotas (`src/app`)
+
+- Os arquivos em `src/app/**/page.tsx` devem ser **containers muito finos**:
+  - Pegar `params`, `searchParams`, cookies ou headers necessários.
+  - Decidir se é server ou client component (`"use client"` apenas quando realmente houver estado/efeitos no cliente).
+  - Renderizar um componente de feature, preferencialmente localizado em `src/features/**`.
+- Evitar colocar em `page.tsx`:
+  - Lógica de negócio extensa.
+  - Funções utilitárias complexas.
+  - Vários componentes inline grandes.
+
+### Layout e componentes globais
+
+- `layout.tsx` deve ser responsável por:
+  - Compor o HTML básico.
+  - Decorar com Providers globais quando necessário.
+- Componentes como `Header` e `Footer`:
+  - Não devem ficar diretamente na raiz de `src/app` como “arquivos soltos”.
+  - Devem ser importados de:
+    - `src/app/_components/Header.tsx` e `src/app/_components/Footer.tsx`, ou
+    - `src/components/layout/Header.tsx` e `src/components/layout/Footer.tsx`.
+- Não criar novos componentes de UI genéricos dentro direto de `src/app`:
+  - Preferir `src/components` ou `src/features/*/components`.
+
+---
+
+## 2. Módulos de feature (`src/features`)
+
+- Cada feature (ex.: `auth`, `products`, `checkout`, `account`) é um **módulo de domínio**.
+- Dentro de cada módulo, utilizar uma estrutura semântica e enxuta, por exemplo:
+  - `FeaturePage.tsx` ou `*Page.tsx`: container principal da tela da feature.
+  - `components/`: componentes de UI específicos da feature.
+  - `hooks/`: hooks específicos da feature.
+  - `services/`: caso haja lógica de dados específica da feature (sempre fina; a regra geral de dados está em `src/services` ou equivalente).
+  - `types/` ou `models/`: tipos específicos da feature.
+
+### Regras de acoplamento
+
+- Hooks em `src/features/<feature>/hooks` podem acessar:
+  - `src/features/<feature>/components`
+  - `src/services/<dominio>` (ou `src/api/<dominio>` se este for o nome atual)
+  - Contextos globais ou utils globais, se fizer sentido.
+- Um hook ou componente **não deve** depender de múltiplas features de forma arbitrária:
+  - Se algo for reutilizável entre features, extraia para:
+    - `src/hooks`, `src/components` ou `src/utils`, dependendo do caso.
+
+---
+
+## 3. Components compartilhados (`src/components`)
+
+- `src/components` abriga componentes **reutilizáveis** entre diversas features (ex.: `Header`, `Cart`, `ClientOnly`, `NestedMenuCascade`).
+- Quando for criar algo em `src/components`:
+  - Confirmar se o componente realmente é cross-feature.
+  - Se for específico de uma feature (ex.: componente que só faz sentido em checkout), colocar em `src/features/checkout/components`.
+
+### Semântica de nomes
+
+- Nomes de componentes devem refletir o papel claro:
+  - `CartSidebar`, `CheckoutSummary`, `ProductCard`, etc.
+- Evitar nomes genéricos como `BoxWrapper`, `Container2`, `HelperComponent`, etc.
+
+---
+
+## 4. Hooks (`src/hooks` e hooks de feature)
+
+### Hooks globais (`src/hooks`)
+
+- Devem ser:
+  - Reutilizáveis entre features.
+  - Sem dependência forte de detalhes de uma feature específica.
+- Exemplos adequados:
+  - `useAsyncState`
+  - `useCrudOperations`
+  - `useSearch` (se de fato for genérico)
+- Antes de criar um hook em `src/hooks`:
+  - Verificar se ele não é específico demais de uma feature.
+  - Se for específico, colocá-lo em `src/features/<feature>/hooks`.
+
+### Hooks de feature
+
+- Devem ficar em `src/features/<feature>/hooks`.
+- Podem usar:
+  - services do domínio da feature,
+  - tipos específicos da feature,
+  - contextos necessários.
+
+---
+
+## 5. Lógica de dados / services (integração com backend)
+
+> OBS: mesmo que a pasta atual se chame `src/api`, o foco desta regra é o uso dentro do código Next.
+
+- Components e hooks do Next devem acessar dados via:
+  - Services centralizados (`src/services` ou `src/api/<dominio>/services`), nunca diretamente via `fetch` espalhado.
+- Ao criar nova chamada de API:
+  - Implementar primeiro um método no service correspondente.
+  - Reutilizar o `http.ts` ou client base definido.
+- Nunca duplicar regras de serialização/deserialização:
+  - Se uma transformação for usada em mais de um lugar, extrair para uma função utilitária ou service.
+
+---
+
+## 6. Estilos (CSS / styling)
+
+- Evitar criar novos arquivos de CSS globais em `src/assets/css` para telas específicas.
+- Preferir:
+  - CSS Modules co-localizados (`*.module.css`) próximos aos componentes/telas.
+  - Ou a abordagem de styling que o projeto já utiliza de forma moderna e consistente.
+- Quando precisar ajustar o visual de uma feature/tela:
+  - Criar ou reutilizar CSS Modules dentro da própria feature.
+  - Reduzir a dependência de classes globais.
+
+---
+
+## 7. Middleware
+
+- `src/middleware.ts` é o único arquivo que deve exportar o `middleware` exigido pelo Next.
+- Qualquer lógica adicional (auth, redirects, etc.) deve ficar em helpers:
+  - `src/middleware/authMiddleware.ts`
+  - `src/middleware/redirects.ts`
+- O código em `middleware.ts` deve ser fino:
+  - apenas importar e compor essas funções helper.
+
+---
+
+## 8. Simplicidade, semântica e arquivos finos
+
+- Sempre preferir:
+  - Componentes pequenos, focados em uma responsabilidade.
+  - Hooks pequenos, com nomes altamente descritivos.
+  - Funções utilitárias bem nomeadas e reutilizadas.
+- Evitar:
+  - “God components” com JSX gigantes e lógica misturada.
+  - Funções com múltiplas responsabilidades.
+  - Caminhos de import “estranhos” ou semântica confusa (ex.: usar um helper de `checkout` dentro de `auth` sem motivo real).
+
+---
+
+## 9. Quando houver dúvida
+
+- Se o comportamento de uma rota, de uma página ou de uma feature não estiver claramente definido:
+  - Perguntar ao usuário como deve ser o fluxo.
+  - Sugerir a solução mais simples possível e confirmar antes de criar algo mais complexo.
+- Se houver duplicidade em potencial:
+  - Antes de criar um novo hook, componente ou util:
+    - Verificar se algo semelhante já existe.
+    - Se existir, reaproveitar ou extrair uma versão mais genérica.
+

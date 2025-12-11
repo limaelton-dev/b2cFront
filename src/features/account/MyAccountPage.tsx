@@ -9,6 +9,7 @@ import MeusEnderecos from './sections/meus-enderecos/MeusEnderecos';
 import MeusCartoes from './sections/meus-cartoes/MeusCartoes';
 import MinhasCompras from './sections/minhas-compras/MinhasCompras';
 import { MainItemType } from './types';
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 
 import PlaceOutlinedIcon from '@mui/icons-material/PlaceOutlined';
 import CreditCardIcon from '@mui/icons-material/CreditCard';
@@ -55,7 +56,7 @@ export default function MyAccountPage() {
     };
 
     return (
-        <>
+        <ProtectedRoute>
             <div className="container-fluid p-0">
                 <Header cartOpened={openedCart} onCartToggle={setOpenedCart} />
                 <Cart cartOpened={openedCart} onCartToggle={setOpenedCart} />
@@ -91,7 +92,7 @@ export default function MyAccountPage() {
                     </Box>
                 </Box>
             </main>
-        </>
+        </ProtectedRoute>
     );
 }
 

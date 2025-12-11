@@ -1,41 +1,31 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { jwtVerify } from 'jose';
+import { NextRequest } from 'next/server';
 
-const JWT_SECRET = process.env.NEXT_PUBLIC_JWT_SECRET || '';
-export async function authMiddleware(req: NextRequest) {
-    const token = req.cookies.get('jwt')?.value;
+/**
+ * Verifica se o usuário está autenticado através do JWT no cookie.
+ * Valida formato do token e expiração.
+ */
+export function isUserAuthenticated(req: NextRequest): boolean {
+  const token = req.cookies.get('jwt')?.value;
+  
+  if (!token) return false;
+  
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return false;
     
-    try {
-        if (!token) {
-            return false;
-        }
-        
-        // Verificação básica do formato do token
-        const tokenParts = token.split('.');
-        if (tokenParts.length !== 3) {
-            return false;
-        }
-        
-        // No middleware, usamos uma verificação simplificada
-        // para evitar problemas com a API CryptoKey
-        try {
-            // Decodificar a parte de payload do token (segunda parte)
-            const payloadBase64 = tokenParts[1];
-            // Ajustar o base64 para decodificação correta
-            const base64 = payloadBase64.replace(/-/g, '+').replace(/_/g, '/');
-            const jsonPayload = Buffer.from(base64, 'base64').toString('utf8');
-            const payload = JSON.parse(jsonPayload);
-            
-            // Verificar se o token está expirado
-            if (payload.exp && payload.exp * 1000 < Date.now()) {
-                return false;
-            }
-            
-            return true;
-        } catch (decodeError) {
-            return false;
-        }
-    } catch (error) {
-        return false;
+    // Decodifica o payload
+    const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = Buffer.from(base64, 'base64').toString('utf8');
+    const payload = JSON.parse(jsonPayload);
+    
+    // Verifica a expiração
+    if (payload.exp && typeof payload.exp === 'number') {
+      const now = Math.floor(Date.now() / 1000);
+      return payload.exp > now;
     }
+    
+    return true;
+  } catch {
+    return false;
+  }
 }

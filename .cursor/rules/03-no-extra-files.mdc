@@ -1,0 +1,38 @@
+---
+alwaysApply: true
+---
+
+# Regra para evitar criação de arquivos desnecessários
+
+## Proibição de novos arquivos
+
+- Não criar **qualquer arquivo novo nos formatos** sem que o usuário peça explicitamente.
+- Especificamente, NÃO criar:
+  - Arquivos `.md`, `.mdx`, `.txt`, `.sh`, `.json`, `.yaml`, `.yml` ou similares.
+  - Arquivos de planejamento ou relatório como:
+    - `PLAN.md`
+    - `REVIEW.md`
+    - `REPORT.md`
+    - `TODO.md`
+    - `SUMMARY.md`  
+    ou qualquer variação de nome usada apenas para descrever o plano de ação.
+
+## Como proceder em vez disso
+
+- Se for necessário planejar ou explicar a solução:
+  - Fazer isso **na própria resposta do chat**, em texto.
+  - Não salvar esse conteúdo em arquivos.
+- Se o modelo interno sugerir criar arquivos de plano/documentação:
+  - Ignorar essa sugestão.
+  - Descrever o plano diretamente na conversa e aplicar as mudanças de código necessárias.
+
+## Edição de arquivos existentes
+
+- Focar em editar apenas os arquivos já existentes ou explicitamente criados a pedido do usuário.
+- Não renomear, mover ou apagar arquivos sem instrução do usuário.
+
+## Em caso de dúvida
+
+- Se houver qualquer ambiguidade sobre criar um arquivo:
+  - Perguntar ao usuário se ele realmente deseja que o arquivo exista.
+  - Se nada for dito, assumir que NÃO deve criar arquivos novos.

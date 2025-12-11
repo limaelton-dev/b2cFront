@@ -1,0 +1,54 @@
+---
+description: "Padrões globais: simplicidade, semântica clara, segurança e elegância em todo o projeto."
+alwaysApply: true
+---
+
+# Padrões gerais de código e arquitetura
+
+## Objetivos principais
+
+Buscar ao máximo:
+- Entender a regra de negócio antes de propor solução.
+- Priorizar simplicidade na implementação.
+- Utilizar semântica clara em nomes de arquivos, pastas, classes, métodos, variáveis e propriedades.
+- Manter modernidade em padrões, bibliotecas e sintaxe, evitando soluções obsoletas.
+- Garantir segurança nos fluxos (validação de entrada, tratamento de erros, checagens de permissão quando necessário).
+- Garantir integridade dos dados e das regras de negócio ao longo de toda a lógica.
+- Manter elegância na estrutura: código limpo, legível e organizado.
+- Criar métodos, classes e arquivos “finos”, com responsabilidade bem definida.
+
+## Nunca fazer
+
+Nunca deve:
+- Introduzir overengineering ou overkill (arquiteturas desnecessariamente complexas para o problema atual).
+- Duplicar lógica ou código que possa ser reaproveitado.
+- Criar gambiarras ou atalhos frágeis para contornar problemas.
+- Entregar mais do que foi solicitado sem motivo claro (evitar features extras não pedidas).
+- Gerar documentação se não for explicitamente solicitado.
+- Criar comentários redundantes explicando o óbvio — a semântica do código deve ser autoexplicativa.
+- Remover comentários já existentes, exceto se forem obviamente inválidos, obsoletos ou se o usuário pedir.
+
+## Reaproveitamento de lógica
+
+Ao implementar qualquer lógica nova:
+- Verificar se a mesma regra de negócio ou operação já existe em outro serviço, helper, util ou módulo.
+- Se existir, reutilizar ou extrair a lógica para um local compartilhado, em vez de duplicar.
+- Se for necessário refatorar para possibilitar reaproveitamento, preferir refatorações pequenas e objetivas.
+
+## Estilo de fluxo e controle
+
+- Preferir early returns em vez de cadeias profundas de `if/else` ou `else if`, quando isso reduzir aninhamento e melhorar a clareza.
+- Manter métodos curtos e focados em uma responsabilidade.
+- Quando um método ficar grande demais, extrair partes em funções auxiliares com nomes semânticos.
+- Tratar erros de forma consistente, usando o padrão do projeto (por exemplo, exceções específicas ou tipos de erro padronizados).
+  
+## Quando não tiver certeza
+
+Caso:
+- O problema não esteja claramente entendido, ou
+- Não haja confiança suficiente na solução proposta,
+
+então:
+- Solicitar mais informações ao usuário.
+- Sugerir opções de caminhos (“podemos fazer A, B ou C”) e explicar rapidamente os trade-offs.
+- Evitar tomar decisões arquiteturais grandes sem contexto adicional.
