@@ -1,27 +1,85 @@
 import { useState, useCallback } from 'react';
 import { useToastSide } from '@/context/ToastSideProvider';
-import { validateCPF, validatePhone, validatePasswords } from '../utils/validation';
+import { 
+    validateCPF, validateCNPJ, validatePhone, validatePasswords, validateEmail, validateBirthDate,
+    validateCardNumber, validateCardExpiration, validateCVV, validateCardHolderName, validateCardHolderDocument,
+    CardBrand
+} from '../utils/validation';
 import { checkEmailAvailability, checkCpfAvailability } from '@/api/user';
-import { PROFILE_TYPE, CheckoutFormData } from './useCheckoutCustomer';
+import { PROFILE_TYPE, PAYMENT_METHOD, CheckoutFormData } from './useCheckoutCustomer';
 
 export type { CheckoutFormData } from './useCheckoutCustomer';
 
 interface FormErrors {
     cpf: boolean;
+    cpfMessage: string;
+    cnpj: boolean;
+    cnpjMessage: string;
     email: boolean;
+    emailMessage: string;
     phone: boolean;
     phoneMessage: string;
     passwords: boolean;
     passwordsMessage: string;
+    birthDate: boolean;
+    birthDateMessage: string;
+    address: {
+        postalCode: boolean;
+        street: boolean;
+        number: boolean;
+        neighborhood: boolean;
+        city: boolean;
+        state: boolean;
+    };
+    card: {
+        number: boolean;
+        numberMessage: string;
+        expiration: boolean;
+        expirationMessage: string;
+        cvv: boolean;
+        cvvMessage: string;
+        holderName: boolean;
+        holderNameMessage: string;
+        holderDocument: boolean;
+        holderDocumentMessage: string;
+        brand: CardBrand;
+    };
 }
 
 const initialErrors: FormErrors = {
     cpf: false,
+    cpfMessage: '',
+    cnpj: false,
+    cnpjMessage: '',
     email: false,
+    emailMessage: '',
     phone: false,
     phoneMessage: '',
     passwords: false,
-    passwordsMessage: ''
+    passwordsMessage: '',
+    birthDate: false,
+    birthDateMessage: '',
+    address: {
+        postalCode: false,
+        street: false,
+        number: false,
+        neighborhood: false,
+        city: false,
+        state: false
+    },
+    card: {
+        number: false,
+        numberMessage: '',
+        expiration: false,
+        expirationMessage: '',
+        cvv: false,
+        cvvMessage: '',
+        holderName: false,
+        holderNameMessage: '',
+        holderDocument: false,
+        holderDocumentMessage: '',
+        brand: 'unknown'
+    }
 };
 
 export function useCheckoutSteps(formData: CheckoutFormData, isAuthenticated: boolean) {
@@ -31,31 +89,79 @@ export function useCheckoutSteps(formData: CheckoutFormData, isAuthenticated: bo
     const [validatingCPF, setValidatingCPF] = useState(false);
     
     const checkCPFAvailabilityFn = useCallback(async (cpfValue: string) => {
-        if (cpfValue.length !== 14 || !validateCPF(cpfValue)) {
-            setErrors(prev => ({ ...prev, cpf: true }));
+        if (cpfValue.length !== 14) {
+            setErrors(prev => ({ ...prev, cpf: true, cpfMessage: 'CPF incompleto' }));
             return;
         }
         
-        if (isAuthenticated) return;
+        if (!validateCPF(cpfValue)) {
+            setErrors(prev => ({ ...prev, cpf: true, cpfMessage: 'CPF inválido' }));
+            return;
+        }
+        
+        if (isAuthenticated) {
+            setErrors(prev => ({ ...prev, cpf: false, cpfMessage: '' }));
+            return;
+        }
         
         setValidatingCPF(true);
         try {
             const result = await checkCpfAvailability(cpfValue);
-            setErrors(prev => ({ ...prev, cpf: !result.available }));
+            setErrors(prev => ({ 
+                ...prev, 
+                cpf: !result.available, 
+                cpfMessage: result.available ? '' : 'CPF já cadastrado' 
+            }));
         } catch {
-            setErrors(prev => ({ ...prev, cpf: false }));
+            setErrors(prev => ({ ...prev, cpf: false, cpfMessage: '' }));
         }
         setValidatingCPF(false);
     }, [isAuthenticated]);
     
+    const validateCNPJField = useCallback((cnpjValue: string) => {
+        if (cnpjValue.length !== 18) {
+            setErrors(prev => ({ ...prev, cnpj: true, cnpjMessage: 'CNPJ incompleto' }));
+            return false;
+        }
+        
+        if (!validateCNPJ(cnpjValue)) {
+            setErrors(prev => ({ ...prev, cnpj: true, cnpjMessage: 'CNPJ inválido' }));
+            return false;
+        }
+        
+        setErrors(prev => ({ ...prev, cnpj: false, cnpjMessage: '' }));
+        return true;
+    }, []);
+    
+    const validateEmailField = useCallback((email: string) => {
+        const result = validateEmail(email);
+        setErrors(prev => ({ ...prev, email: !result.isValid, emailMessage: result.errorMessage }));
+        return result.isValid;
+    }, []);
+    
     const checkEmailAvailabilityFn = useCallback(async () => {
-        if (!formData.email || isAuthenticated) return;
+        if (!formData.email) return;
+        
+        const emailValidation = validateEmail(formData.email);
+        if (!emailValidation.isValid) {
+            setErrors(prev => ({ ...prev, email: true, emailMessage: emailValidation.errorMessage }));
+            return;
+        }
+        
+        if (isAuthenticated) {
+            setErrors(prev => ({ ...prev, email: false, emailMessage: '' }));
+            return;
+        }
         
         try {
             const result = await checkEmailAvailability(formData.email);
-            setErrors(prev => ({ ...prev, email: !result.available }));
+            setErrors(prev => ({ 
+                ...prev, 
+                email: !result.available, 
+                emailMessage: result.available ? '' : 'Email já cadastrado' 
+            }));
         } catch {
-            setErrors(prev => ({ ...prev, email: false }));
+            setErrors(prev => ({ ...prev, email: false, emailMessage: '' }));
         }
     }, [formData.email, isAuthenticated]);
     
@@ -71,6 +177,115 @@ export function useCheckoutSteps(formData: CheckoutFormData, isAuthenticated: bo
         return result.isValid;
     }, [formData.password, formData.confirmPassword]);
     
+    const validateBirthDateField = useCallback((birthDateValue: string) => {
+        const result = validateBirthDate(birthDateValue);
+        setErrors(prev => ({ ...prev, birthDate: !result.isValid, birthDateMessage: result.errorMessage }));
+        return result.isValid;
+    }, []);
+    
+    const validateAddressFields = useCallback(() => {
+        const addressErrors = {
+            postalCode: !formData.postalCode || formData.postalCode.replace(/\D/g, '').length !== 8,
+            street: !formData.street,
+            number: !formData.number,
+            neighborhood: !formData.neighborhood,
+            city: !formData.city,
+            state: !formData.state
+        };
+        
+        setErrors(prev => ({ ...prev, address: addressErrors }));
+        
+        return !Object.values(addressErrors).some(Boolean);
+    }, [formData.postalCode, formData.street, formData.number, formData.neighborhood, formData.city, formData.state]);
+    
+    const validateCardNumberField = useCallback((cardNumber: string) => {
+        const result = validateCardNumber(cardNumber);
+        setErrors(prev => ({ 
+            ...prev, 
+            card: { 
+                ...prev.card, 
+                number: !result.isValid, 
+                numberMessage: result.errorMessage,
+                brand: result.brand
+            } 
+        }));
+        return result.isValid;
+    }, []);
+    
+    const validateCardExpirationField = useCallback((expiration: string) => {
+        const result = validateCardExpiration(expiration);
+        setErrors(prev => ({ 
+            ...prev, 
+            card: { ...prev.card, expiration: !result.isValid, expirationMessage: result.errorMessage } 
+        }));
+        return result.isValid;
+    }, []);
+    
+    const validateCardCVVField = useCallback((cvv: string, cardNumber: string) => {
+        const result = validateCVV(cvv, cardNumber);
+        setErrors(prev => ({ 
+            ...prev, 
+            card: { ...prev.card, cvv: !result.isValid, cvvMessage: result.errorMessage } 
+        }));
+        return result.isValid;
+    }, []);
+    
+    const validateCardHolderNameField = useCallback((name: string) => {
+        const result = validateCardHolderName(name);
+        setErrors(prev => ({ 
+            ...prev, 
+            card: { ...prev.card, holderName: !result.isValid, holderNameMessage: result.errorMessage } 
+        }));
+        return result.isValid;
+    }, []);
+    
+    const validateCardHolderDocumentField = useCallback((document: string) => {
+        const result = validateCardHolderDocument(document);
+        setErrors(prev => ({ 
+            ...prev, 
+            card: { ...prev.card, holderDocument: !result.isValid, holderDocumentMessage: result.errorMessage } 
+        }));
+        return result.isValid;
+    }, []);
+    
+    const validateAllCardFields = useCallback((isMaskedCard: boolean) => {
+        if (formData.paymentMethod !== PAYMENT_METHOD.CREDIT_CARD) return true;
+        
+        if (isMaskedCard) {
+            const cvvResult = validateCVV(formData.cardCVV, formData.cardNumber);
+            setErrors(prev => ({ 
+                ...prev, 
+                card: { ...prev.card, cvv: !cvvResult.isValid, cvvMessage: cvvResult.errorMessage } 
+            }));
+            return cvvResult.isValid;
+        }
+        
+        const numberResult = validateCardNumber(formData.cardNumber);
+        const expirationResult = validateCardExpiration(formData.cardExpirationDate);
+        const cvvResult = validateCVV(formData.cardCVV, formData.cardNumber);
+        const holderNameResult = validateCardHolderName(formData.cardHolderName);
+        const holderDocResult = validateCardHolderDocument(formData.cardHolderDocument);
+        
+        setErrors(prev => ({
+            ...prev,
+            card: {
+                number: !numberResult.isValid,
+                numberMessage: numberResult.errorMessage,
+                expiration: !expirationResult.isValid,
+                expirationMessage: expirationResult.errorMessage,
+                cvv: !cvvResult.isValid,
+                cvvMessage: cvvResult.errorMessage,
+                holderName: !holderNameResult.isValid,
+                holderNameMessage: holderNameResult.errorMessage,
+                holderDocument: !holderDocResult.isValid,
+                holderDocumentMessage: holderDocResult.errorMessage,
+                brand: numberResult.brand
+            }
+        }));
+        
+        return numberResult.isValid && expirationResult.isValid && cvvResult.isValid && holderNameResult.isValid && holderDocResult.isValid;
+    }, [formData.paymentMethod, formData.cardNumber, formData.cardExpirationDate, formData.cardCVV, formData.cardHolderName, formData.cardHolderDocument]);
+    
     const canAdvanceToPayment = useCallback(() => {
         const isPF = formData.profileType === PROFILE_TYPE.PF;
         
@@ -81,7 +296,7 @@ export function useCheckoutSteps(formData: CheckoutFormData, isAuthenticated: bo
                 return false;
             }
         } else {
-            if (!formData.firstName || !formData.lastName || !formData.email || !formData.cnpj || (!formData.phone && !isAuthenticated) || !formData.tradingName || !formData.stateRegistration) {
+            if (!formData.firstName || !formData.lastName || !formData.email || !formData.cnpj || (!formData.phone && !isAuthenticated) || !formData.tradingName || !formData.stateRegistration || errors.cnpj) {
                 showToast('Preencha todos os campos de dados pessoais corretamente', 'error');
                 setCurrentStep(1);
                 return false;
@@ -94,7 +309,6 @@ export function useCheckoutSteps(formData: CheckoutFormData, isAuthenticated: bo
             return false;
         }
         
-        // Validação de senhas e data de nascimento para usuários não autenticados
         if (!isAuthenticated) {
             if (!formData.password || !formData.confirmPassword) {
                 showToast('Preencha os campos de senha', 'error');
@@ -110,29 +324,31 @@ export function useCheckoutSteps(formData: CheckoutFormData, isAuthenticated: bo
                 return false;
             }
             
-            // Validar data de nascimento para PF
-            if (isPF && (!formData.birthDate || formData.birthDate.length !== 10)) {
-                showToast('Informe sua data de nascimento', 'error');
-                setCurrentStep(1);
-                return false;
+            if (isPF) {
+                const birthDateValidation = validateBirthDate(formData.birthDate);
+                if (!birthDateValidation.isValid) {
+                    showToast(birthDateValidation.errorMessage, 'error');
+                    setErrors(prev => ({ ...prev, birthDate: true, birthDateMessage: birthDateValidation.errorMessage }));
+                    setCurrentStep(1);
+                    return false;
+                }
             }
         }
         
-        // Validação de política de privacidade (obrigatória)
         if (!formData.acceptPrivacyPolicy) {
             showToast('Você precisa aceitar a Política de Privacidade para continuar', 'error');
             setCurrentStep(1);
             return false;
         }
         
-        if (!formData.postalCode || !formData.number || !formData.street || !formData.state || !formData.city || !formData.neighborhood) {
+        if (!validateAddressFields()) {
             showToast('Preencha todos os campos de endereço', 'error');
             setCurrentStep(2);
             return false;
         }
         
         return true;
-    }, [formData, errors, isAuthenticated, showToast, validatePhoneField]);
+    }, [formData, errors, isAuthenticated, showToast, validatePhoneField, validateAddressFields]);
     
     const goToStep = useCallback((step: number) => {
         if (step === 1 || step === 2) {
@@ -152,8 +368,18 @@ export function useCheckoutSteps(formData: CheckoutFormData, isAuthenticated: bo
         validatingCPF,
         checkCPFAvailability: checkCPFAvailabilityFn,
         checkEmailAvailability: checkEmailAvailabilityFn,
+        validateEmailField,
         validatePhoneField,
-        validatePasswordFields
+        validatePasswordFields,
+        validateBirthDateField,
+        validateCNPJField,
+        validateAddressFields,
+        validateCardNumberField,
+        validateCardExpirationField,
+        validateCardCVVField,
+        validateCardHolderNameField,
+        validateCardHolderDocumentField,
+        validateAllCardFields
     };
 }
 

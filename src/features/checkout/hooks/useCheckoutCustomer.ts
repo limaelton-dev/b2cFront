@@ -30,6 +30,7 @@ export interface CheckoutFormData {
     paymentMethod: string;
     cardNumber: string;
     cardHolderName: string;
+    cardHolderDocument: string;  // CPF do titular do cartão (pode ser diferente do CPF do usuário)
     cardExpirationDate: string;
     cardCVV: string;
     saveCard: boolean;
@@ -61,6 +62,7 @@ const initialFormData: CheckoutFormData = {
     paymentMethod: PAYMENT_METHOD.CREDIT_CARD,
     cardNumber: '',
     cardHolderName: '',
+    cardHolderDocument: '',
     cardExpirationDate: '',
     cardCVV: '',
     saveCard: false,
@@ -153,13 +155,28 @@ export function useCheckoutCustomer(onAddressLoaded?: (postalCode: string) => vo
         setFormData(prev => ({ ...prev, [field]: value }));
     }, []);
     
-    const autoFillAddressByPostalCode = useCallback(async () => {
-        if (formData.postalCode.length !== 9) return;
+    const clearAddressFields = useCallback(() => {
+        setFormData(prev => ({
+            ...prev,
+            street: '',
+            neighborhood: '',
+            city: '',
+            state: '',
+            number: '',
+            complement: ''
+        }));
+    }, []);
+    
+    const autoFillAddressByPostalCode = useCallback(async (postalCodeValue?: string) => {
+        const cep = postalCodeValue || formData.postalCode;
+        const cleanCep = cep.replace(/\D/g, '');
+        
+        if (cleanCep.length !== 8) return { success: false };
         
         setLoadingAddress(true);
         
         try {
-            const address = await fetchAddressByCep(formData.postalCode);
+            const address = await fetchAddressByCep(cleanCep);
             setFormData(prev => ({
                 ...prev,
                 street: address.street,
@@ -167,12 +184,15 @@ export function useCheckoutCustomer(onAddressLoaded?: (postalCode: string) => vo
                 city: address.city,
                 state: address.state
             }));
+            return { success: true };
         } catch {
-            showToast('Erro ao buscar endereço', 'error');
+            clearAddressFields();
+            showToast('CEP não encontrado', 'error');
+            return { success: false };
         } finally {
             setLoadingAddress(false);
         }
-    }, [formData.postalCode, showToast]);
+    }, [formData.postalCode, showToast, clearAddressFields]);
     
     return {
         formData,
@@ -181,7 +201,8 @@ export function useCheckoutCustomer(onAddressLoaded?: (postalCode: string) => vo
         maskedCard,
         disabledFields,
         loadingAddress,
-        autoFillAddressByPostalCode
+        autoFillAddressByPostalCode,
+        clearAddressFields
     };
 }
 

@@ -7,14 +7,35 @@ import Cards from 'react-credit-cards-2';
 import 'react-credit-cards-2/dist/es/styles-compiled.css';
 import MaskedTextField from './MaskedTextField';
 import { CheckoutFormData, PAYMENT_METHOD, PROFILE_TYPE } from '../hooks/useCheckoutCustomer';
+import { CardBrand } from '../utils/validation';
+
+interface CardErrors {
+    number: boolean;
+    numberMessage: string;
+    expiration: boolean;
+    expirationMessage: string;
+    cvv: boolean;
+    cvvMessage: string;
+    holderName: boolean;
+    holderNameMessage: string;
+    holderDocument: boolean;
+    holderDocumentMessage: string;
+    brand: CardBrand;
+}
 
 interface PaymentFormProps {
     formData: CheckoutFormData;
     isSubmitting: boolean;
     maskedCard: { isMasked: boolean; finalDigits: string; cardHolder: string; expiration: string; brand: string };
     cardFlag: React.ReactNode;
+    errors: CardErrors;
     onUpdateField: (field: keyof CheckoutFormData, value: any) => void;
     onCardNumberChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    onValidateCardNumber: (cardNumber: string) => void;
+    onValidateExpiration: (expiration: string) => void;
+    onValidateCVV: (cvv: string, cardNumber: string) => void;
+    onValidateHolderName: (name: string) => void;
+    onValidateHolderDocument: (document: string) => void;
     onPaymentSubmit: () => void;
 }
 
@@ -40,16 +61,45 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
     isSubmitting,
     maskedCard,
     cardFlag,
+    errors,
     onUpdateField,
     onCardNumberChange,
+    onValidateCardNumber,
+    onValidateExpiration,
+    onValidateCVV,
+    onValidateHolderName,
+    onValidateHolderDocument,
     onPaymentSubmit
 }) => {
     const [focused, setFocused] = useState<string>('');
     const isCreditCard = formData.paymentMethod === PAYMENT_METHOD.CREDIT_CARD;
-    const needsCardInfo = !maskedCard.isMasked && isCreditCard && (!formData.cardNumber || !formData.cardCVV || !formData.cardExpirationDate || !formData.cardHolderName);
+    const needsCardInfo = !maskedCard.isMasked && isCreditCard && (!formData.cardNumber || !formData.cardCVV || !formData.cardExpirationDate || !formData.cardHolderName || !formData.cardHolderDocument);
 
     const handleFocus = (fieldName: string) => () => setFocused(fieldName);
-    const handleBlur = () => setFocused('');
+    
+    const handleCardNumberBlur = () => {
+        setFocused('');
+        if (formData.cardNumber) onValidateCardNumber(formData.cardNumber);
+    };
+    
+    const handleExpirationBlur = () => {
+        setFocused('');
+        if (formData.cardExpirationDate) onValidateExpiration(formData.cardExpirationDate);
+    };
+    
+    const handleCVVBlur = () => {
+        setFocused('');
+        if (formData.cardCVV) onValidateCVV(formData.cardCVV, formData.cardNumber);
+    };
+    
+    const handleHolderNameBlur = () => {
+        setFocused('');
+        if (formData.cardHolderName) onValidateHolderName(formData.cardHolderName);
+    };
+    
+    const handleHolderDocumentBlur = () => {
+        if (formData.cardHolderDocument) onValidateHolderDocument(formData.cardHolderDocument);
+    };
 
     // Formatar número para exibição no cartão visual
     const displayCardNumber = maskedCard.isMasked 
@@ -131,9 +181,11 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
                                 value={formData.cardHolderName}
                                 onChange={(e) => onUpdateField('cardHolderName', e.target.value.toUpperCase())}
                                 onFocus={handleFocus('name')}
-                                onBlur={handleBlur}
+                                onBlur={handleHolderNameBlur}
                                 disabled={maskedCard.isMasked}
                                 variant="standard"
+                                error={errors.holderName}
+                                helperText={errors.holderName ? errors.holderNameMessage : ''}
                                 inputProps={{ maxLength: 50, style: { textTransform: 'uppercase' } }}
                             />
 
@@ -142,11 +194,13 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
                                 value={formData.cardNumber}
                                 onChange={onCardNumberChange}
                                 onFocus={handleFocus('number')}
-                                onBlur={handleBlur}
+                                onBlur={handleCardNumberBlur}
                                 disabled={maskedCard.isMasked}
                                 maskChar="X"
                                 label="Número do Cartão*"
                                 variant="standard"
+                                error={errors.number}
+                                helperText={errors.number ? errors.numberMessage : ''}
                                 placeholder='•••• •••• •••• ••••'
                                 slotProps={{ input: { endAdornment: <InputAdornment position="end">{cardFlag}</InputAdornment> } }}
                                 sx={{ width: '100%', mb: 1 }}
@@ -157,11 +211,13 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
                                 value={formData.cardExpirationDate}
                                 onChange={(e) => onUpdateField('cardExpirationDate', e.target.value)}
                                 onFocus={handleFocus('expiry')}
-                                onBlur={handleBlur}
+                                onBlur={handleExpirationBlur}
                                 disabled={maskedCard.isMasked}
                                 label="Validade (MM/AA)*"
                                 placeholder='MM/AA'
                                 variant="standard"
+                                error={errors.expiration}
+                                helperText={errors.expiration ? errors.expirationMessage : ''}
                                 sx={{ width: '48%', mb: 1 }}
                             />
                             
@@ -169,12 +225,26 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
                                 sx={{ width: '48%', mb: 1 }} 
                                 onChange={(e) => onUpdateField('cardCVV', e.target.value.replace(/\D/g, ''))} 
                                 onFocus={handleFocus('cvc')}
-                                onBlur={handleBlur}
+                                onBlur={handleCVVBlur}
                                 value={formData.cardCVV} 
                                 label="CVV*" 
                                 variant="standard"
-                                inputProps={{ maxLength: 4 }}
-                                helperText={maskedCard.isMasked ? "Informe para confirmar" : ""}
+                                error={errors.cvv}
+                                helperText={errors.cvv ? errors.cvvMessage : (maskedCard.isMasked ? "Informe para confirmar" : "")}
+                                inputProps={{ maxLength: errors.brand === 'amex' ? 4 : 3 }}
+                            />
+                            
+                            <MaskedTextField
+                                mask="999.999.999-99"
+                                value={formData.cardHolderDocument}
+                                onChange={(e) => onUpdateField('cardHolderDocument', e.target.value)}
+                                onBlur={handleHolderDocumentBlur}
+                                disabled={maskedCard.isMasked}
+                                label="CPF do Titular do Cartão*"
+                                variant="standard"
+                                error={errors.holderDocument}
+                                helperText={errors.holderDocument ? errors.holderDocumentMessage : ''}
+                                sx={{ width: '100%', mb: 1 }}
                             />
                             
                             <Box sx={{ width: '100%', mt: 2 }}>

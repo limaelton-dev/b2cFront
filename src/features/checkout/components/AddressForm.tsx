@@ -5,6 +5,15 @@ import Checkbox from '@mui/joy/Checkbox';
 import MaskedTextField from './MaskedTextField';
 import { CheckoutFormData } from '../hooks/useCheckoutCustomer';
 
+interface AddressErrors {
+    postalCode: boolean;
+    street: boolean;
+    number: boolean;
+    neighborhood: boolean;
+    city: boolean;
+    state: boolean;
+}
+
 interface AddressFormProps {
     formData: CheckoutFormData;
     disabledFields: { address: boolean };
@@ -12,8 +21,11 @@ interface AddressFormProps {
     shippingName?: string;
     shippingPrice?: number;
     deliveryTime?: number;
+    errors: AddressErrors;
     onUpdateField: (field: keyof CheckoutFormData, value: any) => void;
-    onFetchAddress: () => void;
+    onFetchAddress: (cep: string) => void;
+    onClearAddress: () => void;
+    onValidateAddress: () => void;
     onContinue: () => void;
 }
 
@@ -24,17 +36,29 @@ const AddressForm: React.FC<AddressFormProps> = ({
     shippingName,
     shippingPrice,
     deliveryTime,
+    errors,
     onUpdateField,
     onFetchAddress,
+    onClearAddress,
+    onValidateAddress,
     onContinue
 }) => {
     const handleCepChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const cepValue = e.target.value;
+        const cleanCep = cepValue.replace(/\D/g, '');
+        
         onUpdateField('postalCode', cepValue);
         
-        if (cepValue.replace(/\D/g, '').length === 8) {
-            onFetchAddress();
+        if (cleanCep.length === 8) {
+            onFetchAddress(cepValue);
+        } else if (cleanCep.length < 8 && formData.street) {
+            onClearAddress();
         }
+    };
+
+    const handleContinue = () => {
+        onValidateAddress();
+        onContinue();
     };
 
     return (
@@ -47,6 +71,8 @@ const AddressForm: React.FC<AddressFormProps> = ({
                         onChange={handleCepChange}
                         label="CEP*"
                         variant="standard"
+                        error={errors.postalCode}
+                        helperText={errors.postalCode ? 'CEP é obrigatório' : ''}
                         sx={{ width: '60%', mb: '8px' }}
                     />
                 </div>
@@ -65,6 +91,8 @@ const AddressForm: React.FC<AddressFormProps> = ({
                             onChange={(e) => onUpdateField('street', e.target.value)} 
                             label="Endereço de Entrega*" 
                             variant="standard" 
+                            error={errors.street}
+                            helperText={errors.street ? 'Endereço é obrigatório' : ''}
                         />
                         <TextField 
                             sx={{ width: '19%', mb: '8px' }} 
@@ -72,6 +100,8 @@ const AddressForm: React.FC<AddressFormProps> = ({
                             onChange={(e) => onUpdateField('number', e.target.value)} 
                             label="Número*" 
                             variant="standard" 
+                            error={errors.number}
+                            helperText={errors.number ? 'Obrigatório' : ''}
                         />
                         <TextField 
                             sx={{ width: '45%', mb: '8px' }} 
@@ -86,6 +116,8 @@ const AddressForm: React.FC<AddressFormProps> = ({
                             onChange={(e) => onUpdateField('state', e.target.value)} 
                             label="Estado*" 
                             variant="standard" 
+                            error={errors.state}
+                            helperText={errors.state ? 'Obrigatório' : ''}
                         />
                         <TextField 
                             sx={{ width: '42%', mb: '8px' }} 
@@ -93,6 +125,8 @@ const AddressForm: React.FC<AddressFormProps> = ({
                             onChange={(e) => onUpdateField('city', e.target.value)} 
                             label="Cidade*" 
                             variant="standard" 
+                            error={errors.city}
+                            helperText={errors.city ? 'Obrigatório' : ''}
                         />
                         <TextField 
                             sx={{ width: '42%', mb: '8px' }} 
@@ -100,6 +134,8 @@ const AddressForm: React.FC<AddressFormProps> = ({
                             onChange={(e) => onUpdateField('neighborhood', e.target.value)} 
                             label="Bairro*" 
                             variant="standard" 
+                            error={errors.neighborhood}
+                            helperText={errors.neighborhood ? 'Obrigatório' : ''}
                         />
                     </Box>
                     
@@ -123,7 +159,7 @@ const AddressForm: React.FC<AddressFormProps> = ({
                         </div>
                     )}
                     
-                    <Button variant="contained" color="primary" className='mb-3' fullWidth onClick={onContinue}>
+                    <Button variant="contained" color="primary" className='mb-3' fullWidth onClick={handleContinue}>
                         Continuar
                     </Button>
                 </div>

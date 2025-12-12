@@ -7,11 +7,25 @@ import { CheckoutFormData, PROFILE_TYPE } from '../hooks/useCheckoutCustomer';
 
 interface FormErrors {
     cpf: boolean;
+    cpfMessage: string;
+    cnpj: boolean;
+    cnpjMessage: string;
     email: boolean;
+    emailMessage: string;
     phone: boolean;
     phoneMessage: string;
     passwords: boolean;
     passwordsMessage: string;
+    birthDate: boolean;
+    birthDateMessage: string;
+    address: {
+        postalCode: boolean;
+        street: boolean;
+        number: boolean;
+        neighborhood: boolean;
+        city: boolean;
+        state: boolean;
+    };
 }
 
 interface PersonalInfoFormProps {
@@ -23,8 +37,11 @@ interface PersonalInfoFormProps {
     onChangeProfileType: (value: string) => void;
     onUpdateField: (field: keyof CheckoutFormData, value: any) => void;
     onValidateCPF: (cpf: string) => void;
+    onValidateCNPJ: (cnpj: string) => void;
     onValidateEmail: () => void;
     onValidatePhone: (phone: string) => void;
+    onValidatePasswords: () => void;
+    onValidateBirthDate: (birthDate: string) => void;
     onContinue: () => void;
 }
 
@@ -37,8 +54,11 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
     onChangeProfileType,
     onUpdateField,
     onValidateCPF,
+    onValidateCNPJ,
     onValidateEmail,
     onValidatePhone,
+    onValidatePasswords,
+    onValidateBirthDate,
     onContinue
 }) => {
     return (
@@ -97,7 +117,7 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
                     value={formData.email} 
                     disabled={disabledFields.user} 
                     onBlur={onValidateEmail} 
-                    helperText={errors.email ? "Email já cadastrado" : ''} 
+                    helperText={errors.email ? errors.emailMessage : ''} 
                     label="Email*" 
                     variant="standard" 
                 />
@@ -113,6 +133,7 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
                             variant="standard" 
                             error={errors.passwords}
                             helperText={errors.passwords ? errors.passwordsMessage : ''}
+                            onBlur={onValidatePasswords}
                         />
                         <TextField 
                             sx={{ width: '100%', mb: '12px' }} 
@@ -123,6 +144,7 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
                             variant="standard" 
                             error={errors.passwords}
                             helperText={errors.passwords ? errors.passwordsMessage : ''}
+                            onBlur={onValidatePasswords}
                         />
                     </>
                 )}
@@ -146,9 +168,12 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
                             mask="99.999.999/9999-99"
                             value={formData.cnpj}
                             onChange={(e) => onUpdateField('cnpj', e.target.value)}
+                            onBlur={() => onValidateCNPJ(formData.cnpj)}
                             disabled={disabledFields.personalPJ}
                             label="CNPJ*"
                             variant="standard"
+                            error={errors.cnpj}
+                            helperText={errors.cnpj ? errors.cnpjMessage : ''}
                             sx={{ width: '45%', mb: '8px' }}
                         />
                         <TextField 
@@ -180,7 +205,7 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
                             disabled={disabledFields.personalPF}
                             label="CPF*"
                             error={errors.cpf}
-                            helperText={errors.cpf ? "CPF inválido ou já cadastrado" : ''}
+                            helperText={errors.cpf ? errors.cpfMessage : ''}
                             variant="standard"
                             sx={{ width: '48%', mb: '8px' }}
                         />
@@ -189,9 +214,12 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
                                 mask="99/99/9999"
                                 value={formData.birthDate}
                                 onChange={(e) => onUpdateField('birthDate', e.target.value)}
+                                onBlur={() => onValidateBirthDate(formData.birthDate)}
                                 label="Data de Nascimento*"
                                 variant="standard"
                                 placeholder="DD/MM/AAAA"
+                                error={errors.birthDate}
+                                helperText={errors.birthDate ? errors.birthDateMessage : ''}
                                 sx={{ width: '48%', mb: '8px' }}
                             />
                         )}

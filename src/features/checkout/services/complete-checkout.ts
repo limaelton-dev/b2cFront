@@ -118,9 +118,6 @@ function getFullName(firstName: string, lastName: string): string {
     return `${firstName} ${lastName}`.trim();
 }
 
-/**
- * Gera token do cartão via Mercado Pago SDK
- */
 async function tokenizeCard(formData: CheckoutFormData): Promise<string> {
     const [expMonth, expYear] = formData.cardExpirationDate.split('/');
     
@@ -131,7 +128,7 @@ async function tokenizeCard(formData: CheckoutFormData): Promise<string> {
         cardExpirationYear: expYear.length === 2 ? `20${expYear}` : expYear,
         securityCode: formData.cardCVV,
         identificationType: 'CPF',
-        identificationNumber: cleanCpf(formData.cpf)
+        identificationNumber: cleanCpf(formData.cardHolderDocument)
     });
     
     return tokenResponse.id;

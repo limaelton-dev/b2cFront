@@ -78,7 +78,8 @@ const CheckoutPage = () => {
         maskedCard,
         disabledFields,
         loadingAddress,
-        autoFillAddressByPostalCode
+        autoFillAddressByPostalCode,
+        clearAddressFields
     } = useCheckoutCustomer(handleAddressLoaded);
     
     const {
@@ -89,7 +90,16 @@ const CheckoutPage = () => {
         checkCPFAvailability,
         checkEmailAvailability,
         validatePhoneField,
-        validatePasswordFields
+        validatePasswordFields,
+        validateBirthDateField,
+        validateCNPJField,
+        validateAddressFields,
+        validateCardNumberField,
+        validateCardExpirationField,
+        validateCardCVVField,
+        validateCardHolderNameField,
+        validateCardHolderDocumentField,
+        validateAllCardFields
     } = useCheckoutSteps(formData, isAuthenticated);
 
     const cardFlag = useMemo(() => {
@@ -132,12 +142,13 @@ const CheckoutPage = () => {
         updateField('cardNumber', event.target.value);
     };
     
-    const handleAddressFetch = async () => {
-        await autoFillAddressByPostalCode();
+    const handleAddressFetch = async (cep: string) => {
+        await autoFillAddressByPostalCode(cep);
         
-        if (formData.postalCode?.length === 9) {
+        const cleanCep = cep.replace(/\D/g, '');
+        if (cleanCep.length === 8) {
             try {
-                await calculateShipping(formData.postalCode, isAuthenticated);
+                await calculateShipping(cep, isAuthenticated);
             } catch {
                 showToast('Erro ao calcular frete', 'error');
             }
@@ -145,20 +156,13 @@ const CheckoutPage = () => {
     };
     
     const handlePaymentSubmit = async () => {
-        // Validação de cartão de crédito
         if (formData.paymentMethod === PAYMENT_METHOD.CREDIT_CARD) {
-            if (!maskedCard.isMasked && (!formData.cardNumber || !formData.cardExpirationDate || !formData.cardHolderName)) {
-                showToast('Preencha todos os dados do cartão de crédito', 'error');
-                return;
-            }
-            // CVV é sempre obrigatório, mesmo com cartão salvo
-            if (!formData.cardCVV) {
-                showToast('Informe o CVV do cartão', 'error');
+            if (!validateAllCardFields(maskedCard.isMasked)) {
+                showToast('Verifique os dados do cartão de crédito', 'error');
                 return;
             }
         }
         
-        // Validação de autorização PJ
         if (formData.profileType === '2' && !formData.companyPurchaseAuthorization) {
             showToast('Você precisa confirmar que está autorizado a comprar em nome da empresa', 'error');
             return;
@@ -339,8 +343,11 @@ const CheckoutPage = () => {
                                     onChangeProfileType={(value) => updateField('profileType', value)}
                                     onUpdateField={updateField}
                                     onValidateCPF={checkCPFAvailability}
+                                    onValidateCNPJ={validateCNPJField}
                                     onValidateEmail={checkEmailAvailability}
                                     onValidatePhone={validatePhoneField}
+                                    onValidatePasswords={validatePasswordFields}
+                                    onValidateBirthDate={validateBirthDateField}
                                     onContinue={() => goToStep(2)}
                                 />
                             )}
@@ -365,8 +372,11 @@ const CheckoutPage = () => {
                                     shippingName={shippingName}
                                     shippingPrice={shippingPrice}
                                     deliveryTime={deliveryTime}
+                                    errors={errors.address}
                                     onUpdateField={updateField}
                                     onFetchAddress={handleAddressFetch}
+                                    onClearAddress={clearAddressFields}
+                                    onValidateAddress={validateAddressFields}
                                     onContinue={() => goToStep(3)}
                                 />
                             )}
@@ -389,8 +399,14 @@ const CheckoutPage = () => {
                                     isSubmitting={isSubmitting}
                                     maskedCard={maskedCard}
                                     cardFlag={cardFlag}
+                                    errors={errors.card}
                                     onUpdateField={updateField}
                                     onCardNumberChange={handleChangeCardNumber}
+                                    onValidateCardNumber={validateCardNumberField}
+                                    onValidateExpiration={validateCardExpirationField}
+                                    onValidateCVV={validateCardCVVField}
+                                    onValidateHolderName={validateCardHolderNameField}
+                                    onValidateHolderDocument={validateCardHolderDocumentField}
                                     onPaymentSubmit={handlePaymentSubmit}
                                 />
                             )}
