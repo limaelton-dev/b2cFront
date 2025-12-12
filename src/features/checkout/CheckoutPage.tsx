@@ -25,7 +25,6 @@ import { useCheckoutSteps } from './hooks/useCheckoutSteps';
 import { useCheckoutPricing } from './hooks/useCheckoutPricing';
 import { useCart } from '@/context/CartProvider';
 import { useAuth } from '@/context/AuthProvider';
-import { createGuestAccount } from './services/customer-registration';
 import { completeCheckoutWithCreditCard, completeCheckoutWithPix } from './services/complete-checkout';
 
 type CartLoadingState = 'loading' | 'ready' | 'empty';
@@ -76,6 +75,7 @@ const CheckoutPage = () => {
         updateField,
         isAuthenticated,
         maskedCard,
+        savedIds,
         disabledFields,
         loadingAddress,
         autoFillAddressByPostalCode,
@@ -171,25 +171,17 @@ const CheckoutPage = () => {
         setIsSubmitting(true);
         
         try {
-            const registerCustomer = async (customerData: any) => {
-                const response = await createGuestAccount({
-                    ...customerData,
-                    birthDate: formData.birthDate
-                });
-                await refreshProfile();
-                return response;
-            };
-            
             const result = formData.paymentMethod === PAYMENT_METHOD.CREDIT_CARD
-                ? await completeCheckoutWithCreditCard(formData, maskedCard, isAuthenticated, registerCustomer)
+                ? await completeCheckoutWithCreditCard(formData, maskedCard, isAuthenticated, savedIds)
                 : await completeCheckoutWithPix(
                     formData, 
                     parseFloat(calculateSubtotal()) * (1 - (pixDiscount / 100)),
                     isAuthenticated,
-                    registerCustomer
+                    savedIds
                 );
             
             if (result.success) {
+                await refreshProfile();
                 showToast(formData.paymentMethod === PAYMENT_METHOD.CREDIT_CARD ? 'Pagamento processado com sucesso!' : 'PIX gerado com sucesso!', 'success');
                 await clearItems();
                 router.push(result.redirectUrl!);
@@ -337,7 +329,6 @@ const CheckoutPage = () => {
                                 <PersonalInfoForm 
                                     formData={formData}
                                     errors={errors}
-                                    disabledFields={{ user: disabledFields.user, personalPF: disabledFields.personalPF, personalPJ: disabledFields.personalPJ }}
                                     isAuthenticated={isAuthenticated}
                                     loadingPersonalData={validatingCPF}
                                     onChangeProfileType={(value) => updateField('profileType', value)}

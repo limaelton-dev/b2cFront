@@ -2,17 +2,28 @@ import { getProfileDetails } from '@/api/user';
 import type { ProfileDetails, ProfilePF, ProfilePJ } from '@/api/user';
 import { formatPhoneNumber } from '@/utils/formatters';
 
+const formatISOToBR = (isoDate: string): string => {
+    const date = new Date(isoDate);
+    const day = String(date.getUTCDate()).padStart(2, '0');
+    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const year = date.getUTCFullYear();
+    return `${day}/${month}/${year}`;
+};
+
 export interface CustomerData {
     firstName: string;
     lastName: string;
     email: string;
     phone: string;
+    phoneId?: number;
     cpf: string;
+    birthDate: string;
     cnpj: string;
     tradingName: string;
     stateRegistration: string;
     profileType: 'PF' | 'PJ';
     address?: {
+        id?: number;
         postalCode: string;
         street: string;
         number: string;
@@ -51,6 +62,7 @@ export async function prefillCustomerData(user: any): Promise<CustomerData | nul
         email: user.email,
         phone: '',
         cpf: '',
+        birthDate: '',
         cnpj: '',
         tradingName: '',
         stateRegistration: '',
@@ -62,6 +74,7 @@ export async function prefillCustomerData(user: any): Promise<CustomerData | nul
         data.firstName = pf.firstName || '';
         data.lastName = pf.lastName || '';
         data.cpf = pf.cpf || '';
+        data.birthDate = pf.birthDate ? formatISOToBR(pf.birthDate) : '';
     } else if (isPJ && profileData.profile) {
         const pj = profileData.profile as ProfilePJ;
         data.cnpj = pj.cnpj || '';
@@ -73,12 +86,14 @@ export async function prefillCustomerData(user: any): Promise<CustomerData | nul
         const primaryPhone = profileData.phones.find(p => p.isDefault) || profileData.phones[0];
         if (primaryPhone) {
             data.phone = formatPhoneNumber(`${primaryPhone.ddd}${primaryPhone.number}`);
+            data.phoneId = primaryPhone.id;
         }
     }
     
     if (profileData.addresses && profileData.addresses.length > 0) {
         const addr = profileData.addresses.find(a => a.isDefault) || profileData.addresses[0];
         data.address = {
+            id: addr.id,
             postalCode: addr.zipCode || '',
             street: addr.street || '',
             number: addr.number || '',

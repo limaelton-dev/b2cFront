@@ -1,9 +1,16 @@
-import { getProfileDetails } from '@/api/user';
-import { saveCustomerProfile, saveCustomerPhone, saveCustomerAddress, saveCustomerCard } from './customer-profile';
-import { processCreditCardPayment, processPixPayment } from '@/api/checkout/services/checkout-service';
+import { processCheckout, processCreditCardPayment, processPixPayment } from '@/api/checkout/services/checkout-service';
 import { generateCardToken } from '@/api/checkout/services/mercado-pago';
-import { CheckoutFormData } from '../hooks/useCheckoutCustomer';
+import { saveToken } from '@/utils/auth';
+import { CheckoutFormData, SavedIds } from '../hooks/useCheckoutCustomer';
 import { detectCardBrand } from '../utils/validation';
+import type { 
+    CheckoutRequest, 
+    CheckoutCard, 
+    CheckoutProfilePF, 
+    CheckoutProfilePJ,
+    CheckoutAddress,
+    CheckoutPhone
+} from '@/api/checkout/types';
 
 interface CheckoutResult {
     success: boolean;
@@ -20,102 +27,117 @@ interface MaskedCardData {
     brand: string;
 }
 
-const MAX_PROFILE_RETRIES = 5;
-const RETRY_DELAY_MS = 300;
-
-/**
- * Aguarda o perfil estar disponível após registro, com polling em vez de delay fixo
- */
-async function waitForProfile(maxRetries = MAX_PROFILE_RETRIES): Promise<number> {
-    for (let attempt = 0; attempt < maxRetries; attempt++) {
-        try {
-            const profile = await getProfileDetails();
-            if (profile?.id) {
-                return profile.id;
-            }
-        } catch {
-            // Perfil ainda não disponível, tentar novamente
-        }
-        
-        if (attempt < maxRetries - 1) {
-            await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS));
-        }
-    }
-    
-    throw new Error('Não foi possível obter perfil após várias tentativas');
-}
-
-async function getCustomerProfileId(
-    isAuthenticated: boolean, 
-    customerData: any, 
-    onRegister: (customerData: any) => Promise<any>
-): Promise<number> {
-    if (!isAuthenticated) {
-        const registerResponse = await onRegister(customerData);
-        if (!registerResponse) throw new Error('Falha ao criar conta');
-        
-        return waitForProfile();
-    }
-    
-    const profile = await getProfileDetails();
-    if (!profile?.id) throw new Error('Não foi possível obter perfil');
-    
-    return profile.id;
-}
-
-async function saveAllCustomerData(
-    profileId: number, 
-    formData: CheckoutFormData, 
-    isAuthenticated: boolean,
-    maskedCard: MaskedCardData,
-    shouldSaveCard: boolean
-): Promise<void> {
-    if (!isAuthenticated) {
-        await saveCustomerProfile(profileId, {
-            firstName: formData.firstName,
-            lastName: formData.lastName,
-            cpf: formData.cpf,
-            cnpj: formData.cnpj,
-            tradingName: formData.tradingName,
-            stateRegistration: formData.stateRegistration,
-            profileType: formData.profileType === '1' ? 'PF' : 'PJ'
-        });
-        
-        await saveCustomerPhone({ phone: formData.phone });
-    }
-    
-    await saveCustomerAddress(profileId, {
-        street: formData.street,
-        number: formData.number,
-        complement: formData.complement,
-        neighborhood: formData.neighborhood,
-        city: formData.city,
-        state: formData.state,
-        postalCode: formData.postalCode
-    });
-    
-    if (!maskedCard.isMasked && shouldSaveCard && formData.cardNumber) {
-        const [expMonth, expYear] = formData.cardExpirationDate.split('/');
-        await saveCustomerCard(profileId, {
-            cardNumber: formData.cardNumber,
-            holderName: formData.cardHolderName || `${formData.firstName} ${formData.lastName}`.trim(),
-            expirationMonth: expMonth,
-            expirationYear: expYear.length === 2 ? `20${expYear}` : expYear,
-            cvv: formData.cardCVV
-        });
-    }
+function cleanDocument(value: string): string {
+    return value.replace(/\D/g, '');
 }
 
 function formatAddress(formData: CheckoutFormData): string {
     return `${formData.street}, ${formData.number}${formData.complement ? ', ' + formData.complement : ''}, ${formData.neighborhood}, ${formData.city} - ${formData.state}, ${formData.postalCode}`;
 }
 
-function cleanCpf(cpf: string): string {
-    return cpf.replace(/\D/g, '');
-}
-
 function getFullName(firstName: string, lastName: string): string {
     return `${firstName} ${lastName}`.trim();
+}
+
+function convertBirthDateToISO(dateStr?: string): string | undefined {
+    if (!dateStr || dateStr.length < 10) return undefined;
+    const [day, month, year] = dateStr.split('/');
+    return `${year}-${month}-${day}`;
+}
+
+function buildCheckoutCard(formData: CheckoutFormData, cardToken: string): CheckoutCard {
+    const [expMonth, expYear] = formData.cardExpirationDate.split('/');
+    
+    const card: CheckoutCard = { cardToken };
+    
+    if (formData.saveCard) {
+        card.saveCard = true;
+        card.lastFourDigits = formData.cardNumber.replace(/\s/g, '').slice(-4);
+        card.holderName = formData.cardHolderName || getFullName(formData.firstName, formData.lastName);
+        card.expirationMonth = expMonth;
+        card.expirationYear = expYear.length === 2 ? `20${expYear}` : expYear;
+        card.brand = detectCardBrand(formData.cardNumber);
+        card.isDefault = true;
+    }
+    
+    return card;
+}
+
+function buildAddress(formData: CheckoutFormData, savedIds: SavedIds, isAuthenticated: boolean): CheckoutAddress {
+    if (isAuthenticated && savedIds.addressId) {
+        return { id: savedIds.addressId, isDefault: true };
+    }
+    
+    return {
+        street: formData.street,
+        number: formData.number,
+        complement: formData.complement || undefined,
+        neighborhood: formData.neighborhood,
+        city: formData.city,
+        state: formData.state,
+        zipCode: cleanDocument(formData.postalCode),
+        isDefault: true
+    };
+}
+
+function buildPhone(formData: CheckoutFormData, savedIds: SavedIds, isAuthenticated: boolean): CheckoutPhone {
+    if (isAuthenticated && savedIds.phoneId) {
+        return { id: savedIds.phoneId };
+    }
+    
+    return {
+        ddd: cleanDocument(formData.phone).substring(0, 2),
+        number: cleanDocument(formData.phone).substring(2),
+        isDefault: true
+    };
+}
+
+function buildCheckoutRequest(
+    formData: CheckoutFormData,
+    isAuthenticated: boolean,
+    savedIds: SavedIds,
+    card?: CheckoutCard
+): CheckoutRequest {
+    const profileType = formData.profileType === '1' ? 'PF' : 'PJ';
+    
+    const profile = profileType === 'PF'
+        ? {
+            firstName: formData.firstName,
+            lastName: formData.lastName,
+            cpf: cleanDocument(formData.cpf),
+            birthDate: convertBirthDateToISO(formData.birthDate),
+            gender: undefined
+        } as CheckoutProfilePF
+        : {
+            companyName: formData.tradingName,
+            cnpj: cleanDocument(formData.cnpj),
+            tradingName: formData.tradingName
+        } as CheckoutProfilePJ;
+
+    const phone = buildPhone(formData, savedIds, isAuthenticated);
+    const address = buildAddress(formData, savedIds, isAuthenticated);
+
+    if (isAuthenticated) {
+        return {
+            isRegistered: true,
+            profileType,
+            profile,
+            phone,
+            address,
+            card
+        };
+    }
+
+    return {
+        isRegistered: false,
+        email: formData.email,
+        password: formData.password,
+        profileType,
+        profile,
+        phone,
+        address,
+        card
+    };
 }
 
 async function tokenizeCard(formData: CheckoutFormData): Promise<string> {
@@ -128,7 +150,7 @@ async function tokenizeCard(formData: CheckoutFormData): Promise<string> {
         cardExpirationYear: expYear.length === 2 ? `20${expYear}` : expYear,
         securityCode: formData.cardCVV,
         identificationType: 'CPF',
-        identificationNumber: cleanCpf(formData.cardHolderDocument)
+        identificationNumber: cleanDocument(formData.cardHolderDocument)
     });
     
     return tokenResponse.id;
@@ -138,30 +160,33 @@ export async function completeCheckoutWithCreditCard(
     formData: CheckoutFormData,
     maskedCard: MaskedCardData,
     isAuthenticated: boolean,
-    onRegister: (customerData: any) => Promise<any>
+    savedIds: SavedIds = {}
 ): Promise<CheckoutResult> {
     if (maskedCard.isMasked && !formData.cardCVV) {
-        return {
-            success: false,
-            message: 'Informe o CVV do cartão para continuar'
-        };
+        return { success: false, message: 'Informe o CVV do cartão para continuar' };
     }
+
+    let cardToken: string;
+    let card: CheckoutCard | undefined;
+
+    if (maskedCard.isMasked) {
+        cardToken = '';
+    } else {
+        try {
+            cardToken = await tokenizeCard(formData);
+            card = buildCheckoutCard(formData, cardToken);
+        } catch (tokenError: any) {
+            return { success: false, message: tokenError?.message || 'Erro ao processar dados do cartão' };
+        }
+    }
+
+    const checkoutRequest = buildCheckoutRequest(formData, isAuthenticated, savedIds, card);
+    const checkoutResponse = await processCheckout(checkoutRequest);
     
-    const profileId = await getCustomerProfileId(
-        isAuthenticated, 
-        {
-            firstName: formData.firstName,
-            lastName: formData.lastName,
-            email: formData.email,
-            password: formData.password,
-            cpf: formData.cpf
-        },
-        onRegister
-    );
-    
-    await saveAllCustomerData(profileId, formData, isAuthenticated, maskedCard, formData.saveCard);
-    
-    // Preparar dados de pagamento baseado no tipo de cartão
+    if (checkoutResponse.accessToken) {
+        saveToken(checkoutResponse.accessToken);
+    }
+
     const customerFullName = getFullName(formData.firstName, formData.lastName);
     const basePaymentData = {
         holder: formData.cardHolderName,
@@ -172,37 +197,23 @@ export async function completeCheckoutWithCreditCard(
         customerData: { 
             name: customerFullName, 
             email: formData.email,
-            cpf: cleanCpf(formData.cpf)
+            cpf: cleanDocument(formData.cpf)
         }
     };
-    
-    let paymentData;
-    
-    if (maskedCard.isMasked) {
-        // Cartão salvo: usar cardId + CVV informado agora
-        paymentData = {
+
+    const paymentData = maskedCard.isMasked
+        ? {
             ...basePaymentData,
             savedCardId: maskedCard.cardId,
             securityCode: formData.cardCVV,
             expirationDate: maskedCard.expiration
-        };
-    } else {
-        // Cartão novo: tokenizar via Mercado Pago SDK
-        try {
-            const token = await tokenizeCard(formData);
-            paymentData = {
-                ...basePaymentData,
-                token,
-                expirationDate: formData.cardExpirationDate
-            };
-        } catch (tokenError: any) {
-            return {
-                success: false,
-                message: tokenError?.message || 'Erro ao processar dados do cartão'
-            };
         }
-    }
-    
+        : {
+            ...basePaymentData,
+            token: cardToken,
+            expirationDate: formData.cardExpirationDate
+        };
+
     const response = await processCreditCardPayment(paymentData);
     
     if (response?.success) {
@@ -212,40 +223,22 @@ export async function completeCheckoutWithCreditCard(
         };
     }
     
-    return {
-        success: false,
-        message: response?.message || 'Erro no processamento'
-    };
+    return { success: false, message: response?.message || 'Erro no processamento' };
 }
 
 export async function completeCheckoutWithPix(
     formData: CheckoutFormData,
     totalAmount: number,
     isAuthenticated: boolean,
-    onRegister: (customerData: any) => Promise<any>
+    savedIds: SavedIds = {}
 ): Promise<CheckoutResult> {
-    const profileId = await getCustomerProfileId(
-        isAuthenticated,
-        {
-            firstName: formData.firstName,
-            lastName: formData.lastName,
-            email: formData.email,
-            password: formData.password,
-            cpf: formData.cpf
-        },
-        onRegister
-    );
+    const checkoutRequest = buildCheckoutRequest(formData, isAuthenticated, savedIds);
+    const checkoutResponse = await processCheckout(checkoutRequest);
     
-    const emptyMaskedCard: MaskedCardData = { 
-        isMasked: false, 
-        cardId: 0, 
-        finalDigits: '', 
-        cardHolder: '', 
-        expiration: '',
-        brand: ''
-    };
-    await saveAllCustomerData(profileId, formData, isAuthenticated, emptyMaskedCard, false);
-    
+    if (checkoutResponse.accessToken) {
+        saveToken(checkoutResponse.accessToken);
+    }
+
     const pixPaymentData = {
         amount: totalAmount,
         description: "Pagamento via PIX",
@@ -253,7 +246,7 @@ export async function completeCheckoutWithPix(
         customerData: { 
             name: getFullName(formData.firstName, formData.lastName), 
             email: formData.email,
-            cpf: cleanCpf(formData.cpf)
+            cpf: cleanDocument(formData.cpf)
         }
     };
     
@@ -266,8 +259,5 @@ export async function completeCheckoutWithPix(
         };
     }
     
-    return {
-        success: false,
-        message: response?.message || 'Erro ao gerar PIX'
-    };
+    return { success: false, message: response?.message || 'Erro ao gerar PIX' };
 }

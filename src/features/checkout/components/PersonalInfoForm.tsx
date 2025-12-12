@@ -31,7 +31,6 @@ interface FormErrors {
 interface PersonalInfoFormProps {
     formData: CheckoutFormData;
     errors: FormErrors;
-    disabledFields: { user: boolean; personalPF: boolean; personalPJ: boolean };
     isAuthenticated: boolean;
     loadingPersonalData: boolean;
     onChangeProfileType: (value: string) => void;
@@ -48,7 +47,6 @@ interface PersonalInfoFormProps {
 const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
     formData,
     errors,
-    disabledFields,
     isAuthenticated,
     loadingPersonalData,
     onChangeProfileType,
@@ -70,34 +68,35 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
             )}
             
             <Box className="d-flex justify-content-between flex-wrap" sx={{ filter: loadingPersonalData ? 'blur(2px)' : 'none', width: '100%' }}>
-                <RadioGroup
-                    row
-                    value={formData.profileType}
-                    aria-labelledby="profile-type-radio-group"
-                    name="profile-type-radio-group"
-                    sx={{ justifyContent: 'space-between', width: '100%' }}
-                >
-                    <FormControlLabel 
-                        value={PROFILE_TYPE.PF}
-                        sx={{ margin: 0 }} 
-                        control={<Radio disabled={isAuthenticated} />} 
-                        onClick={() => onChangeProfileType(PROFILE_TYPE.PF)} 
-                        label="Pessoa Física" 
-                    />
-                    <FormControlLabel 
-                        value={PROFILE_TYPE.PJ}
-                        sx={{ margin: 0 }} 
-                        control={<Radio disabled={isAuthenticated} />} 
-                        onClick={() => onChangeProfileType(PROFILE_TYPE.PJ)} 
-                        label="Pessoa Jurídica" 
-                    />
-                </RadioGroup>
+                {!isAuthenticated && (
+                    <RadioGroup
+                        row
+                        value={formData.profileType}
+                        aria-labelledby="profile-type-radio-group"
+                        name="profile-type-radio-group"
+                        sx={{ justifyContent: 'space-between', width: '100%' }}
+                    >
+                        <FormControlLabel 
+                            value={PROFILE_TYPE.PF}
+                            sx={{ margin: 0 }} 
+                            control={<Radio />} 
+                            onClick={() => onChangeProfileType(PROFILE_TYPE.PF)} 
+                            label="Pessoa Física" 
+                        />
+                        <FormControlLabel 
+                            value={PROFILE_TYPE.PJ}
+                            sx={{ margin: 0 }} 
+                            control={<Radio />} 
+                            onClick={() => onChangeProfileType(PROFILE_TYPE.PJ)} 
+                            label="Pessoa Jurídica" 
+                        />
+                    </RadioGroup>
+                )}
                 
                 <TextField 
                     sx={{ width: '48%', mb: '12px' }} 
                     onChange={(e) => onUpdateField('firstName', e.target.value)} 
                     value={formData.firstName} 
-                    disabled={disabledFields.user} 
                     label="Nome*" 
                     variant="standard" 
                 />
@@ -105,7 +104,6 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
                     sx={{ width: '48%', mb: '12px' }} 
                     onChange={(e) => onUpdateField('lastName', e.target.value)} 
                     value={formData.lastName} 
-                    disabled={disabledFields.user} 
                     label="Sobrenome*" 
                     variant="standard" 
                 />
@@ -115,7 +113,7 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
                     onChange={(e) => onUpdateField('email', e.target.value)} 
                     error={errors.email} 
                     value={formData.email} 
-                    disabled={disabledFields.user} 
+                    disabled={isAuthenticated} 
                     onBlur={onValidateEmail} 
                     helperText={errors.email ? errors.emailMessage : ''} 
                     label="Email*" 
@@ -154,7 +152,6 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
                     value={formData.phone}
                     onChange={(e) => onUpdateField('phone', e.target.value)}
                     onBlur={() => onValidatePhone(formData.phone)}
-                    disabled={isAuthenticated}
                     label="Telefone fixo ou Celular*"
                     variant="standard"
                     error={errors.phone}
@@ -169,7 +166,7 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
                             value={formData.cnpj}
                             onChange={(e) => onUpdateField('cnpj', e.target.value)}
                             onBlur={() => onValidateCNPJ(formData.cnpj)}
-                            disabled={disabledFields.personalPJ}
+                            disabled={isAuthenticated}
                             label="CNPJ*"
                             variant="standard"
                             error={errors.cnpj}
@@ -180,7 +177,6 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
                             sx={{ width: '45%', mb: '12px' }} 
                             value={formData.stateRegistration} 
                             onChange={(e) => onUpdateField('stateRegistration', e.target.value)} 
-                            disabled={disabledFields.personalPJ} 
                             label="Inscrição Estadual*" 
                             variant="standard" 
                         />
@@ -188,7 +184,6 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
                             sx={{ width: '100%', mb: '12px' }} 
                             value={formData.tradingName} 
                             onChange={(e) => onUpdateField('tradingName', e.target.value)} 
-                            disabled={disabledFields.personalPJ} 
                             label="Razão Social*" 
                             variant="standard" 
                         />
@@ -202,27 +197,25 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
                             value={formData.cpf}
                             onChange={(e) => onUpdateField('cpf', e.target.value)}
                             onBlur={() => onValidateCPF(formData.cpf)}
-                            disabled={disabledFields.personalPF}
+                            disabled={isAuthenticated}
                             label="CPF*"
                             error={errors.cpf}
                             helperText={errors.cpf ? errors.cpfMessage : ''}
                             variant="standard"
                             sx={{ width: '48%', mb: '8px' }}
                         />
-                        {!isAuthenticated && (
-                            <MaskedTextField
-                                mask="99/99/9999"
-                                value={formData.birthDate}
-                                onChange={(e) => onUpdateField('birthDate', e.target.value)}
-                                onBlur={() => onValidateBirthDate(formData.birthDate)}
-                                label="Data de Nascimento*"
-                                variant="standard"
-                                placeholder="DD/MM/AAAA"
-                                error={errors.birthDate}
-                                helperText={errors.birthDate ? errors.birthDateMessage : ''}
-                                sx={{ width: '48%', mb: '8px' }}
-                            />
-                        )}
+                        <MaskedTextField
+                            mask="99/99/9999"
+                            value={formData.birthDate}
+                            onChange={(e) => onUpdateField('birthDate', e.target.value)}
+                            onBlur={() => onValidateBirthDate(formData.birthDate)}
+                            label="Data de Nascimento*"
+                            variant="standard"
+                            placeholder="DD/MM/AAAA"
+                            error={errors.birthDate}
+                            helperText={errors.birthDate ? errors.birthDateMessage : ''}
+                            sx={{ width: '48%', mb: '8px' }}
+                        />
                     </>
                 )}
                 

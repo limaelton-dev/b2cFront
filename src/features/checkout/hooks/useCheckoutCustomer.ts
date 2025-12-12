@@ -71,12 +71,18 @@ const initialFormData: CheckoutFormData = {
     acceptPrivacyPolicy: false
 };
 
+export interface SavedIds {
+    addressId?: number;
+    phoneId?: number;
+}
+
 export function useCheckoutCustomer(onAddressLoaded?: (postalCode: string) => void) {
     const { user, isAuthenticated } = useAuth();
     const { showToast } = useToastSide();
     const [formData, setFormData] = useState<CheckoutFormData>(initialFormData);
     const [loadingAddress, setLoadingAddress] = useState(false);
     const [maskedCard, setMaskedCard] = useState({ isMasked: false, cardId: 0, finalDigits: '', cardHolder: '', expiration: '', brand: '' });
+    const [savedIds, setSavedIds] = useState<SavedIds>({});
     
     const [disabledFields, setDisabledFields] = useState({
         user: false,
@@ -106,6 +112,7 @@ export function useCheckoutCustomer(onAddressLoaded?: (postalCode: string) => vo
                 phone: data.phone,
                 profileType: data.profileType === 'PJ' ? PROFILE_TYPE.PJ : PROFILE_TYPE.PF,
                 cpf: data.cpf,
+                birthDate: data.birthDate,
                 cnpj: data.cnpj,
                 tradingName: data.tradingName,
                 stateRegistration: data.stateRegistration
@@ -118,9 +125,13 @@ export function useCheckoutCustomer(onAddressLoaded?: (postalCode: string) => vo
                 address: !!data.address?.street
             });
             
+            setSavedIds({
+                addressId: data.address?.id,
+                phoneId: data.phoneId
+            });
+            
             if (data.address) {
                 setFormData(prev => ({ ...prev, ...data.address }));
-                // Notificar que endereço foi carregado para calcular frete
                 if (data.address.postalCode && onAddressLoaded) {
                     onAddressLoaded(data.address.postalCode);
                 }
@@ -199,6 +210,7 @@ export function useCheckoutCustomer(onAddressLoaded?: (postalCode: string) => vo
         updateField,
         isAuthenticated,
         maskedCard,
+        savedIds,
         disabledFields,
         loadingAddress,
         autoFillAddressByPostalCode,

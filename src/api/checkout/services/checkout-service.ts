@@ -1,5 +1,7 @@
 import { get, post } from '../../http';
 import { 
+    CheckoutRequest,
+    CheckoutResponse,
     CreditCardPaymentRequest, 
     PixPaymentRequest, 
     PaymentResponse,
@@ -49,5 +51,9 @@ export async function processPixPayment(data: PixPaymentRequest): Promise<Paymen
     } catch (error: any) {
         return { success: false, message: error?.message || 'Erro ao gerar PIX' };
     }
+}
+
+export async function processCheckout(data: CheckoutRequest): Promise<CheckoutResponse> {
+    return post<CheckoutResponse>('/checkout', data);
 }
 
