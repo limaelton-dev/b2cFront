@@ -152,6 +152,7 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
                     value={formData.phone}
                     onChange={(e) => onUpdateField('phone', e.target.value)}
                     onBlur={() => onValidatePhone(formData.phone)}
+                    // disabled={isAuthenticated}
                     label="Telefone fixo ou Celular*"
                     variant="standard"
                     error={errors.phone}

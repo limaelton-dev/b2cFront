@@ -233,7 +233,13 @@ export async function completeCheckoutWithPix(
     savedIds: SavedIds = {}
 ): Promise<CheckoutResult> {
     const checkoutRequest = buildCheckoutRequest(formData, isAuthenticated, savedIds);
-    const checkoutResponse = await processCheckout(checkoutRequest);
+    
+    let checkoutResponse;
+    try {
+        checkoutResponse = await processCheckout(checkoutRequest);
+    } catch (error: any) {
+        return { success: false, message: error?.message || 'Erro ao processar cadastro' };
+    }
     
     if (checkoutResponse.accessToken) {
         saveToken(checkoutResponse.accessToken);
