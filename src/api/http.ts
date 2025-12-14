@@ -121,6 +121,12 @@ export const patch = <TResp = any, TReq = any>(
   cfg?: HttpOptions<TReq>
 ) => httpClient<TResp, TReq>(url, { ...cfg, method: "PATCH", data });
 
+export const put = <TResp = any, TReq = any>(
+  url: string,
+  data?: TReq,
+  cfg?: HttpOptions<TReq>
+) => httpClient<TResp, TReq>(url, { ...cfg, method: "PUT", data });
+
 export const del = <TResp = any, TReq = any>(
   url: string,
   data?: TReq,

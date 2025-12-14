@@ -1,6 +1,6 @@
 import { Accordion, AccordionDetails, AccordionSummary, Typography, FormGroup, FormControlLabel, Checkbox } from "@mui/material";
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
-import { Category } from "../../../api/categories/types/category";
+import { Category } from "../../../../api/categories/types/category";
 
 export default function CategoriesList({ categories, filters, setFilters }: { categories: Category[], filters: string[], setFilters: (filters: string[]) => void }) {
     return (

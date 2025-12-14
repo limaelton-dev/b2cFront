@@ -125,39 +125,3 @@ export interface CreateOrderResponse {
     grandTotal: string;
     items: OrderItemResponse[];
 }
-
-/** @deprecated usar GuestCheckoutRequest ou RegisteredCheckoutRequest */
-export interface CheckoutRequestNewUser {
-    isRegistered: false;
-    email: string;
-    password: string;
-    profileType: ProfileType;
-    profile: CheckoutProfilePF | CheckoutProfilePJ;
-    address: CheckoutAddress;
-    phone: CheckoutPhone;
-    card?: CheckoutCard;
-}
-
-/** @deprecated usar GuestCheckoutRequest ou RegisteredCheckoutRequest */
-export interface CheckoutRequestExistingUser {
-    isRegistered: true;
-    profileType: ProfileType;
-    profile: CheckoutProfilePF | CheckoutProfilePJ;
-    address: CheckoutAddress;
-    phone: CheckoutPhone;
-    card?: CheckoutCard;
-}
-
-/** @deprecated usar GuestCheckoutRequest ou RegisteredCheckoutRequest */
-export type CheckoutRequest = CheckoutRequestNewUser | CheckoutRequestExistingUser;
-
-/** @deprecated usar GuestCheckoutResponse ou RegisteredCheckoutResponse */
-export interface CheckoutResponse {
-    userId: number;
-    profileId: number;
-    addressId: number;
-    phoneId: number;
-    cardId?: number;
-    cardToken?: string;
-    accessToken: string;
-}

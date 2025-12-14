@@ -4,7 +4,7 @@ import LocationOnIcon from '@mui/icons-material/LocationOn';
 import LocationCityIcon from '@mui/icons-material/LocationCity';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
-import { EnderecoType } from '../../types';
+import { EnderecoType } from '../../../types';
 
 interface AddressCardProps {
   endereco: EnderecoType;

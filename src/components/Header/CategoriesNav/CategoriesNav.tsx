@@ -10,8 +10,7 @@ import { getFirstLeafCategories } from '../../../utils/category-utils';
 
 const CategoriesNav = memo(function CategoriesNav() {
   const { tree, loading, error, isEmpty } = useCategoriesMenu({
-    preloadPopular: true,
-    maxDepth: 3 // Limita a 3 níveis para performance
+    maxDepth: 3
   });
 
   if (loading) {

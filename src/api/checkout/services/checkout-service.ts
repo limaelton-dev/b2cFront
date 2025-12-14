@@ -6,18 +6,13 @@ import type {
     RegisteredCheckoutResponse,
     CreateOrderRequest,
     CreateOrderResponse,
-    CheckoutRequest,
-    CheckoutResponse,
     ShippingResponse,
     ShippingProductItem,
     PixPaymentRequest,
     CreditCardPaymentRequest,
     DebitCardPaymentRequest,
     PaymentResponse,
-    PaymentGateway,
-    LegacyCreditCardPaymentRequest,
-    LegacyPixPaymentRequest,
-    LegacyPaymentResponse
+    PaymentGateway
 } from '../types';
 
 const ORIGIN_ZIP_CODE = "85010100";
@@ -29,14 +24,6 @@ function withIdempotencyKey(idempotencyKey: string): HttpOptions {
             'X-Idempotency-Key': idempotencyKey
         }
     };
-}
-
-export async function validateCpf(cpf: string) {
-    return post<{ status: number }>('/checkout/validacpf', { cpf });
-}
-
-export async function validateEmail(email: string) {
-    return post<{ status: number }>('/checkout/validaEmail', { email });
 }
 
 export async function calculateShippingAuthenticated(zipCode: string): Promise<ShippingResponse> {
@@ -119,27 +106,4 @@ export interface GatewayInfo {
 
 export async function fetchGatewaysInfo(): Promise<GatewayInfo[]> {
     return get<GatewayInfo[]>('/checkout/gateways/info');
-}
-
-/** @deprecated usar processCreditCardPaymentWithGateway */
-export async function processCreditCardPayment(data: LegacyCreditCardPaymentRequest): Promise<LegacyPaymentResponse> {
-    try {
-        return await post<LegacyPaymentResponse>('/payment/credit-card', data);
-    } catch (error: any) {
-        return { success: false, message: error?.message || 'Erro ao processar pagamento' };
-    }
-}
-
-/** @deprecated usar processPixPaymentWithGateway */
-export async function processPixPayment(data: LegacyPixPaymentRequest): Promise<LegacyPaymentResponse> {
-    try {
-        return await post<LegacyPaymentResponse>('/payment/pix', data);
-    } catch (error: any) {
-        return { success: false, message: error?.message || 'Erro ao gerar PIX' };
-    }
-}
-
-/** @deprecated usar processGuestCheckout ou processRegisteredCheckout */
-export async function processCheckout(data: CheckoutRequest): Promise<CheckoutResponse> {
-    return post<CheckoutResponse>('/checkout', data);
 }

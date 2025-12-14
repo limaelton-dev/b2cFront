@@ -1,7 +1,7 @@
 import { get, post, patch, del } from "../../http";
 import { Phone, CreatePhoneRequest, UpdatePhoneRequest } from "../types";
 
-const BASE_PATH = "/user/profile/phone";
+const BASE_PATH = "/phone";
 
 export async function getPhones(): Promise<Phone[]> {
   return get<Phone[]>(BASE_PATH);

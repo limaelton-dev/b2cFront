@@ -30,7 +30,7 @@ import type {
   CreatePhoneRequest,
   UpdatePhoneRequest,
 } from '@/api/user';
-import { formatDateBR, detectCardBrand } from '@/utils/formatters';
+import { formatDateBR, formatPhoneNumber } from '@/utils/formatters';
 import { DadosPessoaisType, EnderecoType, CartaoType } from '../types';
 
 export { fetchAddressByCep } from '@/api/address/services/cep';
@@ -38,9 +38,11 @@ export { fetchAddressByCep } from '@/api/address/services/cep';
 export const getUserPersonalData = async (): Promise<DadosPessoaisType> => {
   const profileData = await getProfileDetails();
   
-  const phone = profileData.phones?.find(p => p.isDefault) || profileData.phones?.[0];
+  const phones = profileData.phone || profileData.phones || [];
+  const phoneDefault = phones.find(p => p.isDefault) || phones[0];
   
-  const isPF = profileData.profileType === 'PF';
+  const profileType = profileData.profile_type || profileData.profileType || 'PF';
+  const isPF = profileType === 'PF';
   const profile = profileData.profile;
   
   let fullName = '';
@@ -64,20 +66,23 @@ export const getUserPersonalData = async (): Promise<DadosPessoaisType> => {
     email: profileData.email || '',
     username: profileData.email || '',
     birth_date: birthDate,
-    phone: phone ? `${phone.ddd}${phone.number}` : '',
+    phone: phoneDefault ? formatPhoneNumber(`${phoneDefault.ddd}${phoneDefault.number}`) : '',
     gender,
-    profile_type: profileData.profileType || 'PF',
+    profile_type: profileType,
   };
 };
 
 export const updateProfile = async (data: any): Promise<void> => {
-  const profile = await getProfileDetails();
+  const profileData = await getProfileDetails();
   
-  if (!profile?.id) {
+  const profileType = profileData.profile_type || profileData.profileType;
+  const profileId = profileData.profile?.id;
+  
+  if (!profileId) {
     throw new Error('Perfil não encontrado');
   }
   
-  if (profile.profileType === 'PF') {
+  if (profileType === 'PF') {
     const pfData: Partial<Omit<ProfilePF, 'id'>> = {};
     if (data.firstName !== undefined) pfData.firstName = data.firstName;
     if (data.lastName !== undefined) pfData.lastName = data.lastName;
@@ -90,7 +95,7 @@ export const updateProfile = async (data: any): Promise<void> => {
     if (data.birth_date !== undefined) pfData.birthDate = data.birth_date;
     if (data.gender !== undefined) pfData.gender = data.gender;
     
-    await updateProfilePF(profile.id, pfData);
+    await updateProfilePF(profileId, pfData);
   } else {
     const pjData: Partial<Omit<ProfilePJ, 'id'>> = {};
     if (data.companyName !== undefined) pjData.companyName = data.companyName;
@@ -99,24 +104,22 @@ export const updateProfile = async (data: any): Promise<void> => {
     if (data.stateRegistration !== undefined) pjData.stateRegistration = data.stateRegistration;
     if (data.municipalRegistration !== undefined) pjData.municipalRegistration = data.municipalRegistration;
     
-    await updateProfilePJ(profile.id, pjData);
+    await updateProfilePJ(profileId, pjData);
   }
 };
 
 export const updateUser = async (data: Partial<DadosPessoaisType>): Promise<void> => {
-  const profileData = await getProfileDetails();
-  
   const dataToUpdate: Record<string, string> = {};
   if (data.email !== undefined) dataToUpdate.email = data.email;
   
   if (Object.keys(dataToUpdate).length > 0) {
-    await patch(`/user/${profileData.id}`, dataToUpdate);
+    await patch('/user', dataToUpdate);
   }
 };
 
 export const getUserAddresses = async (): Promise<EnderecoType[]> => {
-  const addresses = await getAddresses();
-  return addresses.map(mapAddressToEndereco);
+  const addressList = await getAddresses();
+  return addressList.map(mapAddressToEndereco);
 };
 
 export const setAddressAsDefault = async (addressId: number): Promise<void> => {
@@ -164,7 +167,7 @@ export const updateAddress = async (
 
 export const checkAddressLinkedToOrders = async (addressId: number): Promise<boolean> => {
   try {
-    const response = await get<{ linked: boolean }>(`/user/profile/address/${addressId}/check-usage`);
+    const response = await get<{ linked: boolean }>(`/address/${addressId}/check-usage`);
     return response.linked || false;
   } catch {
     return false;
@@ -172,8 +175,8 @@ export const checkAddressLinkedToOrders = async (addressId: number): Promise<boo
 };
 
 export const getUserCards = async (): Promise<CartaoType[]> => {
-  const cards = await getCards();
-  return cards.map(mapCardToCartao);
+  const cardList = await getCards();
+  return cardList.map(mapCardToCartao);
 };
 
 export const setCardAsDefault = async (cardId: number): Promise<void> => {
@@ -186,12 +189,11 @@ export const deleteCard = async (cardId: number): Promise<void> => {
 
 export const addCard = async (cardData: Partial<CartaoType>): Promise<CartaoType> => {
   const payload: CreateCardRequest = {
-    cardNumber: (cardData.card_number || '').replace(/\s+/g, ''),
+    lastFourDigits: cardData.last_four_digits || '',
     holderName: cardData.holder_name || '',
     expirationMonth: cardData.expiration_month || '',
     expirationYear: cardData.expiration_year || '',
-    cvv: cardData.cvv || '',
-    brand: cardData.card_type || detectCardBrand(cardData.card_number || ''),
+    brand: cardData.card_type || '',
     isDefault: cardData.is_default,
   };
   

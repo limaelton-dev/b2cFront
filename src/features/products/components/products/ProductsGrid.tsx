@@ -1,5 +1,5 @@
 import { CircularProgress, Typography } from '@mui/material';
-import { Product } from '../../../api/products/types/product';
+import { Product } from '../../../../api/products/types/product';
 import ProductCard from './ProductCard';
 
 interface ProductsGridProps {

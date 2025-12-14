@@ -127,11 +127,10 @@ export interface Card {
 }
 
 export interface CreateCardRequest {
-  cardNumber: string;
+  lastFourDigits: string;
   holderName: string;
   expirationMonth: string;
   expirationYear: string;
-  cvv: string;
   brand: string;
   isDefault?: boolean;
 }
@@ -148,5 +147,9 @@ export interface ProfileDetails extends UserWithProfile {
   addresses?: Address[];
   phones?: Phone[];
   cards?: Card[];
+  address?: Address[];
+  phone?: Phone[];
+  card?: Card[];
+  profile_type?: ProfileType;
 }
 

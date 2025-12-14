@@ -8,11 +8,8 @@ export async function getUser(): Promise<User> {
   return get<User>(BASE_PATH);
 }
 
-export async function updateUser(
-  userId: number,
-  data: UpdateUserRequest
-): Promise<User> {
-  return patch<User>(`${BASE_PATH}/${userId}`, data);
+export async function updateUser(data: UpdateUserRequest): Promise<User> {
+  return patch<User>(BASE_PATH, data);
 }
 
 export async function checkEmailAvailability(

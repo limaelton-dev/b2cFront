@@ -1,6 +1,6 @@
 import { Accordion, AccordionDetails, AccordionSummary, Typography, FormGroup, FormControlLabel, Checkbox } from "@mui/material";
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
-import { Brand } from "../../../api/brands/types/brand";
+import { Brand } from "../../../../api/brands/types/brand";
 
 export default function BrandsList({ brands, filters, setFilters }: { brands: Brand[], filters: string[], setFilters: (filters: string[]) => void }) {
     return (

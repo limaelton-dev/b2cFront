@@ -1,7 +1,7 @@
-import { get, post, patch, del } from "../../http";
+import { get, post, put, del } from "../../http";
 import { Address, CreateAddressRequest, UpdateAddressRequest } from "../types";
 
-const BASE_PATH = "/user/profile/address";
+const BASE_PATH = "/address";
 
 export async function getAddresses(): Promise<Address[]> {
   return get<Address[]>(BASE_PATH);
@@ -27,7 +27,7 @@ export async function updateAddress(
   addressId: number,
   data: UpdateAddressRequest
 ): Promise<Address> {
-  return patch<Address>(`${BASE_PATH}/${addressId}`, data);
+  return put<Address>(`${BASE_PATH}/${addressId}`, data);
 }
 
 export async function deleteAddress(addressId: number): Promise<void> {

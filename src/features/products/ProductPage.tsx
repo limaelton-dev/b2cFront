@@ -383,11 +383,11 @@ const ProductPage = () => {
                                             const variationTypes = new Map();
                                             product.skus.forEach(sku => {
                                                 sku.variations?.forEach(variation => {
-                                                    if (!variationTypes.has(variation.type.name)) {
-                                                        variationTypes.set(variation.type.name, []);
+                                                    if (!variationTypes.has(variation.type)) {
+                                                        variationTypes.set(variation.type, []);
                                                     }
-                                                    if (!variationTypes.get(variation.type.name).some((v: any) => v.description === variation.description)) {
-                                                        variationTypes.get(variation.type.name).push(variation);
+                                                    if (!variationTypes.get(variation.type).some((v: any) => v.description === variation.description)) {
+                                                        variationTypes.get(variation.type).push(variation);
                                                     }
                                                 });
                                             });

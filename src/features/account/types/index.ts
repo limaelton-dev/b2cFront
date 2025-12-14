@@ -28,7 +28,7 @@ export interface EnderecoType {
   updated_at: string;
 }
 
-// Tipos para cartões
+// Tipos para cartões (PCI: não armazenamos número completo nem CVV)
 export interface CartaoType {
   id: number;
   profile_id: number;
@@ -41,9 +41,6 @@ export interface CartaoType {
   card_token?: string | null;
   created_at: string;
   updated_at: string;
-  // Campos usados apenas para criação de token (não retornados pelo backend)
-  card_number?: string;
-  cvv?: string;
 }
 
 // Tipos para compras (usando estrutura da API de orders)
