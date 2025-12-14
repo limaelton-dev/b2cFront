@@ -1,6 +1,11 @@
 import { useState, useCallback } from 'react';
 import { fetchAddressByCep, CepAddress } from '@/api/address/services/cep';
-import { calculateShippingForAuthenticatedUser, calculateShippingForGuest, ShippingProduct } from '@/api/shipping';
+import { 
+    calculateShippingForCart, 
+    calculateShippingForProduct, 
+    ShippingCartItem,
+    ShippingService 
+} from '@/api/shipping';
 
 export interface ShippingInfo {
     serviceName: string;
@@ -13,6 +18,7 @@ export function useShipping() {
     const [loadingCep, setLoadingCep] = useState(false);
     const [loadingShipping, setLoadingShipping] = useState(false);
     const [shippingInfo, setShippingInfo] = useState<ShippingInfo | null>(null);
+    const [shippingServices, setShippingServices] = useState<ShippingService[]>([]);
     const [addressData, setAddressData] = useState<CepAddress | null>(null);
     const [error, setError] = useState('');
 
@@ -40,8 +46,57 @@ export function useShipping() {
         }
     }, []);
 
-    const calculateShipping = useCallback(
-        async (cep: string, products: ShippingProduct[], isAuthenticated: boolean) => {
+    const calculateShippingForCartItems = useCallback(
+        async (cep: string, items: ShippingCartItem[]) => {
+            const cleanCep = cep.replace(/\D/g, '');
+
+            if (cleanCep.length !== 8) {
+                setError('CEP inválido');
+                return null;
+            }
+
+            if (!items.length) {
+                setError('Nenhum item para calcular frete');
+                return null;
+            }
+
+            setLoadingShipping(true);
+            setError('');
+
+            try {
+                const response = await calculateShippingForCart(cleanCep, items);
+
+                if (response?.success && response.services?.length) {
+                    setShippingServices(response.services);
+                    const service = response.services[0];
+                    const info: ShippingInfo = {
+                        serviceName: service.serviceName,
+                        price: service.price,
+                        deliveryTime: service.deliveryDays
+                    };
+                    setShippingInfo(info);
+                    return info;
+                }
+                
+                setError(response?.message || 'Não foi possível calcular o frete');
+                setShippingInfo(null);
+                setShippingServices([]);
+                return null;
+            } catch (err) {
+                console.error('Erro ao calcular frete:', err);
+                setError('Erro ao calcular frete');
+                setShippingInfo(null);
+                setShippingServices([]);
+                return null;
+            } finally {
+                setLoadingShipping(false);
+            }
+        },
+        []
+    );
+
+    const calculateShippingForSingleProduct = useCallback(
+        async (cep: string, skuId: number, partnerId?: string) => {
             const cleanCep = cep.replace(/\D/g, '');
 
             if (cleanCep.length !== 8) {
@@ -53,35 +108,29 @@ export function useShipping() {
             setError('');
 
             try {
-                const response = isAuthenticated
-                    ? await calculateShippingForAuthenticatedUser(cep)
-                    : await calculateShippingForGuest(cep, products);
+                const response = await calculateShippingForProduct(skuId, cleanCep, partnerId);
 
-                if (response?.success && response.data?.availableServices?.length) {
-                    const service = response.data.availableServices[0];
-                    setShippingInfo({
+                if (response?.success && response.services?.length) {
+                    setShippingServices(response.services);
+                    const service = response.services[0];
+                    const info: ShippingInfo = {
                         serviceName: service.serviceName,
                         price: service.price,
-                        deliveryTime: service.deliveryTime
-                    });
-                    return service;
-                } else if (response?.data?.totalPreco !== undefined) {
-                    const service = {
-                        serviceName: 'PAC',
-                        price: response.data.totalPreco,
-                        deliveryTime: response.data.maiorPrazo || 0
+                        deliveryTime: service.deliveryDays
                     };
-                    setShippingInfo(service);
-                    return service;
-                } else {
-                    setError('Não foi possível calcular o frete');
-                    setShippingInfo(null);
-                    return null;
+                    setShippingInfo(info);
+                    return info;
                 }
+                
+                setError(response?.message || 'Não foi possível calcular o frete');
+                setShippingInfo(null);
+                setShippingServices([]);
+                return null;
             } catch (err) {
                 console.error('Erro ao calcular frete:', err);
                 setError('Erro ao calcular frete');
                 setShippingInfo(null);
+                setShippingServices([]);
                 return null;
             } finally {
                 setLoadingShipping(false);
@@ -92,12 +141,14 @@ export function useShipping() {
 
     const clearShipping = useCallback(() => {
         setShippingInfo(null);
+        setShippingServices([]);
         setError('');
     }, []);
 
     const clearAll = useCallback(() => {
         setPostalCode('');
         setShippingInfo(null);
+        setShippingServices([]);
         setAddressData(null);
         setError('');
     }, []);
@@ -108,12 +159,13 @@ export function useShipping() {
         loadingCep,
         loadingShipping,
         shippingInfo,
+        shippingServices,
         addressData,
         error,
         lookupAddressByPostalCode,
-        calculateShipping,
+        calculateShippingForCartItems,
+        calculateShippingForSingleProduct,
         clearShipping,
         clearAll
     };
 }
-

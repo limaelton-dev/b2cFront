@@ -1,58 +1,67 @@
 import { get, post } from '../../http';
 
-const ORIGIN_ZIP_CODE = "85010100";
+export interface ShippingCartItem {
+    skuId: number;
+    partnerId: string;
+    quantity: number;
+}
 
-export interface ShippingCalculationResult {
+export interface ShippingService {
     serviceName: string;
+    carrierName: string;
     price: number;
-    deliveryTime: number;
+    deliveryDays: number;
+    estimatedDeliveryDate: string;
 }
 
 export interface ShippingResponse {
     success: boolean;
-    data?: {
-        availableServices?: ShippingCalculationResult[];
-        totalPreco?: number;
-        maiorPrazo?: number;
-    };
+    zipCode?: string;
+    services?: ShippingService[];
     message?: string;
 }
 
-export interface ShippingProduct {
-    productId: number;
-    quantity: number;
-}
-
-export async function calculateShippingForAuthenticatedUser(zipCode: string): Promise<ShippingResponse> {
+export async function calculateShippingForCart(
+    destinationZipCode: string,
+    items: ShippingCartItem[]
+): Promise<ShippingResponse> {
     try {
-        const cleanZipCode = zipCode.replace(/\D/g, '');
-        const response = await get<ShippingResponse>(`/cart/shipping?zipCode=${cleanZipCode}&shippingType=ALL`);
-        return response;
-    } catch (error) {
-        console.error('Error calculating shipping for authenticated user:', error);
-        return { success: false, message: 'Erro ao calcular frete' };
-    }
-}
-
-export async function calculateShippingForGuest(zipCode: string, products: ShippingProduct[]): Promise<ShippingResponse> {
-    try {
-        const cleanZipCode = zipCode.replace(/\D/g, '');
+        const cleanZipCode = destinationZipCode.replace(/\D/g, '');
         
-        const requestBody = {
-            originZipCode: ORIGIN_ZIP_CODE,
+        if (cleanZipCode.length !== 8) {
+            return { success: false, message: 'CEP inválido. Deve conter 8 dígitos.' };
+        }
+
+        return await post<ShippingResponse>('/shipping/cart', {
             destinationZipCode: cleanZipCode,
-            products: products.map(p => ({
-                productId: Number(p.productId),
-                quantity: Number(p.quantity)
-            })),
-            shippingType: "ALL"
-        };
-        
-        const response = await post<ShippingResponse>('/shipping/calculate-by-ids', requestBody);
-        return response;
+            items
+        });
     } catch (error) {
-        console.error('Error calculating shipping for guest:', error);
+        console.error('Erro ao calcular frete para carrinho:', error);
         return { success: false, message: 'Erro ao calcular frete' };
     }
 }
 
+export async function calculateShippingForProduct(
+    skuId: number,
+    destinationZipCode: string,
+    partnerId?: string
+): Promise<ShippingResponse> {
+    try {
+        const cleanZipCode = destinationZipCode.replace(/\D/g, '');
+        
+        if (cleanZipCode.length !== 8) {
+            return { success: false, message: 'CEP inválido. Deve conter 8 dígitos.' };
+        }
+
+        const params = new URLSearchParams({ destinationZipCode: cleanZipCode });
+        if (partnerId) {
+            params.append('partnerId', partnerId);
+        }
+
+        return await get<ShippingResponse>(`/shipping/product/${skuId}?${params.toString()}`);
+    } catch (error) {
+        console.error('Erro ao calcular frete para produto:', error);
+        return { success: false, message: 'Erro ao calcular frete' };
+    }
+}

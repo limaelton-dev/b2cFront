@@ -6,8 +6,6 @@ import type {
     RegisteredCheckoutResponse,
     CreateOrderRequest,
     CreateOrderResponse,
-    ShippingResponse,
-    ShippingProductItem,
     PixPaymentRequest,
     CreditCardPaymentRequest,
     DebitCardPaymentRequest,
@@ -15,7 +13,6 @@ import type {
     PaymentGateway
 } from '../types';
 
-const ORIGIN_ZIP_CODE = "85010100";
 const DEFAULT_GATEWAY: PaymentGateway = 'mercado-pago';
 
 function withIdempotencyKey(idempotencyKey: string): HttpOptions {
@@ -24,24 +21,6 @@ function withIdempotencyKey(idempotencyKey: string): HttpOptions {
             'X-Idempotency-Key': idempotencyKey
         }
     };
-}
-
-export async function calculateShippingAuthenticated(zipCode: string): Promise<ShippingResponse> {
-    const cleanZip = zipCode.replace(/\D/g, '');
-    return get<ShippingResponse>(`/cart/shipping?zipCode=${cleanZip}&shippingType=ALL`);
-}
-
-export async function calculateShippingGuest(zipCode: string, products: ShippingProductItem[]): Promise<ShippingResponse> {
-    const cleanZip = zipCode.replace(/\D/g, '');
-    return post<ShippingResponse>('/shipping/calculate-by-ids', {
-        originZipCode: ORIGIN_ZIP_CODE,
-        destinationZipCode: cleanZip,
-        products: products.map(p => ({
-            productId: Number(p.id || p.produto_id),
-            quantity: Number(p.quantity)
-        })),
-        shippingType: "ALL"
-    });
 }
 
 export async function processGuestCheckout(data: GuestCheckoutRequest): Promise<GuestCheckoutResponse> {

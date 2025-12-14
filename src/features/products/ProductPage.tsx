@@ -41,11 +41,10 @@ const ProductPage = () => {
     const {
         postalCode,
         setPostalCode,
-        loadingCep,
+        loadingShipping,
         shippingInfo,
         error: shippingError,
-        lookupAddressByPostalCode,
-        calculateShipping
+        calculateShippingForSingleProduct
     } = useShipping();
 
     const [openedCart, setOpenedCart] = useState(false);
@@ -183,12 +182,13 @@ const ProductPage = () => {
     };
 
     const handleCalculateShipping = async () => {
-        if (!product?.id || !postalCode) return;
+        const selectedSku = getSelectedSku();
+        if (!selectedSku || !postalCode) return;
 
-        await calculateShipping(
+        await calculateShippingForSingleProduct(
             postalCode,
-            [{ productId: product.id, quantity: 1 }],
-            !!user
+            selectedSku.id,
+            selectedSku.partnerId
         );
     };
     const stringTester = 'teste';
@@ -453,13 +453,13 @@ const ProductPage = () => {
                                             color="primary" 
                                             size="small" 
                                             onClick={handleCalculateShipping}
-                                            disabled={loadingCep}
+                                            disabled={loadingShipping}
                                             style={{marginTop: '5px', fontSize: '12px', textTransform: 'none'}}
                                         >
                                             Calcular
                                         </Button>
                                         </div>
-                                        {loadingCep && (
+                                        {loadingShipping && (
                                             <div className="text-center">
                                                 <CircularProgress size={20} color="primary" />
                                                 <span className="ml-2">Calculando frete...</span>

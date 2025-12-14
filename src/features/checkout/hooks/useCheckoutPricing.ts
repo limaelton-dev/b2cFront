@@ -1,7 +1,7 @@
 "use client";
 import { useState, useCallback } from 'react';
 import { CartItem } from '@/api/cart/types/Cart';
-import { calculateShippingAuthenticated, calculateShippingGuest } from '@/api/checkout';
+import { calculateShippingForCart, ShippingService } from '@/api/shipping';
 
 const PIX_DISCOUNT_PERCENT = 5;
 
@@ -9,6 +9,7 @@ export const useCheckoutPricing = (cartItems: CartItem[]) => {
     const [shippingName, setShippingName] = useState('');
     const [shippingPrice, setShippingPrice] = useState(0);
     const [deliveryTime, setDeliveryTime] = useState(0);
+    const [shippingServices, setShippingServices] = useState<ShippingService[]>([]);
 
     const calculateRawTotal = useCallback(() => {
         return cartItems.reduce((total, item) => {
@@ -27,35 +28,48 @@ export const useCheckoutPricing = (cartItems: CartItem[]) => {
         return discounted.toFixed(2).replace('.', ',');
     }, [calculateSubtotal]);
 
-    const calculateShipping = useCallback(async (postalCode: string, isAuthenticated: boolean) => {
-        if (!postalCode || postalCode.length !== 9) return;
+    const calculateShipping = useCallback(async (postalCode: string, _isAuthenticated?: boolean) => {
+        const cleanPostalCode = postalCode.replace(/\D/g, '');
         
-        const cleanPostalCode = postalCode.replace('-', '');
-        
+        if (cleanPostalCode.length !== 8) return;
+
+        const items = cartItems
+            .filter(item => item.sku?.partnerId)
+            .map(item => ({
+                skuId: item.skuId,
+                partnerId: item.sku?.partnerId || '',
+                quantity: item.quantity
+            }));
+
+        if (!items.length) {
+            setShippingName('');
+            setShippingPrice(0);
+            setDeliveryTime(0);
+            setShippingServices([]);
+            return;
+        }
+
         try {
-            const response = isAuthenticated
-                ? await calculateShippingAuthenticated(cleanPostalCode)
-                : await calculateShippingGuest(cleanPostalCode, cartItems.map(item => ({
-                    id: item.productId || item.skuId,
-                    produto_id: item.productId || item.skuId,
-                    quantity: item.quantity
-                })));
+            const response = await calculateShippingForCart(cleanPostalCode, items);
             
-            if (response?.success && response.data?.availableServices?.length) {
-                const service = response.data.availableServices[0];
+            if (response?.success && response.services?.length) {
+                setShippingServices(response.services);
+                const service = response.services[0];
                 setShippingName(service.serviceName);
                 setShippingPrice(service.price);
-                setDeliveryTime(service.deliveryTime);
+                setDeliveryTime(service.deliveryDays);
             } else {
                 setShippingName('');
                 setShippingPrice(0);
                 setDeliveryTime(0);
+                setShippingServices([]);
             }
         } catch (error) {
             console.error('Erro ao calcular frete:', error);
             setShippingName('');
             setShippingPrice(0);
             setDeliveryTime(0);
+            setShippingServices([]);
             throw error;
         }
     }, [cartItems]);
@@ -63,6 +77,7 @@ export const useCheckoutPricing = (cartItems: CartItem[]) => {
     return {
         shippingName,
         shippingPrice,
+        shippingServices,
         deliveryTime,
         pixDiscount: PIX_DISCOUNT_PERCENT,
         calculateSubtotal,
@@ -71,4 +86,3 @@ export const useCheckoutPricing = (cartItems: CartItem[]) => {
         calculateShipping
     };
 };
-
