@@ -1,9 +1,57 @@
+export type PaymentType = 'pix' | 'credit-card' | 'debit-card';
+export type PaymentGateway = 'mercado-pago' | 'cielo';
+
+export interface PayerIdentification {
+    type: 'CPF' | 'CNPJ';
+    number: string;
+}
+
+export interface PaymentCard {
+    token: string;
+    brand: string;
+}
+
+export interface PixPaymentRequest {
+    orderId: number;
+    description?: string;
+    payerIdentification: PayerIdentification;
+}
+
 export interface CreditCardPaymentRequest {
-    // Opção 1: Pagamento com token (cartão novo)
+    orderId: number;
+    description?: string;
+    card: PaymentCard;
+    installments: number;
+    payerIdentification: PayerIdentification;
+}
+
+export interface DebitCardPaymentRequest {
+    orderId: number;
+    card: PaymentCard;
+}
+
+export interface PixData {
+    qrCode: string;
+    qrCodeBase64: string;
+    expirationDate: string;
+}
+
+export interface PaymentResponse {
+    success: boolean;
+    transactionId: string;
+    status: 'pending' | 'approved' | 'rejected' | 'in_process';
+    paymentMethod: 'pix' | 'credit_card' | 'debit_card';
+    amount: number;
+    message?: string;
+    pixData?: PixData;
+    installments?: number;
+    installmentAmount?: number;
+}
+
+/** @deprecated usar PixPaymentRequest, CreditCardPaymentRequest ou DebitCardPaymentRequest */
+export interface LegacyCreditCardPaymentRequest {
     token?: string;
-    // Opção 2: Pagamento com cartão salvo
     savedCardId?: number;
-    // Dados do cartão (apenas para fallback se backend não suportar token)
     cardNumber?: string;
     holder: string;
     expirationDate?: string;
@@ -19,7 +67,8 @@ export interface CreditCardPaymentRequest {
     };
 }
 
-export interface PixPaymentRequest {
+/** @deprecated usar PixPaymentRequest */
+export interface LegacyPixPaymentRequest {
     amount: number;
     description: string;
     address: string;
@@ -30,7 +79,8 @@ export interface PixPaymentRequest {
     };
 }
 
-export interface PaymentResponse {
+/** @deprecated usar PaymentResponse */
+export interface LegacyPaymentResponse {
     success: boolean;
     message?: string;
     transactionId?: string;
@@ -40,4 +90,3 @@ export interface PaymentResponse {
     qrCode?: string;
     pixKey?: string;
 }
-

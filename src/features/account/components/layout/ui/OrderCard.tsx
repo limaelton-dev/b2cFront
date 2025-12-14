@@ -19,9 +19,12 @@ import LocalShippingIcon from '@mui/icons-material/LocalShippingOutlined';
 import CheckCircleIcon from '@mui/icons-material/CheckCircleOutlined';
 import CancelIcon from '@mui/icons-material/CancelOutlined';
 import ScheduleIcon from '@mui/icons-material/Schedule';
+import PaymentIcon from '@mui/icons-material/Payment';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CompraType } from '../../types';
+import { CompraType, OrderStatusDisplay } from '../../../types';
 import Image from 'next/image';
+import NoImage from '@/assets/img/noimage.png';
 
 interface OrderCardProps {
   pedido: CompraType;
@@ -29,7 +32,7 @@ interface OrderCardProps {
 
 const OrderCard: React.FC<OrderCardProps> = ({ pedido }) => {
   const [expanded, setExpanded] = useState(false);
-  const { id, produtos, status, data } = pedido;
+  const { id, partnerOrderId, produtos, status, data, valorTotal } = pedido;
   
   const getStatusIcon = () => {
     switch (status) {
@@ -41,12 +44,16 @@ const OrderCard: React.FC<OrderCardProps> = ({ pedido }) => {
         return <CancelIcon sx={{ fontSize: '13px' }} />;
       case 'Processando':
         return <ScheduleIcon sx={{ fontSize: '13px' }} />;
+      case 'Aguardando Pagamento':
+        return <PaymentIcon sx={{ fontSize: '13px' }} />;
+      case 'Problema na Entrega':
+        return <ErrorOutlineIcon sx={{ fontSize: '13px' }} />;
       default:
         return null;
     }
   };
   
-  const getStatusColor = () => {
+  const getStatusColor = (): string => {
     switch (status) {
       case 'A caminho':
         return '#2196f3';
@@ -56,16 +63,16 @@ const OrderCard: React.FC<OrderCardProps> = ({ pedido }) => {
         return '#f44336';
       case 'Processando':
         return '#ff9800';
+      case 'Aguardando Pagamento':
+        return '#9c27b0';
+      case 'Problema na Entrega':
+        return '#e91e63';
       default:
         return '#757575';
     }
   };
   
   const totalItems = produtos.reduce((acc, produto) => acc + produto.quantidade, 0);
-  const valorTotal = produtos.reduce((acc, produto) => {
-    const valor = parseFloat(produto.valor.replace('R$ ', '').replace('.', '').replace(',', '.'));
-    return acc + (valor * produto.quantidade);
-  }, 0);
   
   return (
     <Card
@@ -90,15 +97,17 @@ const OrderCard: React.FC<OrderCardProps> = ({ pedido }) => {
             mb: 0.75
           }}
         >
-          <Typography 
-            variant="subtitle1"
-            sx={{ 
-              fontWeight: 500,
-              fontSize: '0.9rem'
-            }}
-          >
-            Pedido #{id}
-          </Typography>
+          <Box>
+            <Typography 
+              variant="subtitle1"
+              sx={{ 
+                fontWeight: 500,
+                fontSize: '0.9rem'
+              }}
+            >
+              Pedido #{partnerOrderId || id}
+            </Typography>
+          </Box>
           
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.75 }}>
             <Typography 
@@ -156,7 +165,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ pedido }) => {
                 color: '#102d57'
               }}
             >
-              {`R$ ${valorTotal.toFixed(2).replace('.', ',')}`}
+              {valorTotal}
             </Typography>
           </Box>
           
@@ -188,7 +197,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ pedido }) => {
               <List disablePadding>
                 {produtos.map((produto, index) => (
                   <ListItem 
-                    key={`produto-${index}`}
+                    key={`produto-${produto.skuId || index}`}
                     disablePadding
                     sx={{ 
                       py: 0.85,
@@ -202,15 +211,16 @@ const OrderCard: React.FC<OrderCardProps> = ({ pedido }) => {
                           width: 45, 
                           height: 45,
                           borderRadius: '5px',
-                          backgroundColor: 'transparent'
+                          backgroundColor: '#f5f5f5'
                         }}
                       >
                         <Image 
-                          src={produto.imagem} 
+                          src={produto.imagem || NoImage.src} 
                           alt={produto.nome}
                           width={45}
                           height={45}
                           style={{ objectFit: 'contain' }}
+                          unoptimized={!produto.imagem}
                         />
                       </Avatar>
                     </ListItemAvatar>
@@ -261,4 +271,4 @@ const OrderCard: React.FC<OrderCardProps> = ({ pedido }) => {
   );
 };
 
-export default OrderCard; 
+export default OrderCard;

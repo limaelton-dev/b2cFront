@@ -36,11 +36,23 @@ export interface VariationType {
     visualVariation: boolean;
 }
 
-// Interface para variação de SKU
+// Interface para variação de SKU (estrutura simplificada da API)
 export interface SkuVariation {
-    id: number;
+    type: string;
     description: string;
-    type: VariationType;
+}
+
+export interface MarketplaceData {
+    listingId: number;
+    skuId: number;
+    partnerId: string;
+    marketplace: string;
+    status: string;
+    originalPrice: number;
+    finalPrice: number;
+    hasDiscount: boolean;
+    stock: number;
+    isActive: boolean;
 }
 
 // Nova interface para as imagens do backend
@@ -63,19 +75,30 @@ export interface ProductImageNew {
     idVariation?: number;
 }
 
-// Nova interface para SKUs do backend
+// Interface para SKUs do backend (com dados do marketplace)
 export interface ProductSkuNew {
     id: number;
     title: string;
     partnerId: string;
+    marketplacePartnerId: string;
     ean: string;
-    price: number;
     amount: number;
-    additionalTime: number;
-    variations?: SkuVariation[]; // Variações do SKU (ex: cor, tamanho)
-    stockLocalId: number;
-    active: boolean;
-    volumes: number;
+    originalPrice: number;
+    finalPrice: number;
+    hasDiscount: boolean;
+    marketplaceStock: number;
+    marketplaceData?: MarketplaceData;
+    variations?: SkuVariation[];
+    /** @deprecated usar finalPrice */
+    price?: number;
+    /** @deprecated */
+    additionalTime?: number;
+    /** @deprecated */
+    stockLocalId?: number;
+    /** @deprecated usar marketplaceData?.isActive */
+    active?: boolean;
+    /** @deprecated */
+    volumes?: number;
 }
 
 export interface Product {

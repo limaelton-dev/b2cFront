@@ -1,34 +1,27 @@
 import HeadphoneImg from '@/assets/img/headphone.png';
 import NoImage from '@/assets/img/noimage.png';
-import { Product } from '@/api/products/types/product';
+import { Product, ProductSkuNew } from '@/api/products/types/product';
 
 // ============================================================================
 // NORMALIZAÇÃO DE PRODUTOS
 // ============================================================================
 
-/**
- * Normaliza um produto vindo do backend para compatibilidade com o frontend
- * Adiciona campos de compatibilidade baseados na nova estrutura
- */
 export function normalizeProduct(product: Product): Product {
     if (!product) return product;
 
     const normalized = { ...product };
 
-    // Adicionar campo 'name' como alias para 'title'
     if (product.title && !normalized.name) {
         normalized.name = product.title;
     }
 
-    // Calcular preço de venda do primeiro SKU ativo
     if (product.skus && Array.isArray(product.skus) && product.skus.length > 0 && !normalized.pro_precovenda) {
-        const activeSku = product.skus.find(sku => sku.active) || product.skus[0];
-        if (activeSku && activeSku.price) {
-            normalized.pro_precovenda = activeSku.price;
+        const activeSku = getFirstAvailableSku(product);
+        if (activeSku) {
+            normalized.pro_precovenda = activeSku.finalPrice ?? activeSku.price;
         }
     }
 
-    // Definir imagem principal
     if (product.images && Array.isArray(product.images) && product.images.length > 0 && !normalized.pro_imagem) {
         const mainImage = product.images.find(img => img.main) || product.images[0];
         if (mainImage) {
@@ -36,7 +29,6 @@ export function normalizeProduct(product: Product): Product {
         }
     }
 
-    // Converter imagens para formato antigo para compatibilidade
     if (product.images && Array.isArray(product.images) && !normalized.imagens) {
         normalized.imagens = product.images.map(img => ({
             id: img.id,
@@ -56,12 +48,8 @@ export function normalizeProduct(product: Product): Product {
     return normalized;
 }
 
-/**
- * Normaliza uma lista de produtos
- */
 export function normalizeProducts(products: Product[]): Product[] {
     if (!Array.isArray(products)) return products;
-    
     return products.map(product => normalizeProduct(product));
 }
 
@@ -69,12 +57,7 @@ export function normalizeProducts(products: Product[]): Product[] {
 // FUNÇÕES DE IMAGEM
 // ============================================================================
 
-/**
- * Obtém a URL da imagem principal do produto
- * Suporta tanto a estrutura nova quanto a antiga da API
- */
 export function getProductImage(product: any): string {
-    // Nova estrutura: usar a imagem principal ou a primeira imagem
     if (product?.images && Array.isArray(product.images) && product.images.length > 0) {
         const mainImage = product.images.find((img: any) => img.main) || product.images[0];
         if (mainImage) {
@@ -82,7 +65,6 @@ export function getProductImage(product: any): string {
         }
     }
     
-    // Compatibilidade: estrutura antiga
     if (product?.imagens && Array.isArray(product.imagens) && product.imagens.length > 0) {
         return product.imagens[0].url || NoImage.src;
     }
@@ -94,9 +76,6 @@ export function getProductImage(product: any): string {
     return NoImage.src;
 }
 
-/**
- * Obtém a imagem de um item do carrinho (que tem estrutura item.sku.product)
- */
 export function getCartItemImage(item: any): any {
     const sku = item?.sku;
     if (!sku) return HeadphoneImg;
@@ -114,107 +93,152 @@ export function getCartItemImage(item: any): any {
 // FUNÇÕES DE NOME/TÍTULO
 // ============================================================================
 
-/**
- * Obtém o nome/título do produto
- */
 export function getProductName(product: any): string {
     return product?.title || product?.name || product?.pro_descricao || 'Produto';
 }
 
-/**
- * Obtém o título de um item do carrinho
- */
 export function getCartItemTitle(item: any): string {
-    return item?.sku?.product?.title || item?.sku?.product?.name || 'Produto';
+    return item?.sku?.product?.title || item?.sku?.product?.name || item?.sku?.title || 'Produto';
 }
 
 // ============================================================================
 // FUNÇÕES DE SKU E CATEGORIA
 // ============================================================================
 
-/**
- * Obtém o SKU/código do produto
- */
 export function getProductSkuCode(item: any): string {
-    return item?.sku?.partnerId || item?.sku?.id || item?.sku?.ean || 'Sem referência';
+    return item?.sku?.marketplacePartnerId || item?.sku?.partnerId || item?.sku?.id || item?.sku?.ean || 'Sem referência';
 }
 
-/**
- * Obtém a categoria do produto
- */
 export function getProductCategory(item: any): string | null {
     return item?.sku?.product?.category?.name || item?.category?.name || null;
 }
 
-/**
- * Obtém o primeiro SKU ativo de um produto
- */
-export function getActiveSku(product: Product): any | null {
+function getFirstAvailableSku(product: Product): ProductSkuNew | null {
     if (!product?.skus || product.skus.length === 0) return null;
-    return product.skus.find(sku => sku.active) || product.skus[0] || null;
+    
+    const withStock = product.skus.find(sku => {
+        const stock = sku.marketplaceStock ?? sku.amount ?? 0;
+        return stock > 0;
+    });
+    
+    return withStock || product.skus[0] || null;
 }
 
-/**
- * Obtém um SKU específico por ID, ou retorna o SKU ativo se não encontrar
- */
-export function getSkuById(product: Product, skuId: number | null): any | null {
+export function getActiveSku(product: Product): ProductSkuNew | null {
+    return getFirstAvailableSku(product);
+}
+
+export function getSkuById(product: Product, skuId: number | null): ProductSkuNew | null {
     if (!product?.skus || !skuId) return getActiveSku(product);
     return product.skus.find(sku => sku.id === skuId) || getActiveSku(product);
-}
-
-/**
- * Obtém o preço de um SKU específico
- */
-export function getSkuPrice(sku: any): number | null {
-    if (!sku) return null;
-    return sku?.price || null;
-}
-
-/**
- * Obtém o preço do primeiro SKU ativo do produto
- */
-export function getFirstSkuPrice(product?: Product): number | null {
-    if (!product) return null;
-    const sku = getActiveSku(product);
-    return getSkuPrice(sku);
 }
 
 // ============================================================================
 // FUNÇÕES DE PREÇO
 // ============================================================================
 
-/**
- * Obtém o preço formatado do produto
- * Suporta tanto a estrutura nova (com SKUs) quanto a antiga
- */
-export function getProductPrice(product: any): string {
-    // Nova estrutura: usar o preço do primeiro SKU ativo
-    if (product?.skus && Array.isArray(product.skus) && product.skus.length > 0) {
-        const activeSku = product.skus.find((sku: any) => sku.active) || product.skus[0];
-        if (activeSku?.price && !isNaN(Number(activeSku.price))) {
-            return `R$ ${formatPrice(Number(activeSku.price))}`;
+export function getSkuFinalPrice(sku: ProductSkuNew | null): number | null {
+    if (!sku) return null;
+    return sku.finalPrice ?? sku.price ?? null;
+}
+
+export function getSkuOriginalPrice(sku: ProductSkuNew | null): number | null {
+    if (!sku) return null;
+    return sku.originalPrice ?? sku.finalPrice ?? sku.price ?? null;
+}
+
+export function getSkuDiscount(sku: ProductSkuNew | null): { hasDiscount: boolean; percentage: number } {
+    if (!sku) return { hasDiscount: false, percentage: 0 };
+    
+    if (sku.hasDiscount) {
+        const original = sku.originalPrice ?? 0;
+        const final = sku.finalPrice ?? 0;
+        if (original > 0 && final < original) {
+            const percentage = Math.round(((original - final) / original) * 100);
+            return { hasDiscount: true, percentage };
         }
     }
     
-    // Compatibilidade: usar campos antigos
-    if (product?.pro_precovenda && !isNaN(Number(product.pro_precovenda))) {
-        return `R$ ${formatPrice(Number(product.pro_precovenda))}`;
+    return { hasDiscount: false, percentage: 0 };
+}
+
+/** @deprecated usar getSkuFinalPrice */
+export function getSkuPrice(sku: any): number | null {
+    if (!sku) return null;
+    return sku?.finalPrice ?? sku?.price ?? null;
+}
+
+export function getFirstSkuPrice(product?: Product): number | null {
+    if (!product) return null;
+    const sku = getActiveSku(product);
+    return getSkuFinalPrice(sku);
+}
+
+export function getProductFinalPrice(product: any): number | null {
+    if (product?.skus && Array.isArray(product.skus) && product.skus.length > 0) {
+        const activeSku = getFirstAvailableSku(product);
+        if (activeSku) {
+            return activeSku.finalPrice ?? activeSku.price ?? null;
+        }
     }
-    
+    return product?.pro_precovenda ?? null;
+}
+
+export function getProductOriginalPrice(product: any): number | null {
+    if (product?.skus && Array.isArray(product.skus) && product.skus.length > 0) {
+        const activeSku = getFirstAvailableSku(product);
+        if (activeSku) {
+            return activeSku.originalPrice ?? activeSku.finalPrice ?? activeSku.price ?? null;
+        }
+    }
+    return product?.pro_precovenda ?? null;
+}
+
+export function getProductDiscountInfo(product: any): { hasDiscount: boolean; percentage: number } {
+    if (product?.skus && Array.isArray(product.skus) && product.skus.length > 0) {
+        const activeSku = getFirstAvailableSku(product);
+        return getSkuDiscount(activeSku);
+    }
+    return { hasDiscount: false, percentage: 0 };
+}
+
+export function getProductPrice(product: any): string {
+    const finalPrice = getProductFinalPrice(product);
+    if (finalPrice !== null && !isNaN(finalPrice)) {
+        return `R$ ${formatPrice(finalPrice)}`;
+    }
     return 'Preço não disponível';
 }
 
-/**
- * Obtém o preço de um item do carrinho (SKU específico)
- */
+export function getProductPriceWithDiscount(product: any): { 
+    finalPrice: string; 
+    originalPrice: string | null; 
+    hasDiscount: boolean;
+    discountPercentage: number;
+} {
+    const final = getProductFinalPrice(product);
+    const original = getProductOriginalPrice(product);
+    const discountInfo = getProductDiscountInfo(product);
+    
+    return {
+        finalPrice: final !== null ? `R$ ${formatPrice(final)}` : 'Preço não disponível',
+        originalPrice: discountInfo.hasDiscount && original !== null ? `R$ ${formatPrice(original)}` : null,
+        hasDiscount: discountInfo.hasDiscount,
+        discountPercentage: discountInfo.percentage
+    };
+}
+
 export function getCartItemPrice(item: any): number {
-    const price = item?.sku?.price || 0;
+    const sku = item?.sku;
+    const price = sku?.finalPrice ?? sku?.price ?? 0;
     return price * (item?.quantity || 1);
 }
 
-/**
- * Formata um número como preço brasileiro (0,00)
- */
+export function getCartItemUnitPrice(item: any): number {
+    const sku = item?.sku;
+    return sku?.finalPrice ?? sku?.price ?? 0;
+}
+
 export function formatPrice(price: number): string {
     if (isNaN(price) || price === null || price === undefined) {
         return '0,00';
@@ -222,27 +246,32 @@ export function formatPrice(price: number): string {
     return price.toFixed(2).replace('.', ',');
 }
 
+export function formatPriceBRL(price: number): string {
+    if (isNaN(price) || price === null || price === undefined) {
+        return 'R$ 0,00';
+    }
+    return `R$ ${price.toFixed(2).replace('.', ',')}`;
+}
+
 // ============================================================================
 // FUNÇÕES DE ESTOQUE
 // ============================================================================
 
-/**
- * Verifica se o produto tem estoque disponível
- */
-export function hasStock(product: any): boolean {
-    const sku = getActiveSku(product);
-    return sku && sku.amount > 0;
+export function getSkuStock(sku: ProductSkuNew | null): number {
+    if (!sku) return 0;
+    return sku.marketplaceStock ?? sku.amount ?? 0;
 }
 
-/**
- * Verifica se um produto tem estoque disponível (mais robusto)
- */
+export function hasStock(product: any): boolean {
+    const sku = getActiveSku(product);
+    return getSkuStock(sku) > 0;
+}
+
 export function hasProductStock(product: Product): boolean {
     if (!product) return false;
 
-    // Verificar se há SKUs ativos com estoque
     if (product.skus && Array.isArray(product.skus) && product.skus.length > 0) {
-        return product.skus.some(sku => sku.active && sku.amount > 0);
+        return product.skus.some(sku => getSkuStock(sku) > 0);
     }
 
     return false;
@@ -252,9 +281,6 @@ export function hasProductStock(product: Product): boolean {
 // FUNÇÕES AUXILIARES
 // ============================================================================
 
-/**
- * Limita o texto a um número máximo de caracteres
- */
 export function truncateText(text: string | undefined, maxLength: number = 36): string {
     if (!text) return '';
     return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;

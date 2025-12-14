@@ -9,14 +9,15 @@ interface Pagination {
   limit: number;
 }
 
-interface ProductsResponse {
-  data?: Product[];
-  items?: Product[];
+interface ProductsApiResponse {
+  items: Product[];
+  offset: number;
+  limit: number;
+  total: number;
+  page: number;
+  lastPage: number;
 }
 
-/**
- * Busca produtos com filtros e paginação
- */
 export const fetchAllProducts = async (
   filters: Filters,
   pagination: Pagination,
@@ -36,23 +37,17 @@ export const fetchAllProducts = async (
     }
 
     const url = `/products?${params.toString()}`;
-    const response = await get<ProductsResponse>(url, { signal });
+    const response = await get<ProductsApiResponse>(url, { signal });
 
-    // Normalizar produtos para compatibilidade
-    let products: Product[] = [];
-    if (response.data && Array.isArray(response.data)) {
-      products = normalizeProducts(response.data);
-    } else if (response.items && Array.isArray(response.items)) {
-      products = normalizeProducts(response.items);
-    }
+    const products = normalizeProducts(response.items || []);
 
     return {
       items: products,
-      offset: pagination.offset,
-      limit: pagination.limit,
-      totalMatched: products.length,
-      currentPage: Math.floor(pagination.offset / pagination.limit) + 1,
-      lastPage: 1,
+      offset: response.offset ?? pagination.offset,
+      limit: response.limit ?? pagination.limit,
+      total: response.total ?? products.length,
+      page: response.page ?? Math.floor(pagination.offset / pagination.limit) + 1,
+      lastPage: response.lastPage ?? 1,
     };
   } catch (err) {
     console.error("Erro ao obter produtos:", err);
@@ -60,16 +55,13 @@ export const fetchAllProducts = async (
       items: [],
       offset: pagination.offset,
       limit: pagination.limit,
-      totalMatched: 0,
-      currentPage: 1,
+      total: 0,
+      page: 1,
       lastPage: 1,
     };
   }
 };
 
-/**
- * Busca produto por slug
- */
 export const fetchProductBySlug = async (slug: string): Promise<Product | null> => {
   try {
     const data = await get<Product>(`/products/slug/${slug}`);
@@ -80,27 +72,19 @@ export const fetchProductBySlug = async (slug: string): Promise<Product | null> 
   }
 };
 
-/**
- * Busca produtos por termo de pesquisa
- */
 export const fetchProductsByTerm = async (term: string): Promise<PaginatedProducts> => {
   try {
-    const response = await get<ProductsResponse>(`/products?offset=0&limit=12&term=${term}`);
+    const response = await get<ProductsApiResponse>(`/products?offset=0&limit=12&term=${encodeURIComponent(term)}`);
 
-    let products: Product[] = [];
-    if (response.data && Array.isArray(response.data)) {
-      products = normalizeProducts(response.data);
-    } else if (response.items && Array.isArray(response.items)) {
-      products = normalizeProducts(response.items);
-    }
+    const products = normalizeProducts(response.items || []);
 
     return {
       items: products,
-      offset: 0,
-      limit: 12,
-      totalMatched: products.length,
-      currentPage: 1,
-      lastPage: 1,
+      offset: response.offset ?? 0,
+      limit: response.limit ?? 12,
+      total: response.total ?? products.length,
+      page: response.page ?? 1,
+      lastPage: response.lastPage ?? 1,
     };
   } catch (err) {
     console.error("Erro ao buscar produtos por termo:", err);
@@ -108,16 +92,13 @@ export const fetchProductsByTerm = async (term: string): Promise<PaginatedProduc
       items: [],
       offset: 0,
       limit: 12,
-      totalMatched: 0,
-      currentPage: 1,
+      total: 0,
+      page: 1,
       lastPage: 1,
     };
   }
 };
 
-/**
- * Busca produto por ID
- */
 export const fetchProductById = async (id: number): Promise<Product | null> => {
   try {
     const data = await get<Product>(`/products/${id}`);
@@ -128,9 +109,6 @@ export const fetchProductById = async (id: number): Promise<Product | null> => {
   }
 };
 
-/**
- * Busca múltiplos produtos por IDs
- */
 export const fetchProductsByIds = async (ids: number[]): Promise<Product[]> => {
   try {
     if (!ids || ids.length === 0) return [];

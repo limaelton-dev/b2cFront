@@ -25,7 +25,7 @@ import { useCheckoutSteps } from './hooks/useCheckoutSteps';
 import { useCheckoutPricing } from './hooks/useCheckoutPricing';
 import { useCart } from '@/context/CartProvider';
 import { useAuth } from '@/context/AuthProvider';
-import { completeCheckoutWithCreditCard, completeCheckoutWithPix } from './services/complete-checkout';
+import { completeCheckoutWithCreditCard, completeCheckoutWithDebitCard, completeCheckoutWithPix } from './services/complete-checkout';
 
 type CartLoadingState = 'loading' | 'ready' | 'empty';
 import { useToastSide } from '@/context/ToastSideProvider';
@@ -156,9 +156,12 @@ const CheckoutPage = () => {
     };
     
     const handlePaymentSubmit = async () => {
-        if (formData.paymentMethod === PAYMENT_METHOD.CREDIT_CARD) {
+        const isCardPayment = formData.paymentMethod === PAYMENT_METHOD.CREDIT_CARD || 
+                              formData.paymentMethod === PAYMENT_METHOD.DEBIT_CARD;
+        
+        if (isCardPayment) {
             if (!validateAllCardFields(maskedCard.isMasked)) {
-                showToast('Verifique os dados do cartão de crédito', 'error');
+                showToast('Verifique os dados do cartão', 'error');
                 return;
             }
         }
@@ -171,18 +174,25 @@ const CheckoutPage = () => {
         setIsSubmitting(true);
         
         try {
-            const result = formData.paymentMethod === PAYMENT_METHOD.CREDIT_CARD
-                ? await completeCheckoutWithCreditCard(formData, maskedCard, isAuthenticated, savedIds)
-                : await completeCheckoutWithPix(
+            let result;
+            
+            if (formData.paymentMethod === PAYMENT_METHOD.CREDIT_CARD) {
+                result = await completeCheckoutWithCreditCard(formData, maskedCard, isAuthenticated, savedIds);
+            } else if (formData.paymentMethod === PAYMENT_METHOD.DEBIT_CARD) {
+                result = await completeCheckoutWithDebitCard(formData, maskedCard, isAuthenticated, savedIds);
+            } else {
+                result = await completeCheckoutWithPix(
                     formData, 
                     parseFloat(calculateSubtotal()) * (1 - (pixDiscount / 100)),
                     isAuthenticated,
                     savedIds
                 );
+            }
             
             if (result.success) {
                 await refreshProfile();
-                showToast(formData.paymentMethod === PAYMENT_METHOD.CREDIT_CARD ? 'Pagamento processado com sucesso!' : 'PIX gerado com sucesso!', 'success');
+                const successMessage = isCardPayment ? 'Pagamento processado com sucesso!' : 'PIX gerado com sucesso!';
+                showToast(successMessage, 'success');
                 await clearItems();
                 router.push(result.redirectUrl!);
             } else {

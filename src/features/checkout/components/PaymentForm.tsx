@@ -73,7 +73,9 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
 }) => {
     const [focused, setFocused] = useState<string>('');
     const isCreditCard = formData.paymentMethod === PAYMENT_METHOD.CREDIT_CARD;
-    const needsCardInfo = !maskedCard.isMasked && isCreditCard && (!formData.cardNumber || !formData.cardCVV || !formData.cardExpirationDate || !formData.cardHolderName || !formData.cardHolderDocument);
+    const isDebitCard = formData.paymentMethod === PAYMENT_METHOD.DEBIT_CARD;
+    const isCardPayment = isCreditCard || isDebitCard;
+    const needsCardInfo = !maskedCard.isMasked && isCardPayment && (!formData.cardNumber || !formData.cardCVV || !formData.cardExpirationDate || !formData.cardHolderName || !formData.cardHolderDocument);
 
     const handleFocus = (fieldName: string) => () => setFocused(fieldName);
     
@@ -116,7 +118,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
                     value={formData.paymentMethod}
                     aria-labelledby="payment-method-radio-group"
                     name="payment-method-radio-group"
-                    sx={{ justifyContent: 'space-between', width: '100%', mt: '15px' }}
+                    sx={{ justifyContent: 'space-between', width: '100%', mt: '15px', flexWrap: 'wrap', gap: 1 }}
                 >
                     <FormControlLabel 
                         value={PAYMENT_METHOD.CREDIT_CARD}
@@ -124,6 +126,13 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
                         control={<Radio />} 
                         onClick={() => onUpdateField('paymentMethod', PAYMENT_METHOD.CREDIT_CARD)} 
                         label="Cartão de Crédito" 
+                    />
+                    <FormControlLabel 
+                        value={PAYMENT_METHOD.DEBIT_CARD}
+                        sx={{ margin: 0 }} 
+                        control={<Radio />} 
+                        onClick={() => onUpdateField('paymentMethod', PAYMENT_METHOD.DEBIT_CARD)} 
+                        label="Cartão de Débito" 
                     />
                     <FormControlLabel 
                         value={PAYMENT_METHOD.PIX}
@@ -134,7 +143,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
                     />
                 </RadioGroup>
                 
-                {isCreditCard && (
+                {isCardPayment && (
                     <Box sx={{ width: '100%', mt: 2 }}>
                         {/* Visual do Cartão */}
                         <Box sx={{ 
@@ -259,9 +268,9 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
                     </Box>
                 )}
                 
-                {!isCreditCard && (
+                {!isCardPayment && (
                     <div className='d-flex justify-content-center align-items-center' style={{ height: '158px', width: '100%' }}>
-                        <span>A chave pix será liberada após a confirmação</span>
+                        <span>A chave PIX será liberada após a confirmação</span>
                     </div>
                 )}
                 

@@ -5,7 +5,7 @@ import { prefillCustomerData } from '../services/prefill-customer-data';
 import { fetchAddressByCep } from '@/api/address/services/cep';
 
 export const PROFILE_TYPE = { PF: '1', PJ: '2' } as const;
-export const PAYMENT_METHOD = { CREDIT_CARD: '1', PIX: '2' } as const;
+export const PAYMENT_METHOD = { CREDIT_CARD: '1', DEBIT_CARD: '2', PIX: '3' } as const;
 
 export interface CheckoutFormData {
     profileType: string;

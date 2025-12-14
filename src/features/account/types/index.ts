@@ -46,19 +46,32 @@ export interface CartaoType {
   cvv?: string;
 }
 
-// Tipos para compras
+// Tipos para compras (usando estrutura da API de orders)
+export type OrderStatusDisplay = 
+  | 'Aguardando Pagamento' 
+  | 'Processando' 
+  | 'A caminho' 
+  | 'Entregue' 
+  | 'Cancelada'
+  | 'Problema na Entrega';
+
 export interface ProdutoCompraType {
+  id: number;
+  skuId: number;
   nome: string;
   valor: string;
   quantidade: number;
-  imagem: any;
+  imagem?: string;
 }
 
 export interface CompraType {
   id: number;
+  partnerOrderId: string;
   produtos: ProdutoCompraType[];
-  status: 'A caminho' | 'Entregue' | 'Cancelada' | 'Processando';
+  status: OrderStatusDisplay;
   data: string;
+  valorTotal: string;
+  trackingCode?: string;
 }
 
 // Tipos para sidebar

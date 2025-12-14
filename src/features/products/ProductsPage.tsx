@@ -47,8 +47,8 @@ function fallbackPaginated(): PaginatedProducts {
         items: [], 
         offset: 0, 
         limit: 0, 
-        totalMatched: 0, 
-        currentPage: 1, 
+        total: 0, 
+        page: 1, 
         lastPage: 1 
     };
 }
@@ -155,8 +155,8 @@ const ProductsPage = () => {
               isLoading: false,
               products: data.items ?? [],
               totalPages: data.lastPage ?? 1,
-              totalItems: data.totalMatched ?? 0,
-              currentPage: data.currentPage ?? page ?? 1,
+              totalItems: data.total ?? 0,
+              currentPage: data.page ?? page ?? 1,
           });
       })();
 

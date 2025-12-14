@@ -12,6 +12,8 @@ export interface CheckoutProfilePJ {
     companyName: string;
     cnpj: string;
     tradingName?: string;
+    stateRegistration?: string;
+    municipalRegistration?: string;
 }
 
 export interface CheckoutAddressNew {
@@ -45,17 +47,90 @@ export interface CheckoutPhoneExisting {
 export type CheckoutPhone = CheckoutPhoneNew | CheckoutPhoneExisting;
 
 export interface CheckoutCard {
-    cardToken: string;
-    saveCard?: boolean;
-    lastFourDigits?: string;
-    holderName?: string;
-    expirationMonth?: string;
-    expirationYear?: string;
-    brand?: string;
+    saveCard: boolean;
+    lastFourDigits: string;
+    holderName: string;
+    expirationMonth: string;
+    expirationYear: string;
+    brand: string;
     isDefault?: boolean;
 }
 
-interface CheckoutRequestBase {
+export interface GuestCheckoutRequest {
+    email: string;
+    password: string;
+    profileType: ProfileType;
+    profile: CheckoutProfilePF | CheckoutProfilePJ;
+    address: CheckoutAddressNew;
+    phone: CheckoutPhoneNew;
+    card?: CheckoutCard;
+}
+
+export interface GuestCheckoutResponse {
+    userId: number;
+    profileId: number;
+    accessToken: string;
+}
+
+export interface RegisteredCheckoutProfile {
+    pf?: CheckoutProfilePF;
+    pj?: CheckoutProfilePJ;
+}
+
+export interface RegisteredCheckoutRequest {
+    profile: RegisteredCheckoutProfile;
+    address: CheckoutAddress;
+    phone: CheckoutPhone;
+    card?: CheckoutCard;
+}
+
+export interface RegisteredCheckoutResponse {
+    profileId: number;
+    addressId: number;
+    phoneId: number;
+    cardId?: number;
+}
+
+export interface ShippingAddressOverride {
+    street: string;
+    number: string;
+    complement?: string;
+    neighborhood: string;
+    city: string;
+    state: string;
+    zipCode: string;
+}
+
+export interface CreateOrderRequest {
+    shippingAddressId?: number;
+    shippingAddressOverride?: ShippingAddressOverride;
+    shippingOptionCode: string;
+}
+
+export interface OrderItemResponse {
+    skuId: number;
+    title: string;
+    quantity: number;
+    unitPrice: string;
+    total: string;
+}
+
+export interface CreateOrderResponse {
+    orderId: number;
+    partnerOrderId: string;
+    status: string;
+    itemsTotal: string;
+    shippingTotal: string;
+    discountTotal: string;
+    grandTotal: string;
+    items: OrderItemResponse[];
+}
+
+/** @deprecated usar GuestCheckoutRequest ou RegisteredCheckoutRequest */
+export interface CheckoutRequestNewUser {
+    isRegistered: false;
+    email: string;
+    password: string;
     profileType: ProfileType;
     profile: CheckoutProfilePF | CheckoutProfilePJ;
     address: CheckoutAddress;
@@ -63,18 +138,20 @@ interface CheckoutRequestBase {
     card?: CheckoutCard;
 }
 
-export interface CheckoutRequestNewUser extends CheckoutRequestBase {
-    isRegistered: false;
-    email: string;
-    password: string;
-}
-
-export interface CheckoutRequestExistingUser extends CheckoutRequestBase {
+/** @deprecated usar GuestCheckoutRequest ou RegisteredCheckoutRequest */
+export interface CheckoutRequestExistingUser {
     isRegistered: true;
+    profileType: ProfileType;
+    profile: CheckoutProfilePF | CheckoutProfilePJ;
+    address: CheckoutAddress;
+    phone: CheckoutPhone;
+    card?: CheckoutCard;
 }
 
+/** @deprecated usar GuestCheckoutRequest ou RegisteredCheckoutRequest */
 export type CheckoutRequest = CheckoutRequestNewUser | CheckoutRequestExistingUser;
 
+/** @deprecated usar GuestCheckoutResponse ou RegisteredCheckoutResponse */
 export interface CheckoutResponse {
     userId: number;
     profileId: number;

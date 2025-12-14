@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
-import { Box, Typography, Tabs, Tab, InputBase, IconButton, Paper } from '@mui/material';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Box, Typography, Tabs, Tab, InputBase, IconButton, Paper, CircularProgress } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import OrderCard from '@/features/account/components/layout/ui/OrderCard';
-import { CompraType } from '@/features/account/types';
-import headphoneImage from '@/assets/img/headphone.png';
+import { CompraType, OrderStatusDisplay } from '@/features/account/types';
+import { Order, OrderStatus, ORDER_STATUS_LABELS } from '@/api/orders/types/order';
+import { fetchOrders } from '@/api/orders/services/order-service';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -31,68 +32,155 @@ function TabPanel(props: TabPanelProps) {
   );
 }
 
+function mapOrderStatusToDisplay(status: OrderStatus): OrderStatusDisplay {
+  switch (status) {
+    case OrderStatus.WAITING_PAYMENT:
+      return 'Aguardando Pagamento';
+    case OrderStatus.PENDING:
+    case OrderStatus.INCOMPLETE:
+    case OrderStatus.PAID_WAITING_SHIP:
+    case OrderStatus.INVOICED:
+    case OrderStatus.PAID_WAITING_DELIVERY:
+      return 'Processando';
+    case OrderStatus.IN_TRANSIT:
+      return 'A caminho';
+    case OrderStatus.CONCLUDED:
+      return 'Entregue';
+    case OrderStatus.CANCELED:
+      return 'Cancelada';
+    case OrderStatus.DELIVERY_ISSUE:
+      return 'Problema na Entrega';
+    default:
+      return 'Processando';
+  }
+}
+
+function formatDate(dateString: string): string {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('pt-BR');
+}
+
+function mapOrderToCompra(order: Order): CompraType {
+  return {
+    id: order.id,
+    partnerOrderId: order.partnerOrderId,
+    produtos: order.items.map(item => ({
+      id: item.id,
+      skuId: item.skuId,
+      nome: item.title,
+      valor: `R$ ${item.unitPrice.replace('.', ',')}`,
+      quantidade: item.quantity
+    })),
+    status: mapOrderStatusToDisplay(order.status),
+    data: formatDate(order.createdAt),
+    valorTotal: `R$ ${order.grandTotal.replace('.', ',')}`
+  };
+}
+
 const MinhasCompras: React.FC = () => {
   const [tabValue, setTabValue] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
-  
-  // Dados mockados - serão substituídos pela API
-  const [pedidos, setPedidos] = useState<CompraType[]>([
-    {
-      id: 1,
-      produtos: [
-        { nome: 'HeadPhone C3TECH p2', valor: 'R$ 350,00', quantidade: 3, imagem: headphoneImage },
-        { nome: 'HeadPhone LOGITECH p2', valor: 'R$ 150,00', quantidade: 2, imagem: headphoneImage },
-      ],
-      status: 'A caminho',
-      data: '15/10/2024',
-    },
-    {
-      id: 2,
-      produtos: [
-        { nome: 'Produto 3', valor: 'R$ 150,00', quantidade: 1, imagem: headphoneImage },
-      ],
-      status: 'Entregue',
-      data: '10/05/2024',
-    },
-    {
-      id: 3,
-      produtos: [
-        { nome: 'Produto 4', valor: 'R$ 150,00', quantidade: 3, imagem: headphoneImage },
-      ],
-      status: 'Cancelada',
-      data: '10/05/2023',
-    },
-    {
-      id: 4,
-      produtos: [
-        { nome: 'Produto 5', valor: 'R$ 150,00', quantidade: 3, imagem: headphoneImage },
-      ],
-      status: 'Processando',
-      data: '10/05/2023',
-    },
-  ]);
+  const [pedidos, setPedidos] = useState<CompraType[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+  const loadOrders = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const orders = await fetchOrders();
+      const mappedOrders = orders.map(mapOrderToCompra);
+      setPedidos(mappedOrders);
+    } catch (err: any) {
+      setError(err?.message || 'Erro ao carregar pedidos');
+      setPedidos([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadOrders();
+  }, [loadOrders]);
+
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
   };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log(`Pesquisando por: ${searchTerm}`);
-    // Aqui será implementada a lógica para pesquisar pedidos
   };
 
-  // Filtrar pedidos com base no status e termo de pesquisa
   const filteredPedidos = pedidos.filter(pedido => {
-    // Filtrar por status (tab)
     if (tabValue === 1 && pedido.status !== 'Entregue') return false;
     if (tabValue === 2 && pedido.status !== 'Cancelada') return false;
     
-    // Filtrar por termo de pesquisa
-    if (searchTerm && !pedido.id.toString().includes(searchTerm)) return false;
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      const matchesId = pedido.id.toString().includes(term);
+      const matchesPartnerOrderId = pedido.partnerOrderId.toLowerCase().includes(term);
+      if (!matchesId && !matchesPartnerOrderId) return false;
+    }
     
     return true;
   });
+
+  const renderOrderList = (emptyMessage: string) => {
+    if (loading) {
+      return (
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 5 }}>
+          <CircularProgress size={32} />
+        </Box>
+      );
+    }
+
+    if (error) {
+      return (
+        <Box 
+          sx={{ 
+            textAlign: 'center', 
+            py: 5,
+            backgroundColor: 'rgba(244, 67, 54, 0.05)',
+            borderRadius: '6px',
+            mt: 2
+          }}
+        >
+          <Typography 
+            variant="body1"
+            sx={{ color: '#f44336', fontSize: '0.85rem' }}
+          >
+            {error}
+          </Typography>
+        </Box>
+      );
+    }
+
+    if (filteredPedidos.length > 0) {
+      return filteredPedidos.map(pedido => (
+        <OrderCard key={pedido.id} pedido={pedido} />
+      ));
+    }
+
+    return (
+      <Box 
+        sx={{ 
+          textAlign: 'center', 
+          py: 5,
+          backgroundColor: 'rgba(0, 0, 0, 0.02)',
+          borderRadius: '6px',
+          mt: 2
+        }}
+      >
+        <Typography 
+          variant="body1"
+          sx={{ color: '#666', fontSize: '0.85rem' }}
+        >
+          {emptyMessage}
+        </Typography>
+      </Box>
+    );
+  };
 
   return (
     <Box sx={{ mb: 2.5 }}>
@@ -168,91 +256,19 @@ const MinhasCompras: React.FC = () => {
       
       <Box sx={{ backgroundColor: 'white', p: 2.5, borderRadius: '4px' }}>
         <TabPanel value={tabValue} index={0}>
-          {filteredPedidos.length > 0 ? (
-            filteredPedidos.map(pedido => (
-              <OrderCard key={pedido.id} pedido={pedido} />
-            ))
-          ) : (
-            <Box 
-              sx={{ 
-                textAlign: 'center', 
-                py: 5,
-                backgroundColor: 'rgba(0, 0, 0, 0.02)',
-                borderRadius: '6px',
-                mt: 2
-              }}
-            >
-              <Typography 
-                variant="body1"
-                sx={{ 
-                  color: '#666',
-                  fontSize: '0.85rem'
-                }}
-              >
-                Nenhum pedido encontrado.
-              </Typography>
-            </Box>
-          )}
+          {renderOrderList('Nenhum pedido encontrado.')}
         </TabPanel>
         
         <TabPanel value={tabValue} index={1}>
-          {filteredPedidos.length > 0 ? (
-            filteredPedidos.map(pedido => (
-              <OrderCard key={pedido.id} pedido={pedido} />
-            ))
-          ) : (
-            <Box 
-              sx={{ 
-                textAlign: 'center', 
-                py: 5,
-                backgroundColor: 'rgba(0, 0, 0, 0.02)',
-                borderRadius: '6px',
-                mt: 2
-              }}
-            >
-              <Typography 
-                variant="body1"
-                sx={{ 
-                  color: '#666',
-                  fontSize: '0.85rem'
-                }}
-              >
-                Nenhum pedido entregue.
-              </Typography>
-            </Box>
-          )}
+          {renderOrderList('Nenhum pedido entregue.')}
         </TabPanel>
         
         <TabPanel value={tabValue} index={2}>
-          {filteredPedidos.length > 0 ? (
-            filteredPedidos.map(pedido => (
-              <OrderCard key={pedido.id} pedido={pedido} />
-            ))
-          ) : (
-            <Box 
-              sx={{ 
-                textAlign: 'center', 
-                py: 5,
-                backgroundColor: 'rgba(0, 0, 0, 0.02)',
-                borderRadius: '6px',
-                mt: 2
-              }}
-            >
-              <Typography 
-                variant="body1"
-                sx={{ 
-                  color: '#666',
-                  fontSize: '0.85rem'
-                }}
-              >
-                Nenhum pedido cancelado.
-              </Typography>
-            </Box>
-          )}
+          {renderOrderList('Nenhum pedido cancelado.')}
         </TabPanel>
       </Box>
     </Box>
   );
 };
 
-export default MinhasCompras; 
+export default MinhasCompras;
