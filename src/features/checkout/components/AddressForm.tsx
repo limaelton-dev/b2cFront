@@ -18,6 +18,7 @@ interface AddressFormProps {
     formData: CheckoutFormData;
     disabledFields: { address: boolean };
     loadingAddress: boolean;
+    loadingShipping?: boolean;
     shippingName?: string;
     shippingPrice?: number;
     deliveryTime?: number;
@@ -33,6 +34,7 @@ const AddressForm: React.FC<AddressFormProps> = ({
     formData,
     disabledFields,
     loadingAddress,
+    loadingShipping,
     shippingName,
     shippingPrice,
     deliveryTime,
@@ -139,7 +141,12 @@ const AddressForm: React.FC<AddressFormProps> = ({
                         />
                     </Box>
                     
-                    {shippingName && (
+                    {loadingShipping ? (
+                        <div className="fretes" style={{ width: '100%', textAlign: 'center', padding: '20px' }}>
+                            <CircularProgress size={24} />
+                            <p style={{ marginTop: '8px', fontSize: '14px', color: '#666' }}>Calculando frete...</p>
+                        </div>
+                    ) : shippingName ? (
                         <div className="fretes" style={{ width: '100%' }}>
                             <h6 style={{ marginTop: '10px' }}>Escolha o frete:</h6>
                             <div className="frete-box">
@@ -157,7 +164,7 @@ const AddressForm: React.FC<AddressFormProps> = ({
                                 </div>
                             </div>
                         </div>
-                    )}
+                    ) : null}
                     
                     <Button variant="contained" color="primary" className='mb-3' fullWidth onClick={handleContinue}>
                         Continuar

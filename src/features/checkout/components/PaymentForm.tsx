@@ -218,7 +218,11 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
                             <MaskedTextField
                                 mask="99/99"
                                 value={formData.cardExpirationDate}
-                                onChange={(e) => onUpdateField('cardExpirationDate', e.target.value)}
+                                onChange={(e) => {
+                                    const value = e.target.value;
+                                    onUpdateField('cardExpirationDate', value);
+                                    if (value.length === 5) onValidateExpiration(value);
+                                }}
                                 onFocus={handleFocus('expiry')}
                                 onBlur={handleExpirationBlur}
                                 disabled={maskedCard.isMasked}

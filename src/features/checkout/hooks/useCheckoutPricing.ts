@@ -10,6 +10,7 @@ export const useCheckoutPricing = (cartItems: CartItem[]) => {
     const [shippingPrice, setShippingPrice] = useState(0);
     const [deliveryTime, setDeliveryTime] = useState(0);
     const [shippingServices, setShippingServices] = useState<ShippingService[]>([]);
+    const [loadingShipping, setLoadingShipping] = useState(false);
 
     const calculateRawTotal = useCallback(() => {
         return cartItems.reduce((total, item) => {
@@ -28,26 +29,33 @@ export const useCheckoutPricing = (cartItems: CartItem[]) => {
         return discounted.toFixed(2).replace('.', ',');
     }, [calculateSubtotal]);
 
+    const clearShippingData = useCallback(() => {
+        setShippingName('');
+        setShippingPrice(0);
+        setDeliveryTime(0);
+        setShippingServices([]);
+    }, []);
+
     const calculateShipping = useCallback(async (postalCode: string, _isAuthenticated?: boolean) => {
         const cleanPostalCode = postalCode.replace(/\D/g, '');
         
-        if (cleanPostalCode.length !== 8) return;
-
-        const items = cartItems
-            .filter(item => item.sku?.partnerId)
-            .map(item => ({
-                skuId: item.skuId,
-                partnerId: item.sku?.partnerId || '',
-                quantity: item.quantity
-            }));
-
-        if (!items.length) {
-            setShippingName('');
-            setShippingPrice(0);
-            setDeliveryTime(0);
-            setShippingServices([]);
+        if (cleanPostalCode.length !== 8) {
+            clearShippingData();
             return;
         }
+
+        const items = cartItems.map(item => ({
+            skuId: item.skuId,
+            partnerId: item.sku?.partnerId || '',
+            quantity: item.quantity
+        }));
+
+        if (!items.length) {
+            clearShippingData();
+            return;
+        }
+
+        setLoadingShipping(true);
 
         try {
             const response = await calculateShippingForCart(cleanPostalCode, items);
@@ -59,30 +67,28 @@ export const useCheckoutPricing = (cartItems: CartItem[]) => {
                 setShippingPrice(service.price);
                 setDeliveryTime(service.deliveryDays);
             } else {
-                setShippingName('');
-                setShippingPrice(0);
-                setDeliveryTime(0);
-                setShippingServices([]);
+                clearShippingData();
             }
         } catch (error) {
             console.error('Erro ao calcular frete:', error);
-            setShippingName('');
-            setShippingPrice(0);
-            setDeliveryTime(0);
-            setShippingServices([]);
+            clearShippingData();
             throw error;
+        } finally {
+            setLoadingShipping(false);
         }
-    }, [cartItems]);
+    }, [cartItems, clearShippingData]);
     
     return {
         shippingName,
         shippingPrice,
         shippingServices,
         deliveryTime,
+        loadingShipping,
         pixDiscount: PIX_DISCOUNT_PERCENT,
         calculateSubtotal,
         calculateRawTotal: useCallback(() => calculateRawTotal().toFixed(2).replace('.', ','), [calculateRawTotal]),
         getPixDiscountedPrice,
-        calculateShipping
+        calculateShipping,
+        clearShippingData
     };
 };

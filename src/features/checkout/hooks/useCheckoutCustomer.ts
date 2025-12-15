@@ -160,7 +160,7 @@ export function useCheckoutCustomer(onAddressLoaded?: (postalCode: string) => vo
         return () => {
             prefillRequestRef.current++;
         };
-    }, [user?.id]);
+    }, [user?.id, onAddressLoaded]);
     
     const updateField = useCallback((field: keyof CheckoutFormData, value: any) => {
         setFormData(prev => ({ ...prev, [field]: value }));

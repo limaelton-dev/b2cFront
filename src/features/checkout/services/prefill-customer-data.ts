@@ -54,7 +54,8 @@ export async function prefillCustomerData(user: any): Promise<CustomerData | nul
     
     if (!profileData) return null;
     
-    const isPJ = profileData.profileType === 'PJ';
+    const profileType = profileData.profileType || profileData.profile_type;
+    const isPJ = profileType === 'PJ';
     
     const data: CustomerData = {
         firstName: '',
@@ -82,16 +83,18 @@ export async function prefillCustomerData(user: any): Promise<CustomerData | nul
         data.stateRegistration = pj.stateRegistration || '';
     }
     
-    if (profileData.phones && profileData.phones.length > 0) {
-        const primaryPhone = profileData.phones.find(p => p.isDefault) || profileData.phones[0];
+    const phones = profileData.phones || profileData.phone || [];
+    if (phones.length > 0) {
+        const primaryPhone = phones.find(p => p.isDefault) || phones[0];
         if (primaryPhone) {
             data.phone = formatPhoneNumber(`${primaryPhone.ddd}${primaryPhone.number}`);
             data.phoneId = primaryPhone.id;
         }
     }
     
-    if (profileData.addresses && profileData.addresses.length > 0) {
-        const addr = profileData.addresses.find(a => a.isDefault) || profileData.addresses[0];
+    const addresses = profileData.addresses || profileData.address || [];
+    if (addresses.length > 0) {
+        const addr = addresses.find(a => a.isDefault) || addresses[0];
         data.address = {
             id: addr.id,
             postalCode: addr.zipCode || '',
@@ -104,8 +107,9 @@ export async function prefillCustomerData(user: any): Promise<CustomerData | nul
         };
     }
     
-    if (profileData.cards && profileData.cards.length > 0) {
-        const card = profileData.cards.find(c => c.isDefault) || profileData.cards[0];
+    const cards = profileData.cards || profileData.card || [];
+    if (cards.length > 0) {
+        const card = cards.find(c => c.isDefault) || cards[0];
         data.card = {
             cardId: card.id,
             maskedNumber: `**** **** **** ${card.lastFourDigits}`,

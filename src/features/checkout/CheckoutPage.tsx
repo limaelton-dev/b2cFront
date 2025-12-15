@@ -52,11 +52,13 @@ const CheckoutPage = () => {
         shippingName,
         shippingPrice,
         deliveryTime,
+        loadingShipping,
         pixDiscount,
         calculateSubtotal,
         calculateRawTotal,
         getPixDiscountedPrice,
-        calculateShipping
+        calculateShipping,
+        clearShippingData
     } = useCheckoutPricing(cartItems);
     
     // Callback para calcular frete quando endereço for carregado automaticamente
@@ -115,6 +117,7 @@ const CheckoutPage = () => {
     }, [formData.cardNumber]);
     
     const hasRedirected = useRef(false);
+    const hasCalculatedInitialShipping = useRef(false);
     
     useEffect(() => {
         if (cartState === 'empty' && !hasRedirected.current) {
@@ -123,6 +126,24 @@ const CheckoutPage = () => {
             router.push('/');
         }
     }, [cartState, router, showToast]);
+
+    useEffect(() => {
+        if (
+            cartState === 'ready' &&
+            formData.postalCode &&
+            !shippingName &&
+            !loadingShipping &&
+            !hasCalculatedInitialShipping.current
+        ) {
+            const cleanCep = formData.postalCode.replace(/\D/g, '');
+            if (cleanCep.length === 8) {
+                hasCalculatedInitialShipping.current = true;
+                calculateShipping(cleanCep, isAuthenticated).catch(() => {
+                    // Erro silencioso
+                });
+            }
+        }
+    }, [cartState, formData.postalCode, shippingName, loadingShipping, calculateShipping, isAuthenticated]);
 
     // Enquanto carrega o carrinho, mostra loading
     if (cartState === 'loading') {
@@ -143,15 +164,19 @@ const CheckoutPage = () => {
     };
     
     const handleAddressFetch = async (cep: string) => {
-        await autoFillAddressByPostalCode(cep);
-        
         const cleanCep = cep.replace(/\D/g, '');
-        if (cleanCep.length === 8) {
-            try {
-                await calculateShipping(cep, isAuthenticated);
-            } catch {
-                showToast('Erro ao calcular frete', 'error');
-            }
+        
+        if (cleanCep.length !== 8) {
+            clearShippingData();
+            return;
+        }
+        
+        await autoFillAddressByPostalCode(cep);
+
+        try {
+            await calculateShipping(cleanCep, isAuthenticated);
+        } catch {
+            showToast('Erro ao calcular frete', 'error');
         }
     };
     
@@ -366,10 +391,11 @@ const CheckoutPage = () => {
                         
                         <div className={'d-flex justify-content-center flex-wrap ' + (currentStep === 2 ? 'active-column-checkout' : 'nonactive-column-checkout')}>
                             {currentStep === 2 && (
-                                <AddressForm 
+                                <AddressForm
                                     formData={formData}
                                     disabledFields={{ address: disabledFields.address }}
                                     loadingAddress={loadingAddress}
+                                    loadingShipping={loadingShipping}
                                     shippingName={shippingName}
                                     shippingPrice={shippingPrice}
                                     deliveryTime={deliveryTime}
