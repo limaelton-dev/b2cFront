@@ -16,7 +16,7 @@ import Header from './header';
 import Footer from './footer';
 import Cart from '../components/Cart';
 import ClientOnly from '../components/ClientOnly';
-import { ProductCard, ProductCardSkeleton } from '../components/ProductCard';
+import { ProductCard, ProductCardSkeleton, ProductsEmptyState } from '../components/ProductCard';
 import { InfoCards, Newsletter } from '../components/Home';
 import { useCart } from '../context/CartProvider';
 import { useToastSide } from '../context/ToastSideProvider';
@@ -51,12 +51,15 @@ interface ProductSectionProps {
     title: string;
     products: Product[];
     isLoading: boolean;
+    hasError?: boolean;
     loadingProducts: { [key: number]: boolean };
     onAddToCart: (product: Product) => void;
+    onRetry?: () => void;
 }
 
-function ProductSection({ title, products, isLoading, loadingProducts, onAddToCart }: ProductSectionProps) {
+function ProductSection({ title, products, isLoading, hasError, loadingProducts, onAddToCart, onRetry }: ProductSectionProps) {
     const skeletonCount = 4;
+    const hasProducts = products && products.length > 0;
 
     return (
         <Box component="section" sx={{ py: 4 }}>
@@ -83,30 +86,54 @@ function ProductSection({ title, products, isLoading, loadingProducts, onAddToCa
                     {title}
                 </Typography>
                 
-                <Swiper
-                    modules={[Navigation, Pagination, Autoplay]}
-                    spaceBetween={16}
-                    slidesPerView={1}
-                    navigation
-                    pagination={{ clickable: true }}
-                    autoplay={{ delay: 5000, disableOnInteraction: false }}
-                    breakpoints={{
-                        480: { slidesPerView: 2, spaceBetween: 16 },
-                        768: { slidesPerView: 3, spaceBetween: 20 },
-                        1024: { slidesPerView: 4, spaceBetween: 24 },
-                    }}
-                    style={{ paddingBottom: 40 }}
-                >
-                    {isLoading ? (
-                        Array.from({ length: skeletonCount }).map((_, index) => (
+                {isLoading ? (
+                    <Swiper
+                        modules={[Navigation, Pagination]}
+                        spaceBetween={16}
+                        slidesPerView={1}
+                        navigation
+                        breakpoints={{
+                            480: { slidesPerView: 2, spaceBetween: 16 },
+                            768: { slidesPerView: 3, spaceBetween: 20 },
+                            1024: { slidesPerView: 4, spaceBetween: 24 },
+                        }}
+                        style={{ paddingBottom: 40 }}
+                    >
+                        {Array.from({ length: skeletonCount }).map((_, index) => (
                             <SwiperSlide key={`skeleton-${index}`}>
                                 <Box sx={{ display: 'flex', justifyContent: 'center' }}>
                                     <ProductCardSkeleton />
                                 </Box>
                             </SwiperSlide>
-                        ))
-                    ) : (
-                        products.map((product) => (
+                        ))}
+                    </Swiper>
+                ) : hasError ? (
+                    <ProductsEmptyState 
+                        type="error" 
+                        onRetry={onRetry}
+                        showBrowseButton={false}
+                    />
+                ) : !hasProducts ? (
+                    <ProductsEmptyState 
+                        type="empty"
+                        showRetryButton={false}
+                    />
+                ) : (
+                    <Swiper
+                        modules={[Navigation, Pagination, Autoplay]}
+                        spaceBetween={16}
+                        slidesPerView={1}
+                        navigation
+                        pagination={{ clickable: true }}
+                        autoplay={{ delay: 5000, disableOnInteraction: false }}
+                        breakpoints={{
+                            480: { slidesPerView: 2, spaceBetween: 16 },
+                            768: { slidesPerView: 3, spaceBetween: 20 },
+                            1024: { slidesPerView: 4, spaceBetween: 24 },
+                        }}
+                        style={{ paddingBottom: 40 }}
+                    >
+                        {products.map((product) => (
                             <SwiperSlide key={product.id}>
                                 <Box sx={{ display: 'flex', justifyContent: 'center' }}>
                                     <ProductCard
@@ -116,9 +143,9 @@ function ProductSection({ title, products, isLoading, loadingProducts, onAddToCa
                                     />
                                 </Box>
                             </SwiperSlide>
-                        ))
-                    )}
-                </Swiper>
+                        ))}
+                    </Swiper>
+                )}
             </Container>
         </Box>
     );

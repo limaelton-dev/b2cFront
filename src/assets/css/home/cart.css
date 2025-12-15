@@ -1,118 +1,9 @@
-.products-cart {
-    height: calc(100vh - 421px);
-    max-height: calc(100vh - 421px);
-    overflow-y: auto;
-}
-.products-cart .product {
-    display: flex;
-    align-items: center;
-    padding: 7px;
-    border-bottom: 1px solid #dedede;
-}
-.products-cart .product img {
-    width: 100px;
-}
-.products-cart .product .name-qty {
-    margin-left: 5px;
-    width: 50%;
-}
-.products-cart .product .name-qty span {
-    display: flex;
-    align-items: center;
-    line-height: 15px;
-    height: 30px;
-    margin-bottom: 7px;
-}
-.products-cart .product .quantity {
-    display: flex;
-}
-.products-cart .product .quantity input{
-    width: 55px;
-    text-align: center;
-    border: 1px solid #dedede;
-    border-left: none;
-    border-right: none;
-    outline: none;
-}
-.products-cart .product .quantity button{
-    width: 35px;
-    border:1px solid #dedede;
-    background: white;
-    transition: all ease 0.3s;
-}
-.products-cart .product .quantity button:hover{
-    background: #dddddd;
-}
-.products-cart .product .quantity .decrement{
-    border-top-left-radius: 3px;
-    border-bottom-left-radius: 3px;
-}
-.products-cart .product .quantity .increment{
-    border-top-right-radius: 3px;
-    border-bottom-right-radius: 3px;
-}
-.products-cart .product .product-price .price {
-    display: flex;
-    line-height: 18px;
-    font-size: 15px;
-    align-items: center;
-    height: 36px;
-    width: 85px;
-}
+/* Cart styles - most styles are now handled by MUI in src/components/Cart.tsx */
 
-.products-cart .product input[type=number]::-webkit-inner-spin-button, 
-.products-cart .product input[type=number]::-webkit-outer-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-}
-
-.products-cart .product input[type=number] {
-    -moz-appearance: textfield;
-}
-.cart-totals {
-    width: 100%;
-    max-height: 21vh;
-    padding: 10px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-}
-.cart-totals .totals {
-    display: flex;
-    justify-content: space-between;
-}
-.cart-totals .totals span {
-    font-size: 15px;
-    display: flex;
-    line-height: 19px;
-    flex-direction: column;
-    justify-content: center;
-    margin-bottom: 5px;
-}
-.cart-totals .totals span.mini {
-    font-size: 12px;
-    line-height: 8px;
-}
-.cart-totals .link-to-buy {
-    width: 100%;
-    display: flex;
-    justify-content: center;
+/* Header cart icon badge animation */
+.content-header .user-preference .cart .items-total,
+.content-header .user-preference .wishlist .items-total {
     background-color: #252d5f;
-    color: white;
-    border-radius: 4px;
-    padding: 8px 0px;
-    margin-top: 12px;
-    text-decoration: none;
-    font-size: 15px;
-    font-weight: bold;
-    text-transform: uppercase;
-    transition: all ease 0.2s;
-}
-.cart-totals .link-to-buy:hover {
-    background-color: #1a2147;
-}
-.content-header .user-preference .cart .items-total, .content-header .user-preference .wishlist .items-total{
-    background-color: #4C90F3;
     font-size: 11px;
     border-radius: 100%;
     position: absolute;
@@ -122,42 +13,60 @@
     color: white;
     animation: shadowTotal 1 0.9s ease;
 }
-.cart-moreprod {
-    display: flex;
-    justify-content: center;
-    padding-top: 5px;
-    padding-bottom: 4px;
-    box-shadow: 0px -4px 12px 1px #eeeeeeb0;
+
+@keyframes shadowTotal {
+    0% {
+        box-shadow: 0px 0px 0px 0px transparent;
+    }
+    25% {
+        box-shadow: 0px 0px 3px 3px rgba(37, 45, 95, 0.5);
+    }
+    50% {
+        box-shadow: 0px 0px 0px 0px transparent;
+    }
+    75% {
+        box-shadow: 0px 0px 3px 3px rgba(37, 45, 95, 0.5);
+    }
+    100% {
+        box-shadow: 0px 0px 0px 0px transparent;
+    }
 }
+
+/* Coupon code section - used in checkout */
 .coupon-code {
     padding: 10px;
-    height: calc(10vh + 6px);
 }
+
 .coupon-code span {
     width: 100%;
     display: flex;
     justify-content: center;
 }
+
 .coupon-code .coupon-status {
     display: flex;
     color: #252d5f;
     align-items: center;
     margin-top: 6px;
 }
+
 .coupon-code .coupon-status svg {
     margin-right: 5px;
 }
-.coupon-code .apply{
+
+.coupon-code .apply {
     display: flex;
     justify-content: center;
     margin-top: 9px;
 }
+
 .coupon-code .apply .input-cupom {
     overflow: hidden;
     position: relative;
 }
-.coupon-code .circles{
-    background-color: #2a84c3;
+
+.coupon-code .circles {
+    background-color: #252d5f;
     width: 10px;
     height: 10px;
     border-radius: 100%;
@@ -167,58 +76,27 @@
     transform: translateY(-50%);
     animation: moveCircles 3s infinite ease;
 }
+
 .coupon-code .circle1 {
     animation-delay: 0s;
 }
+
 .coupon-code .circle2 {
     animation-delay: 0.4s;
 }
+
 .coupon-code .circle3 {
     animation-delay: 0.8s;
 }
+
 @keyframes moveCircles {
-    0% {
-        left: -9%;
-    }
-    5% {
-        left: -5%;
-    }
-    10% {
-        left: -1%;
-    }
-    45% {
-        left: 47%;
-    }
-    50% {
-        left: 50%;
-    }
-    55% {
-        left: 53%;
-    }
-    85% {
-        left: 105%;
-    }
-    90% {
-        left: 105%;
-    }
-    100% {
-        left: 105%;
-    }
-}
-@keyframes shadowTotal {
-    0% {
-        box-shadow: 0px 0px 0px 0px transparent;
-    }
-    25% {
-        box-shadow: 0px 0px 3px 3px #5a90e1cd;
-    }
-    50% {
-        box-shadow: 0px 0px 0px 0px transparent;
-    }
-    75% {
-        box-shadow: 0px 0px 3px 3px #5a90e1cd;
-    }
-    100% {
-        box-shadow: 0px 0px 0px 0px transparent;
-    }
+    0% { left: -9%; }
+    5% { left: -5%; }
+    10% { left: -1%; }
+    45% { left: 47%; }
+    50% { left: 50%; }
+    55% { left: 53%; }
+    85% { left: 105%; }
+    90% { left: 105%; }
+    100% { left: 105%; }
 }
