@@ -46,7 +46,7 @@ let _instance: AxiosInstance | null = null;
 function createAxios(): AxiosInstance {
   const instance = axios.create({
     baseURL: BASE_URL,
-    timeout: 30000, // 30 segundos
+    timeout: 1800000, // 30 minutos - APIs podem demorar para carregar
     withCredentials: false, // Desabilitado para evitar problemas de CORS
   });
 

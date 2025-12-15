@@ -17,6 +17,8 @@ export interface FiltersContainerProps {
     brands: Brand[];
     filters: Filters;
     setFilters: (filters: Filters) => void;
+    isLoadingCategories?: boolean;
+    isLoadingBrands?: boolean;
 }
 
 export default function FiltersContainer({
@@ -24,6 +26,8 @@ export default function FiltersContainer({
     brands,
     filters,
     setFilters,
+    isLoadingCategories = false,
+    isLoadingBrands = false,
 }: FiltersContainerProps) {
     const handleCategoriesChange = (newCategories: string[]) => {
         setFilters({
@@ -85,12 +89,14 @@ export default function FiltersContainer({
                     categories={categories}
                     filters={filters.categories}
                     setFilters={handleCategoriesChange}
+                    isLoading={isLoadingCategories}
                 />
                 <Divider />
                 <BrandsList
                     brands={brands}
                     filters={filters.brands}
                     setFilters={handleBrandsChange}
+                    isLoading={isLoadingBrands}
                 />
                 <Divider />
                 <OthersList filters={filters} setFilters={setFilters} />

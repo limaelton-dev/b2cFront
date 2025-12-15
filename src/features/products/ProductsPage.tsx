@@ -18,7 +18,7 @@ import Footer from '@/app/footer';
 
 import { useAddToCart } from '@/hooks/useAddToCart';
 
-import { fetchRootCategories } from '@/api/categories/services/categories-service';
+import { fetchCategoriesMenu } from '@/api/categories/services/categories-service';
 import { fetchBrands } from '@/api/brands/services/brand-service';
 import { fetchAllProducts } from '@/api/products/services/product';
 
@@ -81,7 +81,7 @@ async function getBrands(): Promise<Brand[]> {
 
 async function getCategories(): Promise<Category[]> {
     try {
-        const data = await fetchRootCategories();
+        const data = await fetchCategoriesMenu();
         return data ?? [];
     } catch {
         return [];
@@ -105,6 +105,8 @@ export default function ProductsPage() {
 
     const [categories, setCategories] = useState<Category[]>([]);
     const [brands, setBrands] = useState<Brand[]>([]);
+    const [isLoadingCategories, setIsLoadingCategories] = useState(true);
+    const [isLoadingBrands, setIsLoadingBrands] = useState(true);
     const [isPending, startTransition] = useTransition();
 
     const fetchAbortRef = useRef<AbortController | null>(null);
@@ -116,12 +118,29 @@ export default function ProductsPage() {
 
     useEffect(() => {
         let mounted = true;
+
         (async () => {
-            const [cats, bnds] = await Promise.all([getCategories(), getBrands()]);
-            if (!mounted) return;
-            setCategories(Array.isArray(cats) ? cats : []);
-            setBrands(Array.isArray(bnds) ? bnds : []);
+            try {
+                const cats = await getCategories();
+                if (mounted) {
+                    setCategories(Array.isArray(cats) ? cats : []);
+                }
+            } finally {
+                if (mounted) setIsLoadingCategories(false);
+            }
         })();
+
+        (async () => {
+            try {
+                const bnds = await getBrands();
+                if (mounted) {
+                    setBrands(Array.isArray(bnds) ? bnds : []);
+                }
+            } finally {
+                if (mounted) setIsLoadingBrands(false);
+            }
+        })();
+
         return () => {
             mounted = false;
         };
@@ -216,6 +235,8 @@ export default function ProductsPage() {
                         brands={brands}
                         filters={filters}
                         setFilters={handleFiltersChange}
+                        isLoadingCategories={isLoadingCategories}
+                        isLoadingBrands={isLoadingBrands}
                     />
 
                     <Box sx={{ flex: 1 }}>
