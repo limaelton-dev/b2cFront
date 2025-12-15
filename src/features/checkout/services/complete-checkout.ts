@@ -7,6 +7,8 @@ import {
     processDebitCardPaymentWithGateway
 } from '@/api/checkout/services/checkout-service';
 import { generateCardToken } from '@/api/checkout/services/mercado-pago';
+import { addItemAPI } from '@/api/cart/services/cart-service';
+import { loadGuestCart, clearGuestCart } from '@/utils/cart-storage';
 import { saveToken } from '@/utils/auth';
 import { CheckoutFormData, SavedIds } from '../hooks/useCheckoutCustomer';
 import { detectCardBrand } from '../utils/validation';
@@ -123,6 +125,19 @@ function buildCheckoutCard(formData: CheckoutFormData): CheckoutCard | undefined
     };
 }
 
+async function migrateGuestCartToServer(): Promise<void> {
+    const guestCart = loadGuestCart();
+    if (!guestCart?.items?.length) return;
+    
+    for (const item of guestCart.items) {
+        for (let i = 0; i < item.quantity; i++) {
+            await addItemAPI(item.skuId, item.productId);
+        }
+    }
+    
+    clearGuestCart();
+}
+
 async function processGuestFlow(formData: CheckoutFormData): Promise<{ addressId?: number }> {
     const profileType = formData.profileType === '1' ? 'PF' : 'PJ';
     const profile = profileType === 'PF' ? buildProfilePF(formData) : buildProfilePJ(formData);
@@ -141,6 +156,7 @@ async function processGuestFlow(formData: CheckoutFormData): Promise<{ addressId
     
     if (response.accessToken) {
         saveToken(response.accessToken);
+        await migrateGuestCartToServer();
     }
     
     return {};
@@ -191,8 +207,31 @@ async function createOrderFlow(
     return { orderId: response.orderId };
 }
 
+// #region DEV_TEST_CARD - REMOVER EM PRODUÇÃO
+const USE_TEST_CARD = process.env.NODE_ENV === 'development';
+const TEST_CARD_DATA = {
+    cardNumber: "5031433215406351",
+    cardholderName: "APRO",
+    cardExpirationMonth: "11",
+    cardExpirationYear: "2030",
+    identificationType: "CPF",
+    identificationNumber: "12345678909"
+};
+// #endregion DEV_TEST_CARD
+
 async function tokenizeCard(formData: CheckoutFormData): Promise<string> {
     const [expMonth, expYear] = formData.cardExpirationDate.split('/');
+    
+    // #region DEV_TEST_CARD - REMOVER EM PRODUÇÃO
+    if (USE_TEST_CARD) {
+        console.warn('[DEV] Usando cartão de teste do Mercado Pago');
+        const tokenResponse = await generateCardToken({
+            ...TEST_CARD_DATA,
+            securityCode: "123"
+        });
+        return tokenResponse.id;
+    }
+    // #endregion DEV_TEST_CARD
     
     const tokenResponse = await generateCardToken({
         cardNumber: formData.cardNumber.replace(/\s/g, ''),
@@ -287,6 +326,7 @@ export async function completeCheckoutWithCreditCard(
         return handlePaymentResponse(response, 'card');
         
     } catch (error: any) {
+        console.log("ERRO AQUI: ", error)
         return { success: false, message: error?.message || 'Erro ao processar pagamento' };
     }
 }
