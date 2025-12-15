@@ -1,9 +1,21 @@
-"use client";
+'use client';
+
 import React from 'react';
-import { Box, TextField, RadioGroup, FormControlLabel, Radio, Button, CircularProgress, Link as MuiLink } from '@mui/material';
-import Checkbox from '@mui/joy/Checkbox';
+import Link from 'next/link';
+import {
+    Box,
+    TextField,
+    RadioGroup,
+    FormControlLabel,
+    Radio,
+    Button,
+    CircularProgress,
+    Checkbox,
+    Typography,
+} from '@mui/material';
 import MaskedTextField from './MaskedTextField';
 import { CheckoutFormData, PROFILE_TYPE } from '../hooks/useCheckoutCustomer';
+import { THEME_COLOR, checkoutStyles } from '../theme';
 
 interface FormErrors {
     cpf: boolean;
@@ -44,7 +56,7 @@ interface PersonalInfoFormProps {
     onContinue: () => void;
 }
 
-const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
+export default function PersonalInfoForm({
     formData,
     errors,
     isAuthenticated,
@@ -57,191 +69,237 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
     onValidatePhone,
     onValidatePasswords,
     onValidateBirthDate,
-    onContinue
-}) => {
+    onContinue,
+}: PersonalInfoFormProps) {
     return (
-        <form className="d-flex justify-content-between flex-wrap" style={{ position: 'relative' }}>
+        <Box component="form" sx={{ position: 'relative', width: '100%' }}>
             {loadingPersonalData && (
-                <Box sx={{ position: 'absolute', top: '40%', left: '50%', transform: 'translate(-50%, -50%)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 99999 }}>
-                    <CircularProgress />
+                <Box
+                    sx={{
+                        position: 'absolute',
+                        top: '40%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        zIndex: 10,
+                    }}
+                >
+                    <CircularProgress sx={{ color: THEME_COLOR }} />
                 </Box>
             )}
-            
-            <Box className="d-flex justify-content-between flex-wrap" sx={{ filter: loadingPersonalData ? 'blur(2px)' : 'none', width: '100%' }}>
+
+            <Box sx={{ filter: loadingPersonalData ? 'blur(2px)' : 'none', width: '100%' }}>
                 {!isAuthenticated && (
                     <RadioGroup
                         row
                         value={formData.profileType}
                         aria-labelledby="profile-type-radio-group"
                         name="profile-type-radio-group"
-                        sx={{ justifyContent: 'space-between', width: '100%' }}
+                        sx={{ justifyContent: 'space-between', width: '100%', mb: 2 }}
                     >
-                        <FormControlLabel 
+                        <FormControlLabel
                             value={PROFILE_TYPE.PF}
-                            sx={{ margin: 0 }} 
-                            control={<Radio />} 
-                            onClick={() => onChangeProfileType(PROFILE_TYPE.PF)} 
-                            label="Pessoa Física" 
+                            control={<Radio sx={checkoutStyles.checkbox} />}
+                            onClick={() => onChangeProfileType(PROFILE_TYPE.PF)}
+                            label="Pessoa Física"
+                            sx={{ m: 0 }}
                         />
-                        <FormControlLabel 
+                        <FormControlLabel
                             value={PROFILE_TYPE.PJ}
-                            sx={{ margin: 0 }} 
-                            control={<Radio />} 
-                            onClick={() => onChangeProfileType(PROFILE_TYPE.PJ)} 
-                            label="Pessoa Jurídica" 
+                            control={<Radio sx={checkoutStyles.checkbox} />}
+                            onClick={() => onChangeProfileType(PROFILE_TYPE.PJ)}
+                            label="Pessoa Jurídica"
+                            sx={{ m: 0 }}
                         />
                     </RadioGroup>
                 )}
-                
-                <TextField 
-                    sx={{ width: '48%', mb: '12px' }} 
-                    onChange={(e) => onUpdateField('firstName', e.target.value)} 
-                    value={formData.firstName} 
-                    label="Nome*" 
-                    variant="standard" 
-                />
-                <TextField 
-                    sx={{ width: '48%', mb: '12px' }} 
-                    onChange={(e) => onUpdateField('lastName', e.target.value)} 
-                    value={formData.lastName} 
-                    label="Sobrenome*" 
-                    variant="standard" 
-                />
-                
-                <TextField 
-                    sx={{ width: '100%', mb: '12px' }} 
-                    onChange={(e) => onUpdateField('email', e.target.value)} 
-                    error={errors.email} 
-                    value={formData.email} 
-                    disabled={isAuthenticated} 
-                    onBlur={onValidateEmail} 
-                    helperText={errors.email ? errors.emailMessage : ''} 
-                    label="Email*" 
-                    variant="standard" 
-                />
-                
-                {!isAuthenticated && (
-                    <>
-                        <TextField 
-                            sx={{ width: '100%', mb: '12px' }} 
-                            onChange={(e) => onUpdateField('password', e.target.value)} 
-                            value={formData.password} 
-                            type="password"
-                            label="Senha*" 
-                            variant="standard" 
-                            error={errors.passwords}
-                            helperText={errors.passwords ? errors.passwordsMessage : ''}
-                            onBlur={onValidatePasswords}
+
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+                        <TextField
+                            fullWidth
+                            label="Nome *"
+                            value={formData.firstName}
+                            onChange={(e) => onUpdateField('firstName', e.target.value)}
+                            size="small"
+                            sx={checkoutStyles.textField}
                         />
-                        <TextField 
-                            sx={{ width: '100%', mb: '12px' }} 
-                            onChange={(e) => onUpdateField('confirmPassword', e.target.value)} 
-                            value={formData.confirmPassword} 
-                            type="password"
-                            label="Confirmar Senha*" 
-                            variant="standard" 
-                            error={errors.passwords}
-                            helperText={errors.passwords ? errors.passwordsMessage : ''}
-                            onBlur={onValidatePasswords}
+                        <TextField
+                            fullWidth
+                            label="Sobrenome *"
+                            value={formData.lastName}
+                            onChange={(e) => onUpdateField('lastName', e.target.value)}
+                            size="small"
+                            sx={checkoutStyles.textField}
                         />
-                    </>
-                )}
-                
-                <MaskedTextField
-                    mask="(99) 99999-9999"
-                    value={formData.phone}
-                    onChange={(e) => onUpdateField('phone', e.target.value)}
-                    onBlur={() => onValidatePhone(formData.phone)}
-                    // disabled={isAuthenticated}
-                    label="Telefone fixo ou Celular*"
-                    variant="standard"
-                    error={errors.phone}
-                    helperText={errors.phone ? errors.phoneMessage : ''}
-                    sx={{ width: '100%', mb: '8px' }}
-                />
-                
-                {formData.profileType === PROFILE_TYPE.PJ && (
-                    <>
-                        <MaskedTextField
-                            mask="99.999.999/9999-99"
-                            value={formData.cnpj}
-                            onChange={(e) => onUpdateField('cnpj', e.target.value)}
-                            onBlur={() => onValidateCNPJ(formData.cnpj)}
-                            disabled={isAuthenticated}
-                            label="CNPJ*"
-                            variant="standard"
-                            error={errors.cnpj}
-                            helperText={errors.cnpj ? errors.cnpjMessage : ''}
-                            sx={{ width: '45%', mb: '8px' }}
-                        />
-                        <TextField 
-                            sx={{ width: '45%', mb: '12px' }} 
-                            value={formData.stateRegistration} 
-                            onChange={(e) => onUpdateField('stateRegistration', e.target.value)} 
-                            label="Inscrição Estadual*" 
-                            variant="standard" 
-                        />
-                        <TextField 
-                            sx={{ width: '100%', mb: '12px' }} 
-                            value={formData.tradingName} 
-                            onChange={(e) => onUpdateField('tradingName', e.target.value)} 
-                            label="Razão Social*" 
-                            variant="standard" 
-                        />
-                    </>
-                )}
-                
-                {formData.profileType === PROFILE_TYPE.PF && (
-                    <>
-                        <MaskedTextField
-                            mask="999.999.999-99"
-                            value={formData.cpf}
-                            onChange={(e) => onUpdateField('cpf', e.target.value)}
-                            onBlur={() => onValidateCPF(formData.cpf)}
-                            disabled={isAuthenticated}
-                            label="CPF*"
-                            error={errors.cpf}
-                            helperText={errors.cpf ? errors.cpfMessage : ''}
-                            variant="standard"
-                            sx={{ width: '48%', mb: '8px' }}
-                        />
-                        <MaskedTextField
-                            mask="99/99/9999"
-                            value={formData.birthDate}
-                            onChange={(e) => onUpdateField('birthDate', e.target.value)}
-                            onBlur={() => onValidateBirthDate(formData.birthDate)}
-                            label="Data de Nascimento*"
-                            variant="standard"
-                            placeholder="DD/MM/AAAA"
-                            error={errors.birthDate}
-                            helperText={errors.birthDate ? errors.birthDateMessage : ''}
-                            sx={{ width: '48%', mb: '8px' }}
-                        />
-                    </>
-                )}
-                
-                <div className='mb-3 mt-3'>
-                    <Checkbox 
-                        sx={{ '& .MuiCheckbox-label': { zIndex: 55 } }} 
-                        label="Quero receber ofertas futuras"
-                        checked={formData.receiveOffers}
-                        onChange={(e) => onUpdateField('receiveOffers', e.target.checked)}
+                    </Box>
+
+                    <TextField
+                        fullWidth
+                        label="Email *"
+                        value={formData.email}
+                        onChange={(e) => onUpdateField('email', e.target.value)}
+                        onBlur={onValidateEmail}
+                        disabled={isAuthenticated}
+                        error={errors.email}
+                        helperText={errors.email ? errors.emailMessage : ''}
+                        size="small"
+                        sx={checkoutStyles.textField}
                     />
-                    <Checkbox 
-                        sx={{ '& .MuiCheckbox-label': { zIndex: 55 } }} 
-                        label={<>Aceito a <MuiLink sx={{ color: 'blue' }} href="/politica-privacidade">Política de Privacidade</MuiLink></>}
-                        checked={formData.acceptPrivacyPolicy}
-                        onChange={(e) => onUpdateField('acceptPrivacyPolicy', e.target.checked)}
+
+                    {!isAuthenticated && (
+                        <>
+                            <TextField
+                                fullWidth
+                                type="password"
+                                label="Senha *"
+                                value={formData.password}
+                                onChange={(e) => onUpdateField('password', e.target.value)}
+                                onBlur={onValidatePasswords}
+                                error={errors.passwords}
+                                helperText={errors.passwords ? errors.passwordsMessage : ''}
+                                size="small"
+                                sx={checkoutStyles.textField}
+                            />
+                            <TextField
+                                fullWidth
+                                type="password"
+                                label="Confirmar Senha *"
+                                value={formData.confirmPassword}
+                                onChange={(e) => onUpdateField('confirmPassword', e.target.value)}
+                                onBlur={onValidatePasswords}
+                                error={errors.passwords}
+                                helperText={errors.passwords ? errors.passwordsMessage : ''}
+                                size="small"
+                                sx={checkoutStyles.textField}
+                            />
+                        </>
+                    )}
+
+                    <MaskedTextField
+                        mask="(99) 99999-9999"
+                        value={formData.phone}
+                        onChange={(e) => onUpdateField('phone', e.target.value)}
+                        onBlur={() => onValidatePhone(formData.phone)}
+                        label="Telefone fixo ou Celular *"
+                        error={errors.phone}
+                        helperText={errors.phone ? errors.phoneMessage : ''}
+                        size="small"
+                        fullWidth
+                        sx={checkoutStyles.textField}
                     />
-                </div>
-                
-                <Button variant="contained" color="primary" className='mb-3' fullWidth onClick={onContinue}>
+
+                    {formData.profileType === PROFILE_TYPE.PJ && (
+                        <>
+                            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+                                <MaskedTextField
+                                    mask="99.999.999/9999-99"
+                                    value={formData.cnpj}
+                                    onChange={(e) => onUpdateField('cnpj', e.target.value)}
+                                    onBlur={() => onValidateCNPJ(formData.cnpj)}
+                                    disabled={isAuthenticated}
+                                    label="CNPJ *"
+                                    error={errors.cnpj}
+                                    helperText={errors.cnpj ? errors.cnpjMessage : ''}
+                                    size="small"
+                                    fullWidth
+                                    sx={checkoutStyles.textField}
+                                />
+                                <TextField
+                                    fullWidth
+                                    label="Inscrição Estadual *"
+                                    value={formData.stateRegistration}
+                                    onChange={(e) => onUpdateField('stateRegistration', e.target.value)}
+                                    size="small"
+                                    sx={checkoutStyles.textField}
+                                />
+                            </Box>
+                            <TextField
+                                fullWidth
+                                label="Razão Social *"
+                                value={formData.tradingName}
+                                onChange={(e) => onUpdateField('tradingName', e.target.value)}
+                                size="small"
+                                sx={checkoutStyles.textField}
+                            />
+                        </>
+                    )}
+
+                    {formData.profileType === PROFILE_TYPE.PF && (
+                        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+                            <MaskedTextField
+                                mask="999.999.999-99"
+                                value={formData.cpf}
+                                onChange={(e) => onUpdateField('cpf', e.target.value)}
+                                onBlur={() => onValidateCPF(formData.cpf)}
+                                disabled={isAuthenticated}
+                                label="CPF *"
+                                error={errors.cpf}
+                                helperText={errors.cpf ? errors.cpfMessage : ''}
+                                size="small"
+                                fullWidth
+                                sx={checkoutStyles.textField}
+                            />
+                            <MaskedTextField
+                                mask="99/99/9999"
+                                value={formData.birthDate}
+                                onChange={(e) => onUpdateField('birthDate', e.target.value)}
+                                onBlur={() => onValidateBirthDate(formData.birthDate)}
+                                label="Data de Nascimento *"
+                                placeholder="DD/MM/AAAA"
+                                error={errors.birthDate}
+                                helperText={errors.birthDate ? errors.birthDateMessage : ''}
+                                size="small"
+                                fullWidth
+                                sx={checkoutStyles.textField}
+                            />
+                        </Box>
+                    )}
+                </Box>
+
+                <Box sx={{ mt: 2, mb: 2 }}>
+                    <FormControlLabel
+                        control={
+                            <Checkbox
+                                checked={formData.receiveOffers}
+                                onChange={(e) => onUpdateField('receiveOffers', e.target.checked)}
+                                sx={checkoutStyles.checkbox}
+                                size="small"
+                            />
+                        }
+                        label={<Typography variant="body2">Quero receber ofertas futuras</Typography>}
+                    />
+                    <FormControlLabel
+                        control={
+                            <Checkbox
+                                checked={formData.acceptPrivacyPolicy}
+                                onChange={(e) => onUpdateField('acceptPrivacyPolicy', e.target.checked)}
+                                sx={checkoutStyles.checkbox}
+                                size="small"
+                            />
+                        }
+                        label={
+                            <Typography variant="body2">
+                                Aceito a{' '}
+                                <Link
+                                    href="/politica-privacidade"
+                                    style={{ color: THEME_COLOR, fontWeight: 500 }}
+                                >
+                                    Política de Privacidade
+                                </Link>
+                            </Typography>
+                        }
+                    />
+                </Box>
+
+                <Button
+                    variant="contained"
+                    fullWidth
+                    onClick={onContinue}
+                    sx={checkoutStyles.button}
+                >
                     Continuar
                 </Button>
             </Box>
-        </form>
+        </Box>
     );
-};
-
-export default PersonalInfoForm;
-
+}

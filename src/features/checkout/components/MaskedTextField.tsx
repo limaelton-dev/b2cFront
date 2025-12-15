@@ -1,4 +1,5 @@
-"use client";
+'use client';
+
 import React, { forwardRef } from 'react';
 import { TextField, TextFieldProps } from '@mui/material';
 import InputMask from 'react-input-mask';
@@ -11,7 +12,7 @@ interface MaskedTextFieldProps extends Omit<TextFieldProps, 'onChange'> {
 }
 
 const MaskedTextField = forwardRef<HTMLInputElement, MaskedTextFieldProps>(
-    ({ mask, value, onChange, maskChar = '', disabled, onBlur, onFocus, ...textFieldProps }, ref) => {
+    ({ mask, value, onChange, maskChar = '', disabled, onBlur, onFocus, variant = 'outlined', ...textFieldProps }, ref) => {
         return (
             <InputMask
                 mask={mask}
@@ -26,6 +27,7 @@ const MaskedTextField = forwardRef<HTMLInputElement, MaskedTextFieldProps>(
                     <TextField
                         {...textFieldProps}
                         {...inputProps}
+                        variant={variant}
                         disabled={disabled}
                         inputRef={ref}
                         InputLabelProps={{ shrink: !!value }}
