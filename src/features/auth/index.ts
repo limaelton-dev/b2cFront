@@ -1,7 +1,7 @@
 export { default as LoginPage } from './LoginPage';
 export { default as RegisterPage } from './RegisterPage';
 export { AuthLayout } from './components/AuthLayout';
-export { AuthButton } from './components/AuthButton';
-export { AuthFormField } from './components/AuthFormField';
-export { ErrorMessage } from './components/ErrorMessage';
-
+export { default as AuthTextField } from './components/AuthTextField';
+export { default as AuthSelect } from './components/AuthSelect';
+export { default as ProfileTypeSelector } from './components/ProfileTypeSelector';
+export { default as SocialLoginDivider } from './components/SocialLoginDivider';

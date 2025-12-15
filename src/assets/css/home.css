@@ -15,25 +15,21 @@
 
 .swiper-button-next,
 .swiper-button-prev {
-    color: #252d5f;
-    background-color: rgba(255, 255, 255, 0.9);
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    transition: all 0.2s ease;
+    color: rgba(37, 45, 95, 0.25);
+    width: 36px;
+    height: 36px;
+    transition: all 0.3s ease;
 }
 
 .swiper-button-next:hover,
 .swiper-button-prev:hover {
-    background-color: #252d5f;
-    color: #fff;
+    color: rgba(37, 45, 95, 0.7);
 }
 
 .swiper-button-next::after,
 .swiper-button-prev::after {
-    font-size: 16px;
-    font-weight: 700;
+    font-size: 14px;
+    font-weight: 600;
 }
 
 .swiper-pagination-bullet {

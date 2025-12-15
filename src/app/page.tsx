@@ -11,7 +11,10 @@ import 'swiper/css/pagination';
 import '@/assets/css/home.css';
 import LogoColetek from '@/assets/img/logo_coletek.png';
 import bgNewsletter from '@/assets/img/background.png';
-import Banner1 from '@/assets/img/132.jpg';
+import Slide1 from '@/assets/img/bannerCarrousel/slide1.png';
+import Slide2 from '@/assets/img/bannerCarrousel/slide2.png';
+import Slide3 from '@/assets/img/bannerCarrousel/slide3.png';
+import Slide4 from '@/assets/img/bannerCarrousel/slide4.png';
 import Header from './header';
 import Footer from './footer';
 import Cart from '../components/Cart';
@@ -296,18 +299,63 @@ export default function HomePage() {
                     component="section"
                     sx={{
                         width: '100%',
-                        '& img': {
+                        '& .swiper': {
                             width: '100%',
-                            height: { xs: '40vh', md: '57vh' },
-                            objectFit: 'cover',
+                        },
+                        '& .swiper-pagination-bullet': {
+                            bgcolor: 'rgba(255,255,255,0.5)',
+                            width: 12,
+                            height: 12,
+                            transition: 'all 0.3s ease',
+                        },
+                        '& .swiper-pagination-bullet-active': {
+                            bgcolor: '#fff',
+                            width: 32,
+                            borderRadius: 6,
+                        },
+                        '& .swiper-button-prev, & .swiper-button-next': {
+                            color: 'rgba(255,255,255,0.4)',
+                            width: 40,
+                            height: 40,
+                            transition: 'all 0.3s ease',
+                            '&::after': {
+                                fontSize: 16,
+                            },
+                            '&:hover': {
+                                color: 'rgba(255,255,255,0.9)',
+                            },
                         },
                     }}
                 >
-                    <Image
-                        src={Banner1}
-                        alt="Banner promocional"
-                        priority
-                    />
+                    <Swiper
+                        modules={[Navigation, Pagination, Autoplay]}
+                        navigation
+                        pagination={{ clickable: true }}
+                        autoplay={{ delay: 4000, disableOnInteraction: false }}
+                        loop
+                        speed={800}
+                        style={{ width: '100%' }}
+                    >
+                        {[Slide1, Slide2, Slide3, Slide4].map((slide, index) => (
+                            <SwiperSlide key={index}>
+                                <Box
+                                    sx={{
+                                        position: 'relative',
+                                        width: '100%',
+                                        height: { xs: '38vh', sm: '46vh', md: '55vh' },
+                                    }}
+                                >
+                                    <Image
+                                        src={slide}
+                                        alt={`Banner ${index + 1}`}
+                                        fill
+                                        priority={index === 0}
+                                        style={{ objectFit: 'cover' }}
+                                    />
+                                </Box>
+                            </SwiperSlide>
+                        ))}
+                    </Swiper>
                 </Box>
 
                 <InfoCards />

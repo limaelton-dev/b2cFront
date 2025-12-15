@@ -1,13 +1,18 @@
-"use client"
+'use client';
+
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { Box, Typography, Alert, Collapse } from '@mui/material';
+import LoadingButton from '@mui/lab/LoadingButton';
 import AlternateEmailIcon from '@mui/icons-material/AlternateEmail';
-import KeyIcon from '@mui/icons-material/Key';
+import LockIcon from '@mui/icons-material/Lock';
 import PersonIcon from '@mui/icons-material/Person';
-import BusinessIcon from '@mui/icons-material/Business';
 import BadgeIcon from '@mui/icons-material/Badge';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import WcIcon from '@mui/icons-material/Wc';
+import BusinessIcon from '@mui/icons-material/Business';
+import HowToRegIcon from '@mui/icons-material/HowToReg';
 
 import { useAuth } from '@/context/AuthProvider';
 import { useToastSide } from '@/context/ToastSideProvider';
@@ -15,9 +20,18 @@ import { useAuthForm } from '@/hooks/useAuthForm';
 import type { RegisterRequest } from '@/api/auth';
 
 import { AuthLayout } from './components/AuthLayout';
-import { AuthButton } from './components/AuthButton';
-import { AuthFormField } from './components/AuthFormField';
-import { ErrorMessage } from './components/ErrorMessage';
+import AuthTextField from './components/AuthTextField';
+import AuthSelect from './components/AuthSelect';
+import ProfileTypeSelector from './components/ProfileTypeSelector';
+
+const THEME_COLOR = '#252d5f';
+
+const GENDER_OPTIONS = [
+    { value: 'Masculino', label: 'Masculino' },
+    { value: 'Feminino', label: 'Feminino' },
+    { value: 'Outro', label: 'Outro' },
+    { value: 'Prefiro não informar', label: 'Prefiro não informar' },
+];
 
 export default function RegisterPage() {
     const router = useRouter();
@@ -33,7 +47,7 @@ export default function RegisterPage() {
         validateFields,
         validatePasswordMatch,
         setErrorMessage,
-        clearError
+        clearError,
     } = useAuthForm({
         email: '',
         password: '',
@@ -46,7 +60,7 @@ export default function RegisterPage() {
         cnpj: '',
         tradingName: '',
         stateRegistration: '',
-        municipalRegistration: ''
+        municipalRegistration: '',
     });
 
     const handleProfileTypeChange = (type: 'PF' | 'PJ') => {
@@ -54,7 +68,7 @@ export default function RegisterPage() {
         clearError();
     };
 
-    const handleSubmit = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         clearError();
 
@@ -78,7 +92,7 @@ export default function RegisterPage() {
         try {
             const [firstName, ...lastNameParts] = formData.fullName.trim().split(' ');
             const lastName = lastNameParts.join(' ');
-            
+
             const payload: RegisterRequest = profileType === 'PF'
                 ? {
                     email: formData.email,
@@ -89,8 +103,8 @@ export default function RegisterPage() {
                         lastName,
                         cpf: formData.cpf,
                         birthDate: formData.birthDate || new Date().toISOString().split('T')[0],
-                        gender: formData.gender || null
-                    }
+                        gender: formData.gender || null,
+                    },
                 }
                 : {
                     email: formData.email,
@@ -101,192 +115,208 @@ export default function RegisterPage() {
                         cnpj: formData.cnpj,
                         tradingName: formData.tradingName || undefined,
                         stateRegistration: formData.stateRegistration || undefined,
-                        municipalRegistration: formData.municipalRegistration || undefined
-                    }
+                        municipalRegistration: formData.municipalRegistration || undefined,
+                    },
                 };
 
             await register(payload);
-            
             showToast('Você se cadastrou com sucesso!', 'success');
             router.push('/');
         } catch (error: any) {
-            console.error('Erro durante o cadastro:', error);
             setErrorMessage(error?.message || 'Houve um erro ao criar usuário');
         }
     };
 
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        handleChange(e);
+        if (errorMessage) clearError();
+    };
+
     return (
-        <AuthLayout>
-            <form id="form-login" style={{width: '100%'}} method="POST">
-                <ErrorMessage message={errorMessage} />
-                
-                <div className="form-group text-center mb-4">
-                    <div className="btn-group" role="group">
-                        <button
-                            type="button"
-                            className={`btn ${profileType === 'PF' ? 'btn-primary' : 'btn-outline-primary'}`}
-                            onClick={() => handleProfileTypeChange('PF')}
-                        >
-                            Pessoa Física
-                        </button>
-                        <button
-                            type="button"
-                            className={`btn ${profileType === 'PJ' ? 'btn-primary' : 'btn-outline-primary'}`}
-                            onClick={() => handleProfileTypeChange('PJ')}
-                        >
-                            Pessoa Jurídica
-                        </button>
-                    </div>
-                </div>
-                
-                <AuthFormField
+        <AuthLayout title="Criar conta" subtitle="Preencha os dados para se cadastrar">
+            <Box component="form" onSubmit={handleSubmit} noValidate>
+                <ProfileTypeSelector value={profileType} onChange={handleProfileTypeChange} />
+
+                {errorMessage && (
+                    <Alert severity="error" sx={{ mb: 2.5, borderRadius: 2 }}>
+                        {errorMessage}
+                    </Alert>
+                )}
+
+                <AuthTextField
                     icon={<AlternateEmailIcon />}
-                    type="text"
+                    type="email"
                     name="email"
-                    placeholder="Email*"
+                    label="Email *"
                     value={formData.email}
-                    onChange={handleChange}
+                    onChange={handleInputChange}
                     error={errors.email}
-                    required
+                    autoComplete="email"
                 />
-                
-                <AuthFormField
-                    icon={<KeyIcon />}
+
+                <AuthTextField
+                    icon={<LockIcon />}
                     type="password"
                     name="password"
-                    placeholder="Senha*"
+                    label="Senha *"
                     value={formData.password}
-                    onChange={handleChange}
+                    onChange={handleInputChange}
                     error={errors.password}
-                    required
+                    autoComplete="new-password"
                 />
-                
-                <AuthFormField
-                    icon={<KeyIcon />}
+
+                <AuthTextField
+                    icon={<LockIcon />}
                     type="password"
                     name="repassword"
-                    placeholder="Repita novamente a senha*"
+                    label="Confirmar senha *"
                     value={formData.repassword}
-                    onChange={handleChange}
+                    onChange={handleInputChange}
                     error={errors.repassword}
-                    required
+                    autoComplete="new-password"
                 />
-                
-                {profileType === 'PF' && (
-                    <>
-                        <AuthFormField
+
+                <Collapse in={profileType === 'PF'}>
+                    <Box>
+                        <AuthTextField
                             icon={<PersonIcon />}
                             type="text"
                             name="fullName"
-                            placeholder="Nome e sobrenome*"
+                            label="Nome completo *"
                             value={formData.fullName}
-                            onChange={handleChange}
+                            onChange={handleInputChange}
                             error={errors.fullName}
-                            required
+                            autoComplete="name"
                         />
-                        
-                        <AuthFormField
+
+                        <AuthTextField
                             icon={<BadgeIcon />}
                             type="text"
                             name="cpf"
-                            placeholder="CPF*"
+                            label="CPF *"
                             value={formData.cpf}
-                            onChange={handleChange}
+                            onChange={handleInputChange}
                             error={errors.cpf}
-                            required
                         />
-                        
-                        <AuthFormField
+
+                        <AuthTextField
                             icon={<CalendarTodayIcon />}
                             type="date"
                             name="birthDate"
-                            placeholder="Data de Nascimento"
+                            label="Data de Nascimento"
                             value={formData.birthDate}
-                            onChange={handleChange}
+                            onChange={handleInputChange}
+                            InputLabelProps={{ shrink: true }}
                         />
-                        
-                        <div className="form-group icons-inputs">
-                            <div style={{ position: 'absolute', top: '50%', left: '15px', transform: 'translateY(-50%)' }}>
-                                <WcIcon />
-                            </div>
-                            <select
-                                name="gender"
-                                value={formData.gender}
-                                onChange={handleChange}
-                                className="form-control"
-                                style={{ paddingLeft: '45px' }}
-                            >
-                                <option value="">Selecione o gênero</option>
-                                <option value="Masculino">Masculino</option>
-                                <option value="Feminino">Feminino</option>
-                                <option value="Outro">Outro</option>
-                                <option value="Prefiro não informar">Prefiro não informar</option>
-                            </select>
-                        </div>
-                    </>
-                )}
-                
-                {profileType === 'PJ' && (
-                    <>
-                        <AuthFormField
+
+                        <AuthSelect
+                            icon={<WcIcon />}
+                            name="gender"
+                            label="Gênero"
+                            value={formData.gender}
+                            onChange={(e) => handleChange(e as any)}
+                            options={GENDER_OPTIONS}
+                        />
+                    </Box>
+                </Collapse>
+
+                <Collapse in={profileType === 'PJ'}>
+                    <Box>
+                        <AuthTextField
                             icon={<BusinessIcon />}
                             type="text"
                             name="companyName"
-                            placeholder="Razão Social*"
+                            label="Razão Social *"
                             value={formData.companyName}
-                            onChange={handleChange}
+                            onChange={handleInputChange}
                             error={errors.companyName}
-                            required
                         />
-                        
-                        <AuthFormField
+
+                        <AuthTextField
                             icon={<BadgeIcon />}
                             type="text"
                             name="cnpj"
-                            placeholder="CNPJ*"
+                            label="CNPJ *"
                             value={formData.cnpj}
-                            onChange={handleChange}
+                            onChange={handleInputChange}
                             error={errors.cnpj}
-                            required
                         />
-                        
-                        <AuthFormField
+
+                        <AuthTextField
                             icon={<BusinessIcon />}
                             type="text"
                             name="tradingName"
-                            placeholder="Nome Fantasia"
+                            label="Nome Fantasia"
                             value={formData.tradingName}
-                            onChange={handleChange}
+                            onChange={handleInputChange}
                         />
-                        
-                        <AuthFormField
+
+                        <AuthTextField
                             icon={<BadgeIcon />}
                             type="text"
                             name="stateRegistration"
-                            placeholder="Inscrição Estadual"
+                            label="Inscrição Estadual"
                             value={formData.stateRegistration}
-                            onChange={handleChange}
+                            onChange={handleInputChange}
                         />
-                        
-                        <AuthFormField
+
+                        <AuthTextField
                             icon={<BadgeIcon />}
                             type="text"
                             name="municipalRegistration"
-                            placeholder="Inscrição Municipal"
+                            label="Inscrição Municipal"
                             value={formData.municipalRegistration}
-                            onChange={handleChange}
+                            onChange={handleInputChange}
                         />
-                    </>
-                )}
-                
-                <AuthButton loading={loading} onClick={handleSubmit}>
+                    </Box>
+                </Collapse>
+
+                <LoadingButton
+                    type="submit"
+                    fullWidth
+                    variant="contained"
+                    loading={loading}
+                    loadingPosition="start"
+                    startIcon={<HowToRegIcon />}
+                    sx={{
+                        mt: 1,
+                        mb: 3,
+                        py: 1.5,
+                        bgcolor: THEME_COLOR,
+                        borderRadius: 2,
+                        textTransform: 'none',
+                        fontWeight: 600,
+                        fontSize: '1rem',
+                        boxShadow: '0 4px 12px rgba(37, 45, 95, 0.3)',
+                        '&:hover': {
+                            bgcolor: '#1a2147',
+                            boxShadow: '0 6px 16px rgba(37, 45, 95, 0.4)',
+                        },
+                        '&.Mui-disabled': {
+                            bgcolor: 'rgba(37, 45, 95, 0.5)',
+                        },
+                    }}
+                >
                     Cadastrar
-                </AuthButton>
-                
-                <a href="/login" id="change-login">
-                    Já tem uma conta? Logue aqui
-                </a>
-            </form>
+                </LoadingButton>
+
+                <Typography
+                    variant="body2"
+                    sx={{ textAlign: 'center', color: '#666' }}
+                >
+                    Já tem uma conta?{' '}
+                    <Link
+                        href="/login"
+                        style={{
+                            color: THEME_COLOR,
+                            fontWeight: 600,
+                            textDecoration: 'none',
+                        }}
+                    >
+                        Entre aqui
+                    </Link>
+                </Typography>
+            </Box>
         </AuthLayout>
     );
 }
