@@ -1,20 +1,26 @@
+/* Header styles - Most styles are now handled by MUI in the header components */
+
 body ul {
     list-style: none;
     padding-left: 0px;
 }
+
 .title-section {
     display: flex;
     justify-content: space-between;
 }
+
 .title-section p {
     font-size: 35px;
     font-weight: bold;
     color: #373737;
     margin-bottom: 15px;
 }
+
 .title-section ul {
     display: flex;
 }
+
 .title-section ul li {
     font-size: 13px;
     font-weight: 600;
@@ -22,208 +28,4 @@ body ul {
     margin-right: 10px;
     display: flex;
     align-items: center;
-}
-
-header {
-    padding-bottom: 16px;
-}
-header .bar-top {
-    background: rgb(106,17,17);
-    background: linear-gradient(90deg, rgba(106,17,17,1) 0%, rgba(14,17,43,1) 64%, rgba(12,17,79,1) 100%);
-}
-header .bar-top .container {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-} 
-header .bar-top ul {
-    padding: 5px 0px;
-    display: flex;
-    margin-bottom: 0px;
-}
-header .bar-top ul li {
-    color: #BCBCBE;
-    font-size: 12px;
-    list-style: none;
-}
-header .bar-top ul:first-of-type li {
-    margin-right: 8px;
-}
-header .bar-top ul li svg {
-    width: 28px;
-    fill: #BCBCBE;
-}
-header .content-header {
-    background-color: #fff;
-    padding-top: 18px;
-}
-header .content-header .logo, header .content-header .user-preference {
-    width: 24%;
-}
-header .content-header .search {
-    width: 50%;
-}
-header .content-header .logo p {
-    font-size: 28px;
-    font-weight: bold;
-    text-transform: uppercase;
-}
-header .content-header .logo img {
-    
-}
-header .content-header .search .content-search {
-    position: relative;
-}
-header .content-header .search .content-search .result-search {
-    background-color: white;
-    border-bottom-left-radius: 3px;
-    border-bottom-right-radius: 3px;
-    position: absolute;
-    width: 100%;
-    top: 89%;
-    z-index: 1;
-    padding: 7px 5px 5px 5px;
-    border: 1px solid #dedede
-}
-header .content-header .search .content-search .result-search li img {
-    color: transparent;
-    width: 50px;
-    height: 50px;
-    object-fit: contain;
-    margin-right: 7px;
-}
-header .content-header .search .content-search .result-search ul {
-    margin: 0;
-    list-style: none;
-}
-header .content-header .search .content-search .result-search ul li {
-    margin: 1px;
-    transition: all ease 0.3s;
-}
-header .content-header .search .content-search .result-search ul li a {
-    
-}
-header .content-header .search .content-search .result-search ul li:hover a {
-    text-decoration: underline !important;
-}
-header .content-header .search .content-search form {
-    display: flex;
-    align-items: center;
-    z-index: 3;
-    position: inherit;
-}
-header .content-header .search .content-search select {
-    border: 1px solid #dedede;
-    border-top-left-radius: 5px;
-    border-bottom-left-radius: 5px;
-    height: 40px;
-    padding: 0px 5px;
-    font-size: 13px;
-    outline: none;
-    display: none;
-}
-header .content-header .search .content-search input {
-    height: 40px;
-    border: 1px solid #dedede;
-    flex-grow: 1;
-    padding-left: 5px;
-    outline: none;
-    border-top-left-radius: 3px;
-    border-bottom-left-radius: 3px;
-    padding-left: 15px;
-}
-header .content-header .search .content-search button {
-    border: 1px solid #102d57;
-    background-color: #102d57;
-    height: 40px;
-    width: 48px;
-    border-top-right-radius: 5px;
-    border-bottom-right-radius: 5px;
-    outline: none;
-}
-header .content-header .user-preference {
-    display: flex;
-    justify-content: space-around;
-}
-header .content-header .user-preference .entre-cad {
-    font-size: 13px;
-    line-height: 16px;
-}
-header .content-header .user-preference .entre-cad a {
-    text-decoration: none;
-    font-weight: 700;
-    font-size: 13px;
-    color: #6c7ba3;
-}
-header .content-header .user-preference .content-preference {
-    display: flex;
-    align-items: center;
-    font-size: 13px;
-    height: 35px;
-    font-weight: 600;
-    position: relative;
-}
-header .content-header .user-preference .content-preference svg {
-    height: 35px;
-    margin-right: 2px;
-    position: relative;
-}
-header .content-header .categories {
-    width: 100%;
-    display: flex;
-}
-header .content-header .categories ul {
-    display: flex;
-    align-items: center;
-    margin-bottom: 0px;
-}
-header .content-header .categories ul li {
-    margin-right: 15px;
-    font-size: 12px;
-    font-weight: bold;
-}
-header .content-header .user {
-    display: flex;
-    justify-content: flex-end;
-}
-header .content-header .user .content-img {
-    width: 42px;
-    border-radius: 12px;
-    overflow: hidden;
-    margin-right: 8px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-header .content-header .user .content-img img {
-    width: 42px;
-}
-header .content-header .user .content-text p {
-    margin-bottom: 0px;
-}
-header .content-header .user .content-text p.nome {
-    font-size: 13px;
-    font-weight: 600;
-}
-header .content-header .user .content-text p.email {
-    font-size: 11px;
-    font-weight: 600;
-    color: gray;
-}
-header .ofertas-link {
-    text-transform: capitalize;
-    justify-content: center;
-    font-size: 12px;
-    padding: 6px 33px;
-    border: 1px solid #1976d2;
-    background-color: white;
-    color: #1976d2; 
-    text-decoration: none !important;
-    transition: all ease 0.3s;
-    width: 180px;
-    max-width: 200px;
-}
-header .ofertas-link:hover {
-    background-color: #1976d2;
-    color: white;
 }

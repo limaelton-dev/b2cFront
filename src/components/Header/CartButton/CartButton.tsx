@@ -1,17 +1,79 @@
 'use client';
 
-export default function CartButton({ count, onClick }: { count: number; onClick: () => void }) {
-  return (
-    <div className="cart content-preference" onClick={onClick} style={{ cursor: 'pointer' }}>
-      <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#bcbcbc">
-        <path d="M240-80q-33 0-56.5-23.5T160-160v-480q0-33 23.5-56.5T240-720h80q0-66 47-113t113-47q66 0 113 47t47 113h80q33 0 56.5 23.5T800-640v480q0 33-23.5 56.5T720-80H240Zm0-80h480v-480h-80v80q0 17-11.5 28.5T600-520q-17 0-28.5-11.5T560-560v-80H400v80q0 17-11.5 28.5T360-520q-17 0-28.5-11.5T320-560v-80h-80v480Zm160-560h160q0-33-23.5-56.5T480-800q-33 0-56.5 23.5T400-720ZM240-160v-480 480Z"/>
-      </svg>
-      {count > 0 && (
-        <div className="items-total">
-          {count}
-        </div>
-      )}
-      Carrinho
-    </div>
-  );
+import React from 'react';
+import { Box, Badge, Typography, Tooltip } from '@mui/material';
+import { ShoppingBagOutlined } from '@mui/icons-material';
+
+const THEME_COLOR = '#252d5f';
+
+interface CartButtonProps {
+    count: number;
+    onClick: () => void;
+}
+
+export default function CartButton({ count, onClick }: CartButtonProps) {
+    return (
+        <Tooltip title="Carrinho" arrow>
+            <Box
+                onClick={onClick}
+                sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 0.75,
+                    cursor: 'pointer',
+                    p: 1,
+                    borderRadius: 2,
+                    transition: 'all 0.2s ease',
+                    '&:hover': {
+                        backgroundColor: 'rgba(37, 45, 95, 0.05)',
+                        '& .cart-icon': { color: THEME_COLOR },
+                        '& .cart-text': { color: THEME_COLOR },
+                    },
+                }}
+            >
+                <Badge
+                    badgeContent={count}
+                    max={99}
+                    sx={{
+                        '& .MuiBadge-badge': {
+                            backgroundColor: THEME_COLOR,
+                            color: '#fff',
+                            fontWeight: 600,
+                            fontSize: '0.7rem',
+                            minWidth: 18,
+                            height: 18,
+                            animation: count > 0 ? 'pulse 0.3s ease-in-out' : 'none',
+                            '@keyframes pulse': {
+                                '0%': { transform: 'scale(1)' },
+                                '50%': { transform: 'scale(1.2)' },
+                                '100%': { transform: 'scale(1)' },
+                            },
+                        },
+                    }}
+                >
+                    <ShoppingBagOutlined
+                        className="cart-icon"
+                        sx={{
+                            fontSize: 26,
+                            color: '#666',
+                            transition: 'color 0.2s ease',
+                        }}
+                    />
+                </Badge>
+                <Typography
+                    className="cart-text"
+                    variant="body2"
+                    sx={{
+                        fontWeight: 600,
+                        color: '#666',
+                        fontSize: '0.85rem',
+                        display: { xs: 'none', sm: 'block' },
+                        transition: 'color 0.2s ease',
+                    }}
+                >
+                    Carrinho
+                </Typography>
+            </Box>
+        </Tooltip>
+    );
 }

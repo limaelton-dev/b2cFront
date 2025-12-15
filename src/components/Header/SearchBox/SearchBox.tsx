@@ -1,72 +1,111 @@
-"use client";
+'use client';
 
-import { useRef } from "react";
-import { useSearch } from "../../../hooks/useSearch";
-import SearchResults from "./SearchResults";
+import React, { useRef } from 'react';
+import {
+    Box,
+    InputBase,
+    IconButton,
+    Paper,
+    CircularProgress,
+} from '@mui/material';
+import { Search } from '@mui/icons-material';
+import { useSearch } from '../../../hooks/useSearch';
+import SearchResults from './SearchResults';
 
-type Props = {
-  onSubmit: (term: string) => void;
-};
+const THEME_COLOR = '#252d5f';
 
-export default function SearchBox({ onSubmit }: Props) {
-  const { term, setTerm, results, loading, canSearch, clear } = useSearch(4);
-  const inputRef = useRef<HTMLInputElement | null>(null);
+interface SearchBoxProps {
+    onSubmit: (term: string) => void;
+}
 
-  const handleEnter = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") onSubmit(term);
-  };
+export default function SearchBox({ onSubmit }: SearchBoxProps) {
+    const { term, setTerm, results, loading, canSearch, clear } = useSearch(4);
+    const inputRef = useRef<HTMLInputElement>(null);
 
-  return (
-    <div className="search">
-      <div className="content-search">
-        <div role="search" className="d-flex">
-          <select
-            name="categorias"
-            id="categorias-search"
-            aria-label="Categorias"
-          >
-            <option value="all" defaultValue="all">
-              Todas categorias
-            </option>
-          </select>
-          <input 
-            ref={inputRef}
-            type="text"
-            id="search"
-            value={term}
-            onKeyDown={handleEnter}
-            onChange={(e) => setTerm(e.target.value)}
-            placeholder="Buscar produtos"
-            aria-autocomplete="list"
-            aria-controls="search-results"
-          />
-          <button
-            type="button"
-            onClick={() => onSubmit(term)}
-            aria-label="Buscar"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              height="24px"
-              viewBox="0 -960 960 960"
-              width="24px"
-              fill="#fff"
+    const handleEnter = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter' && term.trim()) {
+            onSubmit(term);
+            clear();
+        }
+    };
+
+    const handleSearch = () => {
+        if (term.trim()) {
+            onSubmit(term);
+            clear();
+        }
+    };
+
+    return (
+        <Box sx={{ position: 'relative', width: '100%', maxWidth: 600 }}>
+            <Paper
+                component="form"
+                onSubmit={(e) => {
+                    e.preventDefault();
+                    handleSearch();
+                }}
+                sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    border: '1px solid #e0e0e0',
+                    borderRadius: 1,
+                    overflow: 'hidden',
+                    boxShadow: 'none',
+                    transition: 'border-color 0.2s, box-shadow 0.2s',
+                    '&:focus-within': {
+                        borderColor: THEME_COLOR,
+                        boxShadow: `0 0 0 2px rgba(37, 45, 95, 0.1)`,
+                    },
+                }}
             >
-              <path d="M784-120 532-372q-30 24-69 38t-83 14q-109 0-184.5-75.5T120-580q0-109 75.5-184.5T380-840q109 0 184.5 75.5T640-580q0 44-14 83t-38 69l252 252-56 56ZM380-400q75 0 127.5-52.5T560-580q0-75-52.5-127.5T380-760q-75 0-127.5 52.5T200-580q0 75 52.5 127.5T380-400Z" />
-            </svg>
-          </button>
-        </div>
+                <InputBase
+                    inputRef={inputRef}
+                    value={term}
+                    onChange={(e) => setTerm(e.target.value)}
+                    onKeyDown={handleEnter}
+                    placeholder="Buscar produtos..."
+                    sx={{
+                        flex: 1,
+                        px: 2,
+                        py: 1,
+                        fontSize: '0.95rem',
+                        '& input': {
+                            padding: 0,
+                        },
+                    }}
+                    inputProps={{
+                        'aria-label': 'Buscar produtos',
+                        'aria-autocomplete': 'list',
+                        'aria-controls': 'search-results',
+                    }}
+                />
+                {loading && (
+                    <CircularProgress size={20} sx={{ mr: 1, color: THEME_COLOR }} />
+                )}
+                <IconButton
+                    type="submit"
+                    aria-label="Buscar"
+                    sx={{
+                        bgcolor: THEME_COLOR,
+                        borderRadius: 0,
+                        px: 2,
+                        py: 1.25,
+                        '&:hover': {
+                            bgcolor: '#1a2147',
+                        },
+                    }}
+                >
+                    <Search sx={{ color: '#fff' }} />
+                </IconButton>
+            </Paper>
 
-        {canSearch && results.length > 0 && (
-          <SearchResults
-            id="search-results"
-            results={results}
-            onClose={clear}
-          />
-        )}
-
-        {loading && <div className="result-search">Buscando…</div>}
-      </div>
-    </div>
-  );
+            {canSearch && results.length > 0 && (
+                <SearchResults
+                    id="search-results"
+                    results={results}
+                    onClose={clear}
+                />
+            )}
+        </Box>
+    );
 }

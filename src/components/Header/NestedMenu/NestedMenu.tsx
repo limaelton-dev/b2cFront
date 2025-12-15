@@ -1,81 +1,125 @@
-import * as React from "react";
-import List from "@mui/material/List";
-import { Box, Paper } from "@mui/material";
-import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
-import { Link } from "@mui/material";
-import NestedMenuItem from "./NestedMenuItem";
-import { MenuProvider } from "./MenuContext";
-import { useState } from "react";
-import { Category } from "../../../api/categories/types/category";
+'use client';
 
+import React, { useState, useRef } from 'react';
+import {
+    Box,
+    Button,
+    Paper,
+    List,
+    Fade,
+} from '@mui/material';
+import { KeyboardArrowDown } from '@mui/icons-material';
+import NestedMenuItem from './NestedMenuItem';
+import { MenuProvider } from './MenuContext';
+import { Category as CategoryType } from '../../../api/categories/types/category';
 
+const THEME_COLOR = '#252d5f';
 
-//Mapeia as categorias apenas, e passa para o NestedMenuItem, a categoria completa.
-function RecursiveNestedMenu({ categories }: { categories: Category[] }) {
+function RecursiveNestedMenu({ categories }: { categories: CategoryType[] }) {
     return (
         <>
             {categories.map((category) => (
                 <NestedMenuItem key={category.id} category={category} />
             ))}
         </>
-    )
+    );
 }
 
-export default function NestedList({ categories }: { categories: Category[] }) {
-    const [isOpen, setIsOpen] = useState(false);
+interface NestedListProps {
+    categories: CategoryType[];
+}
 
-    const handleMouseEnter = () => {
+export default function NestedList({ categories }: NestedListProps) {
+    const [isOpen, setIsOpen] = useState(false);
+    const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    const handleOpen = () => {
+        if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+            timeoutRef.current = null;
+        }
         setIsOpen(true);
     };
 
-    const handleMouseLeave = () => {
-        setIsOpen(false);
+    const handleClose = () => {
+        timeoutRef.current = setTimeout(() => {
+            setIsOpen(false);
+        }, 150);
     };
 
     return (
-        <Box 
+        <Box
+            ref={containerRef}
             sx={{ position: 'relative' }}
-            onMouseEnter={handleMouseEnter}
-            onMouseLeave={handleMouseLeave}
+            onMouseEnter={handleOpen}
+            onMouseLeave={handleClose}
         >
-            <Link 
-                underline="hover" 
-                color="inherit" 
-                sx={{ 
-                    cursor: 'pointer',
-                    display: 'block',
-                    padding: '8px 0'
+            <Button
+                variant="text"
+                endIcon={
+                    <KeyboardArrowDown
+                        sx={{
+                            fontSize: 18,
+                            transition: 'transform 0.2s ease',
+                            transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                        }}
+                    />
+                }
+                sx={{
+                    color: isOpen ? THEME_COLOR : '#555',
+                    fontWeight: 600,
+                    fontSize: '0.85rem',
+                    textTransform: 'none',
+                    px: 1.5,
+                    py: 0.5,
+                    borderRadius: 1.5,
+                    transition: 'all 0.2s ease',
+                    '&:hover': {
+                        bgcolor: 'transparent',
+                        color: THEME_COLOR,
+                    },
                 }}
             >
-                Categorias <ArrowDropDownIcon />
-            </Link>
+                Categorias
+            </Button>
 
-            {/* Menu dropdown */}
-            {isOpen && (
+            <Fade in={isOpen} timeout={150}>
                 <Paper
+                    onMouseEnter={handleOpen}
+                    onMouseLeave={handleClose}
                     sx={{
                         position: 'absolute',
                         top: '100%',
                         left: 0,
-                        width: 300,
-                        maxHeight: 500,
+                        width: 260,
+                        maxHeight: 400,
                         overflow: 'auto',
-                        zIndex: 1000,
-                        boxShadow: 3,
-                        bgcolor: 'background.paper'
+                        zIndex: 1200,
+                        borderRadius: 2,
+                        boxShadow: '0 4px 20px rgba(0,0,0,0.12)',
+                        bgcolor: '#fff',
+                        display: isOpen ? 'block' : 'none',
+                        mt: 0.5,
+                        '&::-webkit-scrollbar': {
+                            width: 4,
+                        },
+                        '&::-webkit-scrollbar-track': {
+                            bgcolor: 'transparent',
+                        },
+                        '&::-webkit-scrollbar-thumb': {
+                            bgcolor: '#ddd',
+                            borderRadius: 2,
+                        },
                     }}
                 >
                     <MenuProvider>
-                        <List
-                            component="nav"
-                            aria-labelledby="nested-list-subheader"
-                            sx={{ padding: 0 }}
-                        >
+                        <List component="nav" sx={{ py: 0.5 }}>
                             <RecursiveNestedMenu categories={categories} />
                         </List>
                     </MenuProvider>
                 </Paper>
-            )}
+            </Fade>
         </Box>
     );
 }

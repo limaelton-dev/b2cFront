@@ -1,86 +1,80 @@
-// src/app/components/header/CategoriesNav/CategoriesNav.tsx
 'use client';
 
-import { Link as MuiLink } from '@mui/material';
+import React, { memo } from 'react';
+import Link from 'next/link';
+import { Box, Button, Skeleton } from '@mui/material';
 import { useCategoriesMenu } from '../../../hooks/useCategoriesMenu';
 import NestedMenu from '../NestedMenu/NestedMenu';
-import Link from 'next/link';
-import { memo } from 'react';
-import { getFirstLeafCategories } from '../../../utils/category-utils';
+
+const THEME_COLOR = '#252d5f';
 
 const CategoriesNav = memo(function CategoriesNav() {
-  const { tree, loading, error, isEmpty } = useCategoriesMenu({
-    maxDepth: 3
-  });
+    const { tree, loading, error, isEmpty } = useCategoriesMenu({
+        maxDepth: 3,
+    });
 
-  if (loading) {
-    return (
-      <nav className="categories d-flex justify-content-between" aria-label="Categorias">
-        <div></div>
-        <ul>
-          <li className="loading-skeleton">Carregando categorias...</li>
-        </ul>
-      </nav>
-    );
-  }
-
-  if (error) {
-    return (
-      <nav className="categories d-flex justify-content-between" aria-label="Categorias">
-        <div></div>
-        <ul>
-          <li className="error-message">Erro ao carregar categorias</li>
-        </ul>
-      </nav>
-    );
-  }
-
-  if (isEmpty) {
-    return (
-      <nav className="categories d-flex justify-content-between" aria-label="Categorias">
-        <div></div>
-        <ul>
-          <li>Nenhuma categoria encontrada</li>
-        </ul>
-      </nav>
-    );
-  }
-
-  // Pega as primeiras 4 categorias que não possuem subcategorias
-  const mainCategories = getFirstLeafCategories(tree, 4);
-
-  return (
-    <nav className="categories d-flex justify-content-between" aria-label="Categorias">
-      <div></div>
-      <ul>
-        <li>
-          <NestedMenu categories={tree} />
-        </li>
-        {mainCategories.map(category => (
-          <li key={category.id}>
-            <MuiLink 
-              underline="hover" 
-              color="inherit" 
-              component={Link} 
-              href={`/produtos?categoria=${category.id}&page=1`}
-              title={`${category.name} (${category.totalProducts} produtos)`}
+    if (loading) {
+        return (
+            <Box
+                component="nav"
+                aria-label="Categorias"
+                sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    width: '100%',
+                    py: 1,
+                }}
             >
-              {category.name}
-            </MuiLink>
-          </li>
-        ))}
-        <li>
-          <MuiLink 
-            className="btn-buy-primary ofertas-link" 
-            component={Link}
-            href="/produtos"
-          >
-            Todos os produtos
-          </MuiLink>
-        </li>
-      </ul>
-    </nav>
-  );
+                <Skeleton variant="rounded" width={130} height={32} sx={{ borderRadius: 2 }} />
+                <Skeleton variant="rounded" width={150} height={32} sx={{ borderRadius: 2 }} />
+            </Box>
+        );
+    }
+
+    if (error || isEmpty) {
+        return null;
+    }
+
+    return (
+        <Box
+            component="nav"
+            aria-label="Categorias"
+            sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                width: '100%',
+                py: 1,
+            }}
+        >
+            <NestedMenu categories={tree} />
+
+            <Button
+                component={Link}
+                href="/produtos"
+                variant="contained"
+                size="small"
+                sx={{
+                    bgcolor: THEME_COLOR,
+                    color: '#fff',
+                    fontWeight: 600,
+                    fontSize: '0.8rem',
+                    textTransform: 'none',
+                    px: 2.5,
+                    py: 0.75,
+                    borderRadius: 2,
+                    boxShadow: 'none',
+                    '&:hover': {
+                        bgcolor: '#1a2147',
+                        boxShadow: 'none',
+                    },
+                }}
+            >
+                Ver todos os produtos
+            </Button>
+        </Box>
+    );
 });
 
 export default CategoriesNav;

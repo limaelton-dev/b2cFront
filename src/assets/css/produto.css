@@ -1,40 +1,4 @@
 @import url('--globalClasses.css');
-@import url('./produto/banner.css');
-@import url('./produto/content.css');
-@import url('./produto/products.css');
 @import url('./home/cart.css');
-@import url('./produto/tabs.css');
 @import url('./home/footer.css');
 @import url('./home/header.css');
-
-
-.frete-box .frete {
-    border: 2px solid #b8b8b8;
-    padding: 5px;
-}
-.frete-box .frete:not(:first-of-type) {
-    border-top: none;
-}
-.frete-box .frete .text-frete {
-    display: flex;
-    justify-content: space-between;
-}
-.frete-box .frete:first-of-type {
-    border-top-left-radius: 4px;
-    border-top-right-radius: 4px;
-}
-.frete-box .frete:last-of-type {
-    border-bottom-left-radius: 4px;
-    border-bottom-right-radius: 4px;
-}
-.frete-box span {
-    width: 200px;
-    font-size: 13px !important;
-    display: flex;
-    align-items: center;
-}
-.frete-box span.price {
-    display: flex;
-    width: 70px !important;
-    font-size: 14px !important;
-}

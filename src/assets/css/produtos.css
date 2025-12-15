@@ -7,18 +7,4 @@
 @import url('./home/header.css');
 @import url('./produto/products.css');
 
-.products {
-    padding: 0px 10px;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: flex-start;
-    align-content: flex-start;
-    gap: 5px;
-}
-.products .product {
-    width: 250px !important;
-}
-.products .product img {
-    width: 225px !important;
-    height: 225px !important;
-}
+/* Products page - Additional styles that complement MUI components */
