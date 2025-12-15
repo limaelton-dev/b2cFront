@@ -1,8 +1,10 @@
-"use client"
+'use client';
+
 import React, { useState } from 'react';
-import { Box } from '@mui/material';
+import { Box, Container } from '@mui/material';
 import Header from '@/app/header';
 import Cart from '@/components/Cart';
+import { Breadcrumbs } from '@/components/common';
 import SideBar from './components/layout/SideBar';
 import DadosPessoais from './sections/dados-pessoais/DadosPessoais';
 import MeusEnderecos from './sections/meus-enderecos/MeusEnderecos';
@@ -17,23 +19,25 @@ import FeaturedPlayListOutlinedIcon from '@mui/icons-material/FeaturedPlayListOu
 import BadgeOutlinedIcon from '@mui/icons-material/BadgeOutlined';
 import LocalMallOutlinedIcon from '@mui/icons-material/LocalMallOutlined';
 
+const THEME_COLOR = '#252d5f';
+
 const mainItems: MainItemType[] = [
     {
-        icon: <FeaturedPlayListOutlinedIcon sx={{color: '#102d57'}} />,
+        icon: <FeaturedPlayListOutlinedIcon />,
         label: 'Meus dados',
         subItems: [
-            { icon: <BadgeOutlinedIcon sx={{color: '#102d57', fontSize: 20}} />, label: 'Dados pessoais'},
-            { icon: <PlaceOutlinedIcon sx={{color: '#102d57', fontSize: 20}} />, label: 'Meus endereços'},
+            { icon: <BadgeOutlinedIcon />, label: 'Dados pessoais' },
+            { icon: <PlaceOutlinedIcon />, label: 'Meus endereços' },
         ],
     },
     {
-        icon: <LocalMallOutlinedIcon sx={{color: '#102d57'}}/>,
+        icon: <LocalMallOutlinedIcon />,
         label: 'Minhas compras',
     },
     {
-        icon: <CreditCardIcon sx={{color: '#102d57'}}/>,
+        icon: <CreditCardIcon />,
         label: 'Meus cartões',
-    }
+    },
 ];
 
 export default function MyAccountPage() {
@@ -55,44 +59,49 @@ export default function MyAccountPage() {
         }
     };
 
+    const getBreadcrumbItems = () => {
+        const items = [{ label: 'Minha Conta' }];
+
+        if (activeSection !== 'Minha Conta') {
+            items[0] = { label: 'Minha Conta', href: '#' };
+            items.push({ label: activeSection });
+        }
+
+        return items;
+    };
+
     return (
         <ProtectedRoute>
-            <div className="container-fluid p-0">
-                <Header cartOpened={openedCart} onCartToggle={setOpenedCart} />
-                <Cart cartOpened={openedCart} onCartToggle={setOpenedCart} />
-            </div>
-            
-            <main>
-                <Box 
+            <Header cartOpened={openedCart} onCartToggle={setOpenedCart} />
+            <Cart cartOpened={openedCart} onCartToggle={setOpenedCart} />
+
+            <Container maxWidth="lg">
+                <Breadcrumbs items={getBreadcrumbItems()} />
+
+                <Box
                     sx={{
-                        maxWidth: '1296px',
-                        width: '100%',
-                        margin: '0 auto',
                         display: 'flex',
                         flexDirection: { xs: 'column', md: 'row' },
-                        gap: { xs: 3, md: 4 },
+                        gap: 4,
                         pb: 6,
-                        mt: 4,
                     }}
                 >
-                    <Box sx={{ 
-                        width: { xs: '100%', md: '280px' }, 
-                        flexShrink: 0,
-                        mt: { xs: 2, md: 0 },
-                    }}>
-                        <SideBar 
-                            items={mainItems} 
-                            onSectionChange={setActiveSection} 
+                    <Box
+                        sx={{
+                            width: { xs: '100%', md: 280 },
+                            flexShrink: 0,
+                        }}
+                    >
+                        <SideBar
+                            items={mainItems}
+                            onSectionChange={setActiveSection}
                             activeSection={activeSection}
                         />
                     </Box>
-                    
-                    <Box sx={{ flex: 1, mt: { xs: 0, md: 0 } }}>
-                        {renderContent()}
-                    </Box>
+
+                    <Box sx={{ flex: 1, minWidth: 0 }}>{renderContent()}</Box>
                 </Box>
-            </main>
+            </Container>
         </ProtectedRoute>
     );
 }
-

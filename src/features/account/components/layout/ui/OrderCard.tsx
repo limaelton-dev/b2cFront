@@ -1,274 +1,291 @@
+'use client';
+
 import React, { useState } from 'react';
-import { 
-  Box, 
-  Typography, 
-  Divider, 
-  IconButton, 
-  Chip, 
-  Card, 
-  CardContent,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemAvatar,
-  Avatar
+import {
+    Box,
+    Typography,
+    Divider,
+    IconButton,
+    Chip,
+    Paper,
+    Collapse,
 } from '@mui/material';
-import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
-import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
-import LocalShippingIcon from '@mui/icons-material/LocalShippingOutlined';
-import CheckCircleIcon from '@mui/icons-material/CheckCircleOutlined';
-import CancelIcon from '@mui/icons-material/CancelOutlined';
-import ScheduleIcon from '@mui/icons-material/Schedule';
-import PaymentIcon from '@mui/icons-material/Payment';
-import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
-import { motion, AnimatePresence } from 'framer-motion';
-import { CompraType, OrderStatusDisplay } from '../../../types';
+import {
+    KeyboardArrowDown,
+    KeyboardArrowUp,
+    LocalShipping,
+    CheckCircleOutline,
+    CancelOutlined,
+    Schedule,
+    Payment,
+    ErrorOutline,
+    ShoppingBagOutlined,
+} from '@mui/icons-material';
 import Image from 'next/image';
 import NoImage from '@/assets/img/noimage.png';
+import { CompraType, OrderStatusDisplay } from '../../../types';
+
+const THEME_COLOR = '#252d5f';
 
 interface OrderCardProps {
-  pedido: CompraType;
+    pedido: CompraType;
 }
 
+const statusConfig: Record<
+    OrderStatusDisplay,
+    { icon: React.ReactNode; color: string; bgColor: string }
+> = {
+    'A caminho': {
+        icon: <LocalShipping sx={{ fontSize: 14 }} />,
+        color: '#1976d2',
+        bgColor: 'rgba(25, 118, 210, 0.08)',
+    },
+    Entregue: {
+        icon: <CheckCircleOutline sx={{ fontSize: 14 }} />,
+        color: '#2e7d32',
+        bgColor: 'rgba(46, 125, 50, 0.08)',
+    },
+    Cancelada: {
+        icon: <CancelOutlined sx={{ fontSize: 14 }} />,
+        color: '#d32f2f',
+        bgColor: 'rgba(211, 47, 47, 0.08)',
+    },
+    Processando: {
+        icon: <Schedule sx={{ fontSize: 14 }} />,
+        color: '#ed6c02',
+        bgColor: 'rgba(237, 108, 2, 0.08)',
+    },
+    'Aguardando Pagamento': {
+        icon: <Payment sx={{ fontSize: 14 }} />,
+        color: '#7b1fa2',
+        bgColor: 'rgba(123, 31, 162, 0.08)',
+    },
+    'Problema na Entrega': {
+        icon: <ErrorOutline sx={{ fontSize: 14 }} />,
+        color: '#c2185b',
+        bgColor: 'rgba(194, 24, 91, 0.08)',
+    },
+};
+
 const OrderCard: React.FC<OrderCardProps> = ({ pedido }) => {
-  const [expanded, setExpanded] = useState(false);
-  const { id, partnerOrderId, produtos, status, data, valorTotal } = pedido;
-  
-  const getStatusIcon = () => {
-    switch (status) {
-      case 'A caminho':
-        return <LocalShippingIcon sx={{ fontSize: '13px' }} />;
-      case 'Entregue':
-        return <CheckCircleIcon sx={{ fontSize: '13px' }} />;
-      case 'Cancelada':
-        return <CancelIcon sx={{ fontSize: '13px' }} />;
-      case 'Processando':
-        return <ScheduleIcon sx={{ fontSize: '13px' }} />;
-      case 'Aguardando Pagamento':
-        return <PaymentIcon sx={{ fontSize: '13px' }} />;
-      case 'Problema na Entrega':
-        return <ErrorOutlineIcon sx={{ fontSize: '13px' }} />;
-      default:
-        return null;
-    }
-  };
-  
-  const getStatusColor = (): string => {
-    switch (status) {
-      case 'A caminho':
-        return '#2196f3';
-      case 'Entregue':
-        return '#4caf50';
-      case 'Cancelada':
-        return '#f44336';
-      case 'Processando':
-        return '#ff9800';
-      case 'Aguardando Pagamento':
-        return '#9c27b0';
-      case 'Problema na Entrega':
-        return '#e91e63';
-      default:
-        return '#757575';
-    }
-  };
-  
-  const totalItems = produtos.reduce((acc, produto) => acc + produto.quantidade, 0);
-  
-  return (
-    <Card
-      elevation={0}
-      sx={{
-        border: '1px solid #e0e0e0',
-        borderRadius: '7px',
-        overflow: 'hidden',
-        transition: 'all 0.2s ease',
-        mb: 1.75,
-        '&:hover': {
-          boxShadow: '0 2px 7px rgba(0,0,0,0.05)',
-        }
-      }}
-    >
-      <CardContent sx={{ padding: '14px', '&:last-child': { paddingBottom: '14px' } }}>
-        <Box 
-          sx={{ 
-            display: 'flex', 
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            mb: 0.75
-          }}
-        >
-          <Box>
-            <Typography 
-              variant="subtitle1"
-              sx={{ 
-                fontWeight: 500,
-                fontSize: '0.9rem'
-              }}
-            >
-              Pedido #{partnerOrderId || id}
-            </Typography>
-          </Box>
-          
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.75 }}>
-            <Typography 
-              variant="body2"
-              sx={{ 
-                color: '#666',
-                fontSize: '0.75rem'
-              }}
-            >
-              {data}
-            </Typography>
-            
-            <Chip 
-              icon={getStatusIcon()}
-              label={status}
-              size="small"
-              sx={{ 
-                backgroundColor: `${getStatusColor()}10`,
-                color: getStatusColor(),
-                fontWeight: 500,
-                fontSize: '0.68rem',
-                height: '19px',
-                '.MuiChip-icon': {
-                  color: getStatusColor()
-                }
-              }}
-            />
-          </Box>
-        </Box>
-        
-        <Box 
-          sx={{ 
-            display: 'flex', 
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            mt: 1.75
-          }}
-        >
-          <Box>
-            <Typography 
-              variant="body2"
-              sx={{ 
-                color: '#666',
-                fontSize: '0.75rem',
-                mb: 0.35
-              }}
-            >
-              {totalItems} {totalItems === 1 ? 'item' : 'itens'}
-            </Typography>
-            <Typography 
-              variant="h6"
-              sx={{ 
-                fontWeight: 500,
-                fontSize: '0.95rem',
-                color: '#102d57'
-              }}
-            >
-              {valorTotal}
-            </Typography>
-          </Box>
-          
-          <IconButton 
-            onClick={() => setExpanded(!expanded)}
-            size="small"
-            sx={{ 
-              backgroundColor: 'rgba(0, 0, 0, 0.04)',
-              padding: '3.5px',
-              '&:hover': {
-                backgroundColor: 'rgba(0, 0, 0, 0.08)',
-              }
+    const [expanded, setExpanded] = useState(false);
+    const { id, partnerOrderId, produtos, status, data, valorTotal } = pedido;
+
+    const config = statusConfig[status] || statusConfig['Processando'];
+    const totalItems = produtos.reduce((acc, produto) => acc + produto.quantidade, 0);
+
+    return (
+        <Paper
+            elevation={0}
+            sx={{
+                border: '1px solid #e8e8e8',
+                borderRadius: 2,
+                overflow: 'hidden',
+                transition: 'all 0.2s ease',
+                '&:hover': {
+                    borderColor: '#d0d0d0',
+                },
             }}
-          >
-            {expanded ? <KeyboardArrowUpIcon fontSize="small" /> : <KeyboardArrowDownIcon fontSize="small" />}
-          </IconButton>
-        </Box>
-        
-        <AnimatePresence>
-          {expanded && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              <Divider sx={{ my: 1.75 }} />
-              
-              <List disablePadding>
-                {produtos.map((produto, index) => (
-                  <ListItem 
-                    key={`produto-${produto.skuId || index}`}
-                    disablePadding
-                    sx={{ 
-                      py: 0.85,
-                      px: 0
+        >
+            <Box sx={{ p: 2.5 }}>
+                <Box
+                    sx={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'flex-start',
+                        mb: 2,
                     }}
-                  >
-                    <ListItemAvatar>
-                      <Avatar 
-                        variant="rounded"
-                        sx={{ 
-                          width: 45, 
-                          height: 45,
-                          borderRadius: '5px',
-                          backgroundColor: '#f5f5f5'
-                        }}
-                      >
-                        <Image 
-                          src={produto.imagem || NoImage.src} 
-                          alt={produto.nome}
-                          width={45}
-                          height={45}
-                          style={{ objectFit: 'contain' }}
-                          unoptimized={!produto.imagem}
-                        />
-                      </Avatar>
-                    </ListItemAvatar>
-                    <ListItemText
-                      primary={
-                        <Typography 
-                          variant="body1"
-                          sx={{ 
-                            fontWeight: 500,
-                            fontSize: '0.85rem'
-                          }}
+                >
+                    <Box>
+                        <Typography
+                            variant="subtitle1"
+                            sx={{
+                                fontWeight: 600,
+                                fontSize: '0.95rem',
+                                color: '#333',
+                            }}
                         >
-                          {produto.nome}
+                            Pedido #{partnerOrderId || id}
                         </Typography>
-                      }
-                      secondary={
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.35 }}>
-                          <Typography 
+                        <Typography
                             variant="body2"
-                            sx={{ 
-                              color: '#666',
-                              fontSize: '0.75rem'
+                            sx={{
+                                color: '#888',
+                                fontSize: '0.8rem',
+                                mt: 0.5,
                             }}
-                          >
-                            Qtd: {produto.quantidade}
-                          </Typography>
-                          <Typography 
-                            variant="body2"
-                            sx={{ 
-                              fontWeight: 500,
-                              fontSize: '0.75rem'
-                            }}
-                          >
-                            {produto.valor}
-                          </Typography>
-                        </Box>
-                      }
-                      sx={{ ml: 0.75 }}
+                        >
+                            {data}
+                        </Typography>
+                    </Box>
+
+                    <Chip
+                        icon={config.icon}
+                        label={status}
+                        size="small"
+                        sx={{
+                            bgcolor: config.bgColor,
+                            color: config.color,
+                            fontWeight: 600,
+                            fontSize: '0.75rem',
+                            height: 26,
+                            '& .MuiChip-icon': {
+                                color: config.color,
+                            },
+                        }}
                     />
-                  </ListItem>
-                ))}
-              </List>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </CardContent>
-    </Card>
-  );
+                </Box>
+
+                <Box
+                    sx={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                    }}
+                >
+                    <Box>
+                        <Typography
+                            variant="body2"
+                            sx={{
+                                color: '#666',
+                                fontSize: '0.8rem',
+                            }}
+                        >
+                            {totalItems} {totalItems === 1 ? 'item' : 'itens'}
+                        </Typography>
+                        <Typography
+                            variant="h6"
+                            sx={{
+                                fontWeight: 700,
+                                fontSize: '1.1rem',
+                                color: THEME_COLOR,
+                                mt: 0.25,
+                            }}
+                        >
+                            {valorTotal}
+                        </Typography>
+                    </Box>
+
+                    <IconButton
+                        onClick={() => setExpanded(!expanded)}
+                        size="small"
+                        sx={{
+                            bgcolor: 'rgba(37, 45, 95, 0.06)',
+                            '&:hover': {
+                                bgcolor: 'rgba(37, 45, 95, 0.1)',
+                            },
+                        }}
+                    >
+                        {expanded ? (
+                            <KeyboardArrowUp sx={{ fontSize: 20, color: '#666' }} />
+                        ) : (
+                            <KeyboardArrowDown sx={{ fontSize: 20, color: '#666' }} />
+                        )}
+                    </IconButton>
+                </Box>
+            </Box>
+
+            <Collapse in={expanded} timeout={200}>
+                <Divider />
+                <Box sx={{ p: 2.5, bgcolor: '#fafafa' }}>
+                    <Typography
+                        variant="subtitle2"
+                        sx={{
+                            fontWeight: 600,
+                            fontSize: '0.8rem',
+                            color: '#666',
+                            mb: 2,
+                            textTransform: 'uppercase',
+                            letterSpacing: 0.5,
+                        }}
+                    >
+                        Itens do pedido
+                    </Typography>
+
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                        {produtos.map((produto, index) => (
+                            <Box
+                                key={`produto-${produto.skuId || index}`}
+                                sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 2,
+                                    p: 1.5,
+                                    bgcolor: '#fff',
+                                    borderRadius: 1.5,
+                                    border: '1px solid #f0f0f0',
+                                }}
+                            >
+                                <Box
+                                    sx={{
+                                        width: 56,
+                                        height: 56,
+                                        borderRadius: 1.5,
+                                        bgcolor: '#f5f5f5',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        overflow: 'hidden',
+                                        flexShrink: 0,
+                                    }}
+                                >
+                                    {produto.imagem ? (
+                                        <Image
+                                            src={produto.imagem}
+                                            alt={produto.nome}
+                                            width={56}
+                                            height={56}
+                                            style={{ objectFit: 'contain' }}
+                                            unoptimized
+                                        />
+                                    ) : (
+                                        <ShoppingBagOutlined sx={{ fontSize: 24, color: '#ccc' }} />
+                                    )}
+                                </Box>
+
+                                <Box sx={{ flex: 1, minWidth: 0 }}>
+                                    <Typography
+                                        variant="body2"
+                                        sx={{
+                                            fontWeight: 500,
+                                            fontSize: '0.875rem',
+                                            color: '#333',
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis',
+                                            whiteSpace: 'nowrap',
+                                        }}
+                                    >
+                                        {produto.nome}
+                                    </Typography>
+                                    <Typography
+                                        variant="caption"
+                                        sx={{
+                                            color: '#888',
+                                            fontSize: '0.75rem',
+                                        }}
+                                    >
+                                        Qtd: {produto.quantidade}
+                                    </Typography>
+                                </Box>
+
+                                <Typography
+                                    variant="body2"
+                                    sx={{
+                                        fontWeight: 600,
+                                        fontSize: '0.875rem',
+                                        color: '#333',
+                                        flexShrink: 0,
+                                    }}
+                                >
+                                    {produto.valor}
+                                </Typography>
+                            </Box>
+                        ))}
+                    </Box>
+                </Box>
+            </Collapse>
+        </Paper>
+    );
 };
 
 export default OrderCard;

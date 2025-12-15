@@ -1,86 +1,104 @@
+'use client';
+
 import React from 'react';
 import { Typography, Box, Button, SxProps, Theme } from '@mui/material';
 
+const THEME_COLOR = '#252d5f';
+
 interface InfoCardProps {
-  label: string;
-  description: React.ReactNode;
-  icon?: React.ReactNode;
-  actionLabel?: string;
-  onAction?: () => void;
-  contentSx?: SxProps<Theme>;
+    label: string;
+    description: React.ReactNode;
+    icon?: React.ReactNode;
+    actionLabel?: string;
+    onAction?: () => void;
+    contentSx?: SxProps<Theme>;
 }
 
-const InfoCard: React.FC<InfoCardProps> = ({ 
-  label, 
-  description, 
-  icon, 
-  actionLabel = 'Alterar',
-  onAction,
-  contentSx
+const InfoCard: React.FC<InfoCardProps> = ({
+    label,
+    description,
+    icon,
+    actionLabel = 'Alterar',
+    onAction,
+    contentSx,
 }) => {
-  return (
-    <Box 
-      sx={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        padding: '12px 0',
-        borderBottom: '1px solid #f0f0f0',
-        '&:last-child': {
-          borderBottom: 'none'
-        },
-        ...contentSx
-      }}
-    >
-      <Box component="div" sx={{ display: 'flex', alignItems: 'center' }}>
-        {icon && (
-          <Box sx={{ marginRight: '12px', display: 'flex', alignItems: 'center' }}>
-            {icon}
-          </Box>
-        )}
-        <Box>
-          <Typography 
-            sx={{ 
-              fontSize: '13px',
-              color: '#666',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px'
+    return (
+        <Box
+            sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                py: 1.5,
+                borderBottom: '1px solid #f0f0f0',
+                '&:last-child': {
+                    borderBottom: 'none',
+                },
+                ...contentSx,
             }}
-          >
-            {label}
-          </Typography>
-          <Box
-            sx={{ 
-              fontSize: '15px',
-              fontWeight: 500,
-              color: '#333'
-            }}
-          >
-            {description}
-          </Box>
-        </Box>
-      </Box>
-      {onAction && (
-        <Button 
-          variant="text"
-          onClick={onAction}
-          sx={{ 
-            fontSize: '12px', 
-            padding: '6px 12px', 
-            minWidth: '75px', 
-            height: '36px',
-            color: '#102d57',
-            '&:hover': {
-              backgroundColor: 'rgba(16, 45, 87, 0.04)',
-            }
-          }}
         >
-          {actionLabel}
-        </Button>
-      )}
-    </Box>
-  );
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                {icon && (
+                    <Box
+                        sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            width: 36,
+                            height: 36,
+                            borderRadius: 1.5,
+                            bgcolor: 'rgba(37, 45, 95, 0.06)',
+                        }}
+                    >
+                        {React.cloneElement(icon as React.ReactElement, {
+                            sx: { color: THEME_COLOR, fontSize: 18 },
+                        })}
+                    </Box>
+                )}
+                <Box>
+                    <Typography
+                        variant="caption"
+                        sx={{
+                            fontSize: '0.75rem',
+                            color: '#888',
+                            display: 'block',
+                            mb: 0.25,
+                        }}
+                    >
+                        {label}
+                    </Typography>
+                    <Box
+                        sx={{
+                            fontSize: '0.9rem',
+                            fontWeight: 500,
+                            color: '#333',
+                        }}
+                    >
+                        {description}
+                    </Box>
+                </Box>
+            </Box>
+
+            {onAction && (
+                <Button
+                    variant="text"
+                    onClick={onAction}
+                    size="small"
+                    sx={{
+                        fontSize: '0.8rem',
+                        fontWeight: 500,
+                        color: THEME_COLOR,
+                        textTransform: 'none',
+                        px: 1.5,
+                        '&:hover': {
+                            bgcolor: 'rgba(37, 45, 95, 0.06)',
+                        },
+                    }}
+                >
+                    {actionLabel}
+                </Button>
+            )}
+        </Box>
+    );
 };
 
-export default InfoCard; 
+export default InfoCard;

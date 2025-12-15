@@ -1,160 +1,188 @@
-import * as React from 'react';
-import { Box, List, ListItemButton, ListItemIcon, ListItemText, Collapse, Typography } from '@mui/material';
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import {
+    Box,
+    List,
+    ListItemButton,
+    ListItemIcon,
+    ListItemText,
+    Collapse,
+    Typography,
+    Paper,
+} from '@mui/material';
 import { ExpandLess, ExpandMore } from '@mui/icons-material';
-import { motion, AnimatePresence } from 'framer-motion';
-import { MainItemType, SubItemType } from '../../types';
+import { MainItemType } from '../../types';
+
+const THEME_COLOR = '#252d5f';
 
 interface SideBarProps {
-  items: MainItemType[];
-  onSectionChange: (section: string) => void;
-  activeSection: string;
+    items: MainItemType[];
+    onSectionChange: (section: string) => void;
+    activeSection: string;
 }
 
 export default function SideBar({ items, onSectionChange, activeSection }: SideBarProps) {
-  const [openIndexes, setOpenIndexes] = React.useState<number[]>([0]);
+    const [openIndexes, setOpenIndexes] = useState<number[]>([0]);
 
-  // Efeito para expandir automaticamente o item que contém a seção ativa
-  React.useEffect(() => {
-    items.forEach((item, index) => {
-      if (item.label === activeSection) {
-        setOpenIndexes(prev => prev.includes(index) ? prev : [...prev, index]);
-      } else if (item.subItems?.some(subItem => subItem.label === activeSection)) {
-        setOpenIndexes(prev => prev.includes(index) ? prev : [...prev, index]);
-      }
-    });
-  }, [activeSection, items]);
+    useEffect(() => {
+        items.forEach((item, index) => {
+            if (item.label === activeSection) {
+                setOpenIndexes((prev) => (prev.includes(index) ? prev : [...prev, index]));
+            } else if (item.subItems?.some((subItem) => subItem.label === activeSection)) {
+                setOpenIndexes((prev) => (prev.includes(index) ? prev : [...prev, index]));
+            }
+        });
+    }, [activeSection, items]);
 
-  const handleListItemClick = (index: number, item: MainItemType) => {
-    if (item.subItems) {
-      setOpenIndexes(prev => 
-        prev.includes(index) 
-        ? prev.filter(i => i !== index) 
-        : [...prev, index]
-      );
-      
-      // Se o item principal for clicado e tiver subitens, selecione o primeiro subitem
-      if (!openIndexes.includes(index) && item.subItems.length > 0) {
-        onSectionChange(item.subItems[0].label);
-      }
-    } else {
-      onSectionChange(item.label);
-    }
-  };
+    const handleListItemClick = (index: number, item: MainItemType) => {
+        if (item.subItems) {
+            setOpenIndexes((prev) =>
+                prev.includes(index) ? prev.filter((i) => i !== index) : [...prev, index]
+            );
 
-  const handleSubItemClick = (label: string) => {
-    onSectionChange(label);
-  };
+            if (!openIndexes.includes(index) && item.subItems.length > 0) {
+                onSectionChange(item.subItems[0].label);
+            }
+        } else {
+            onSectionChange(item.label);
+        }
+    };
 
-  return (
-    <Box>
-      <Typography
-        variant="h6"
-        sx={{
-          fontWeight: 500,
-          color: '#102d57',
-          mb: 2,
-          fontSize: '1.1rem',
-        }}
-      >
-        Minha Conta
-      </Typography>
-      <List
-        component="nav"
-        aria-labelledby="nested-list-subheader"
-        sx={{ padding: 0 }}
-      >
-        {items.map((item, index) => (
-          <React.Fragment key={`main-item-${index}`}>
-            <ListItemButton
-              onClick={() => handleListItemClick(index, item)}
-              selected={activeSection === item.label || (item.subItems?.some(subItem => subItem.label === activeSection))}
-              sx={{
-                borderRadius: '4px',
-                pl: 0,
-                pr: 2,
-                py: 0.75,
-                '&.Mui-selected': {
-                  backgroundColor: 'rgba(16, 45, 87, 0.08)',
-                  '&:hover': {
-                    backgroundColor: 'rgba(16, 45, 87, 0.12)',
-                  },
-                },
-                '&:hover': {
-                  backgroundColor: 'rgba(0, 0, 0, 0.04)',
-                },
-              }}
-            >
-              <ListItemIcon sx={{ minWidth: '36px' }}>
-                {item.icon}
-              </ListItemIcon>
-              <ListItemText 
-                primary={item.label} 
-                primaryTypographyProps={{ 
-                  sx: {
-                    fontSize: '0.85rem',
-                  } 
+    const handleSubItemClick = (label: string) => {
+        onSectionChange(label);
+    };
+
+    const isItemActive = (item: MainItemType) => {
+        return (
+            activeSection === item.label ||
+            item.subItems?.some((subItem) => subItem.label === activeSection)
+        );
+    };
+
+    return (
+        <Paper
+            elevation={0}
+            sx={{
+                borderRadius: 2,
+                border: '1px solid #e8e8e8',
+                overflow: 'hidden',
+            }}
+        >
+            <Box
+                sx={{
+                    px: 2.5,
+                    py: 2,
+                    borderBottom: '1px solid #e8e8e8',
+                    bgcolor: '#fafafa',
                 }}
-              />
-              {item.subItems && (openIndexes.includes(index) ? <ExpandLess fontSize="small" /> : <ExpandMore fontSize="small" />)}
-            </ListItemButton>
-            
-            {item.subItems && (
-              <AnimatePresence>
-                {openIndexes.includes(index) && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <Collapse in={openIndexes.includes(index)} timeout="auto" unmountOnExit>
-                      <List component="div" disablePadding>
-                        {item.subItems.map((subItem, subIndex) => (
-                          <ListItemButton
-                            key={`sub-item-${index}-${subIndex}`}
+            >
+                <Typography
+                    variant="h6"
+                    sx={{
+                        fontWeight: 600,
+                        color: THEME_COLOR,
+                        fontSize: '1rem',
+                    }}
+                >
+                    Minha Conta
+                </Typography>
+            </Box>
+
+            <List component="nav" sx={{ py: 1 }}>
+                {items.map((item, index) => (
+                    <React.Fragment key={`main-item-${index}`}>
+                        <ListItemButton
+                            onClick={() => handleListItemClick(index, item)}
                             sx={{
-                              pl: 4,
-                              pr: 2,
-                              py: 0.75,
-                              borderRadius: '4px',
-                              '&.Mui-selected': {
-                                backgroundColor: 'transparent',
-                                color: '#102d57',
-                                '&:hover': {
-                                  backgroundColor: 'rgba(0, 0, 0, 0.04)',
+                                mx: 1,
+                                borderRadius: 1.5,
+                                mb: 0.5,
+                                position: 'relative',
+                                '&::before': {
+                                    content: '""',
+                                    position: 'absolute',
+                                    left: 0,
+                                    top: '50%',
+                                    transform: 'translateY(-50%)',
+                                    width: 3,
+                                    height: isItemActive(item) ? '60%' : 0,
+                                    bgcolor: THEME_COLOR,
+                                    borderRadius: 1,
+                                    transition: 'height 0.2s ease',
                                 },
-                              },
-                              '&:hover': {
-                                backgroundColor: 'rgba(0, 0, 0, 0.04)',
-                              },
+                                bgcolor: isItemActive(item) ? 'rgba(37, 45, 95, 0.06)' : 'transparent',
+                                '&:hover': {
+                                    bgcolor: 'rgba(37, 45, 95, 0.06)',
+                                },
                             }}
-                            selected={activeSection === subItem.label}
-                            onClick={() => handleSubItemClick(subItem.label)}
-                          >
-                            <ListItemIcon sx={{ minWidth: '36px' }}>
-                              {subItem.icon}
+                        >
+                            <ListItemIcon sx={{ minWidth: 36 }}>
+                                {React.cloneElement(item.icon as React.ReactElement, {
+                                    sx: { color: THEME_COLOR, fontSize: 20 },
+                                })}
                             </ListItemIcon>
-                            <ListItemText 
-                              primary={subItem.label} 
-                              primaryTypographyProps={{ 
-                                sx: { 
-                                  fontWeight: activeSection === subItem.label ? 600 : 400,
-                                  fontSize: '0.8rem',
-                                  color: activeSection === subItem.label ? '#102d57' : 'inherit',
-                                } 
-                              }}
+                            <ListItemText
+                                primary={item.label}
+                                primaryTypographyProps={{
+                                    fontSize: '0.875rem',
+                                    fontWeight: isItemActive(item) ? 600 : 500,
+                                    color: isItemActive(item) ? THEME_COLOR : '#444',
+                                }}
                             />
-                          </ListItemButton>
-                        ))}
-                      </List>
-                    </Collapse>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            )}
-          </React.Fragment>
-        ))}
-      </List>
-    </Box>
-  );
-} 
+                            {item.subItems &&
+                                (openIndexes.includes(index) ? (
+                                    <ExpandLess sx={{ fontSize: 18, color: '#999' }} />
+                                ) : (
+                                    <ExpandMore sx={{ fontSize: 18, color: '#999' }} />
+                                ))}
+                        </ListItemButton>
+
+                        {item.subItems && (
+                            <Collapse in={openIndexes.includes(index)} timeout={200} unmountOnExit>
+                                <List component="div" disablePadding>
+                                    {item.subItems.map((subItem, subIndex) => {
+                                        const isSubItemActive = activeSection === subItem.label;
+
+                                        return (
+                                            <ListItemButton
+                                                key={`sub-item-${index}-${subIndex}`}
+                                                onClick={() => handleSubItemClick(subItem.label)}
+                                                sx={{
+                                                    mx: 1,
+                                                    pl: 5,
+                                                    borderRadius: 1.5,
+                                                    mb: 0.5,
+                                                    '&:hover': {
+                                                        bgcolor: 'rgba(37, 45, 95, 0.04)',
+                                                    },
+                                                }}
+                                            >
+                                                <ListItemIcon sx={{ minWidth: 32 }}>
+                                                    {React.cloneElement(subItem.icon as React.ReactElement, {
+                                                        sx: {
+                                                            color: isSubItemActive ? THEME_COLOR : '#888',
+                                                            fontSize: 18,
+                                                        },
+                                                    })}
+                                                </ListItemIcon>
+                                                <ListItemText
+                                                    primary={subItem.label}
+                                                    primaryTypographyProps={{
+                                                        fontSize: '0.8125rem',
+                                                        fontWeight: isSubItemActive ? 600 : 400,
+                                                        color: isSubItemActive ? THEME_COLOR : '#555',
+                                                    }}
+                                                />
+                                            </ListItemButton>
+                                        );
+                                    })}
+                                </List>
+                            </Collapse>
+                        )}
+                    </React.Fragment>
+                ))}
+            </List>
+        </Paper>
+    );
+}
