@@ -2,22 +2,24 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { Box, Breadcrumbs, Typography } from '@mui/material';
+import { Breadcrumbs, Typography, Paper, List, ListItem, Divider, Box } from '@mui/material';
 import Link from 'next/link';
 import HomeIcon from '@mui/icons-material/Home';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
-import LocalAtmIcon from '@mui/icons-material/LocalAtm';
-import { PaymentIcon } from 'react-svg-credit-card-payment-icons';
+import PaymentIcon from '@mui/icons-material/Payment';
+import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
+import { PaymentIcon as CardPaymentIcon } from 'react-svg-credit-card-payment-icons';
 
 import LogoColetek from '@/assets/img/logo_coletek.png';
-import HeadphoneImg from '@/assets/img/headphone.png';
 import '@/assets/css/checkout.css';
+import styles from './CheckoutPage.module.css';
 
 import CartComponent from '@/components/Cart';
 import PersonalInfoForm from './components/PersonalInfoForm';
 import AddressForm from './components/AddressForm';
 import PaymentForm from './components/PaymentForm';
+import CheckoutStepSection from './components/CheckoutStepSection';
 import Footer from '@/app/footer';
 
 import { useCheckoutCustomer, PAYMENT_METHOD } from './hooks/useCheckoutCustomer';
@@ -61,7 +63,6 @@ const CheckoutPage = () => {
         clearShippingData
     } = useCheckoutPricing(cartItems);
     
-    // Callback para calcular frete quando endereço for carregado automaticamente
     const handleAddressLoaded = useCallback(async (postalCode: string) => {
         if (postalCode?.length >= 8) {
             try {
@@ -107,11 +108,11 @@ const CheckoutPage = () => {
     const cardFlag = useMemo(() => {
         const brand = detectCardBrand(formData.cardNumber);
         const brandMap: Record<string, JSX.Element> = {
-            'Visa': <PaymentIcon type="Visa" format="flatRounded" width={40} />,
-            'Mastercard': <PaymentIcon type="Mastercard" format="logo" width={40} />,
-            'American Express': <PaymentIcon type="Amex" format="flatRounded" width={40} />,
-            'Elo': <PaymentIcon type="Elo" format="flatRounded" width={40} />,
-            'Hipercard': <PaymentIcon type="Hipercard" format="flatRounded" width={50} />
+            'Visa': <CardPaymentIcon type="Visa" format="flatRounded" width={40} />,
+            'Mastercard': <CardPaymentIcon type="Mastercard" format="logo" width={40} />,
+            'American Express': <CardPaymentIcon type="Amex" format="flatRounded" width={40} />,
+            'Elo': <CardPaymentIcon type="Elo" format="flatRounded" width={40} />,
+            'Hipercard': <CardPaymentIcon type="Hipercard" format="flatRounded" width={50} />
         };
         return brandMap[brand] || <></>;
     }, [formData.cardNumber]);
@@ -145,7 +146,6 @@ const CheckoutPage = () => {
         }
     }, [cartState, formData.postalCode, shippingName, loadingShipping, calculateShipping, isAuthenticated]);
 
-    // Enquanto carrega o carrinho, mostra loading
     if (cartState === 'loading') {
         return (
             <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '100vh' }}>
@@ -230,18 +230,6 @@ const CheckoutPage = () => {
         }
     };
 
-    const stepTitleStyle = (isActive: boolean) => ({
-        cursor: 'pointer',
-        fontWeight: isActive ? 'bold' : 'normal',
-        color: isActive ? '#0d6efd' : 'inherit',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '8px 0',
-        borderBottom: isActive ? '2px solid #0d6efd' : 'none',
-        transition: 'all 0.3s ease'
-    });
-
     return (
         <>
             <CartComponent cartOpened={openedCart} onCartToggle={setOpenedCart} />
@@ -261,12 +249,12 @@ const CheckoutPage = () => {
             
             <div className="container">
                 {!maskedCard.isMasked && formData.paymentMethod === PAYMENT_METHOD.CREDIT_CARD && !formData.cardNumber && !formData.cardHolderName && (
-                    <div className="alert-message" style={{ backgroundColor: '#f8f9fa', padding: '12px', borderRadius: '4px', marginBottom: '20px', color: '#0d6efd', textAlign: 'center' }}>
+                    <div className={styles.alertMessage}>
                         <span>Preencha os dados do cartão para continuar</span>
                     </div>
                 )}
                 
-                <div className="w-100 mb-3">
+                <div className={styles.breadcrumbWrapper}>
                     <Breadcrumbs aria-label="breadcrumb">
                         <Link href="/" style={{ display: 'flex', alignItems: 'center', color: 'inherit', textDecoration: 'none' }}>
                             <HomeIcon sx={{ mr: 0.5 }} fontSize="inherit" />
@@ -278,167 +266,177 @@ const CheckoutPage = () => {
                     </Breadcrumbs>
                 </div>
                 
-                <div className="prod-total">
-                    <div className="d-flex justify-content-between">
-                        <div className="prods">
+                <Paper 
+                    elevation={0} 
+                    sx={{ 
+                        p: 2.5, 
+                        mb: 3, 
+                        borderRadius: 2,
+                        border: '1px solid',
+                        borderColor: 'divider'
+                    }}
+                >
+                    <Box sx={{ display: 'flex', gap: 3, flexWrap: { xs: 'wrap', md: 'nowrap' } }}>
+                        <div className={styles.productsList}>
                             {cartItems.length > 0 ? cartItems.map((item, index) => {
                                 const category = getProductCategory(item);
                                 
                                 return (
-                                    <div className="prod" key={`${item.skuId}-${index}`}>
+                                    <Box 
+                                        key={`${item.skuId}-${index}`}
+                                        sx={{ 
+                                            display: 'flex', 
+                                            gap: 2, 
+                                            mb: 2,
+                                            pb: 2,
+                                            borderBottom: index < cartItems.length - 1 ? '1px solid' : 'none',
+                                            borderColor: 'divider'
+                                        }}
+                                    >
                                         <Image
                                             src={getCartItemImage(item)}
                                             alt={getCartItemTitle(item)}
-                                            layout="responsive"
-                                            width={200}
-                                            height={200}
+                                            width={80}
+                                            height={80}
+                                            style={{ objectFit: 'contain', borderRadius: 8 }}
                                             unoptimized
                                         />
-                                        <div className="info-prod">
-                                            <span className='title-prod'>{getCartItemTitle(item)}</span>
-                                            <div className="more-info">
-                                                <span className='sku'>SKU: {getProductSkuCode(item)}</span>
-                                                <span className='quantity'>Qtd: {item.quantity}</span>
-                                                {category && (
-                                                    <div style={{ display: 'flex' }}>
-                                                        <span style={{ marginRight: '8px' }}>Categoria: </span>
-                                                        <span>{category}</span>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
+                                        <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                                            <Typography variant="body2" fontWeight={500} sx={{ mb: 0.5 }}>
+                                                {getCartItemTitle(item)}
+                                            </Typography>
+                                            <Typography variant="caption" color="text.secondary">
+                                                SKU: {getProductSkuCode(item)} • Qtd: {item.quantity}
+                                                {category && ` • ${category}`}
+                                            </Typography>
+                                        </Box>
+                                    </Box>
                                 );
-                            }) : <div>Nenhum produto no carrinho</div>}
+                            }) : (
+                                <Typography variant="body2" color="text.secondary">
+                                    Nenhum produto no carrinho
+                                </Typography>
+                            )}
                         </div>
                         
-                        <div className="total">
-                            <table>
-                                <tbody>
-                                {cartItems.length !== 0 ? (
-                                    <>
-                                        <tr>
-                                            <td>Subtotal</td>
-                                            <td>R$</td>
-                                            <td>{calculateRawTotal()}</td>
-                                        </tr>
-                                        <tr>
-                                            <th>Total à vista ({pixDiscount}% off)</th>
-                                            <td>R$</td>
-                                            <td>{getPixDiscountedPrice()}</td>
-                                        </tr>
-                                        <tr>
-                                            <td>Entrega</td>
-                                            <td>R$</td>
-                                            <td>{shippingPrice ? shippingPrice.toFixed(2).replace('.', ',') : '0,00'}</td>
-                                        </tr>
-                                        <tr>
-                                            <th>Total</th>
-                                            <td>R$</td>
-                                            <td>{calculateSubtotal().replace('.', ',')}</td>
-                                        </tr>
-                                    </>
-                                ) : (
-                                    <tr>
-                                        <td colSpan={3}>Carrinho vazio</td>
-                                    </tr>
-                                )}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
+                        <Paper 
+                            elevation={0} 
+                            sx={{ 
+                                bgcolor: '#f8f9fa', 
+                                p: 2, 
+                                borderRadius: 2,
+                                minWidth: 280
+                            }}
+                        >
+                            {cartItems.length !== 0 ? (
+                                <List dense disablePadding>
+                                    <ListItem sx={{ justifyContent: 'space-between', py: 1 }}>
+                                        <Typography variant="body2" color="text.secondary">Subtotal</Typography>
+                                        <Typography variant="body2">R$ {calculateRawTotal()}</Typography>
+                                    </ListItem>
+                                    <ListItem sx={{ justifyContent: 'space-between', py: 1 }}>
+                                        <Typography variant="body2" color="success.main" fontWeight={500}>
+                                            Total à vista ({pixDiscount}% off)
+                                        </Typography>
+                                        <Typography variant="body2" color="success.main" fontWeight={500}>
+                                            R$ {getPixDiscountedPrice()}
+                                        </Typography>
+                                    </ListItem>
+                                    <ListItem sx={{ justifyContent: 'space-between', py: 1 }}>
+                                        <Typography variant="body2" color="text.secondary">Entrega</Typography>
+                                        <Typography variant="body2">
+                                            R$ {shippingPrice ? shippingPrice.toFixed(2).replace('.', ',') : '0,00'}
+                                        </Typography>
+                                    </ListItem>
+                                    <Divider sx={{ my: 1 }} />
+                                    <ListItem sx={{ justifyContent: 'space-between', py: 1 }}>
+                                        <Typography variant="subtitle1" fontWeight="bold">Total</Typography>
+                                        <Typography variant="subtitle1" fontWeight="bold" color="primary">
+                                            R$ {calculateSubtotal().replace('.', ',')}
+                                        </Typography>
+                                    </ListItem>
+                                </List>
+                            ) : (
+                                <Typography variant="body2" color="text.secondary" textAlign="center">
+                                    Carrinho vazio
+                                </Typography>
+                            )}
+                        </Paper>
+                    </Box>
+                </Paper>
                 
-                <div className="ship-pay d-flex justify-content-between flex-wrap">
-                    <div className="data-person content-ship-pay">
-                        <span className='title-section' style={stepTitleStyle(currentStep === 1)} onClick={() => goToStep(1)}>
-                            Dados Pessoais {currentStep !== 1 && <span style={{ fontSize: '12px', marginLeft: '4px' }}>(clique para editar)</span>}
-                        </span>
-                        
-                        <button type='button' className='button-change-checkout' onClick={() => goToStep(1)} style={{ display: currentStep === 1 ? 'none' : 'block' }}>
-                            <LocalShippingIcon />
-                        </button>
-                        
-                        <Box className={'d-flex justify-content-between flex-wrap ' + (currentStep === 1 ? 'active-column-checkout' : 'nonactive-column-checkout')}>
-                            {currentStep === 1 && (
-                                <PersonalInfoForm 
-                                    formData={formData}
-                                    errors={errors}
-                                    isAuthenticated={isAuthenticated}
-                                    loadingPersonalData={validatingCPF}
-                                    onChangeProfileType={(value) => updateField('profileType', value)}
-                                    onUpdateField={updateField}
-                                    onValidateCPF={checkCPFAvailability}
-                                    onValidateCNPJ={validateCNPJField}
-                                    onValidateEmail={checkEmailAvailability}
-                                    onValidatePhone={validatePhoneField}
-                                    onValidatePasswords={validatePasswordFields}
-                                    onValidateBirthDate={validateBirthDateField}
-                                    onContinue={() => goToStep(2)}
-                                />
-                            )}
-                        </Box>
-                    </div>
+                <div className={styles.stepsContainer}>
+                    <CheckoutStepSection
+                        title="Dados Pessoais"
+                        stepNumber={1}
+                        currentStep={currentStep}
+                        icon={<PersonOutlineIcon />}
+                        onStepClick={goToStep}
+                    >
+                        <PersonalInfoForm 
+                            formData={formData}
+                            errors={errors}
+                            isAuthenticated={isAuthenticated}
+                            loadingPersonalData={validatingCPF}
+                            onChangeProfileType={(value) => updateField('profileType', value)}
+                            onUpdateField={updateField}
+                            onValidateCPF={checkCPFAvailability}
+                            onValidateCNPJ={validateCNPJField}
+                            onValidateEmail={checkEmailAvailability}
+                            onValidatePhone={validatePhoneField}
+                            onValidatePasswords={validatePasswordFields}
+                            onValidateBirthDate={validateBirthDateField}
+                            onContinue={() => goToStep(2)}
+                        />
+                    </CheckoutStepSection>
                     
-                    <div className="shipping content-ship-pay px-3">
-                        <span className='title-section' style={stepTitleStyle(currentStep === 2)} onClick={() => goToStep(2)}>
-                            Entrega {currentStep !== 2 && <span style={{ fontSize: '12px', marginLeft: '4px' }}>(clique para editar)</span>}
-                        </span>
-                        
-                        <button type='button' className='button-change-checkout' onClick={() => goToStep(2)} style={{ display: currentStep === 2 ? 'none' : 'block' }}>
-                            <LocalShippingIcon />
-                        </button>
-                        
-                        <div className={'d-flex justify-content-center flex-wrap ' + (currentStep === 2 ? 'active-column-checkout' : 'nonactive-column-checkout')}>
-                            {currentStep === 2 && (
-                                <AddressForm
-                                    formData={formData}
-                                    disabledFields={{ address: disabledFields.address }}
-                                    loadingAddress={loadingAddress}
-                                    loadingShipping={loadingShipping}
-                                    shippingName={shippingName}
-                                    shippingPrice={shippingPrice}
-                                    deliveryTime={deliveryTime}
-                                    errors={errors.address}
-                                    onUpdateField={updateField}
-                                    onFetchAddress={handleAddressFetch}
-                                    onClearAddress={clearAddressFields}
-                                    onValidateAddress={validateAddressFields}
-                                    onContinue={() => goToStep(3)}
-                                />
-                            )}
-                        </div>
-                    </div>
+                    <CheckoutStepSection
+                        title="Entrega"
+                        stepNumber={2}
+                        currentStep={currentStep}
+                        icon={<LocalShippingIcon />}
+                        onStepClick={goToStep}
+                    >
+                        <AddressForm
+                            formData={formData}
+                            disabledFields={{ address: disabledFields.address }}
+                            loadingAddress={loadingAddress}
+                            loadingShipping={loadingShipping}
+                            shippingName={shippingName}
+                            shippingPrice={shippingPrice}
+                            deliveryTime={deliveryTime}
+                            errors={errors.address}
+                            onUpdateField={updateField}
+                            onFetchAddress={handleAddressFetch}
+                            onClearAddress={clearAddressFields}
+                            onValidateAddress={validateAddressFields}
+                            onContinue={() => goToStep(3)}
+                        />
+                    </CheckoutStepSection>
                     
-                    <div className="payment content-ship-pay px-5">
-                        <span className='title-section' style={stepTitleStyle(currentStep === 3)} onClick={() => goToStep(3)}>
-                            Pagamento
-                        </span>
-                        
-                        <button type='button' className='button-change-checkout' onClick={() => goToStep(3)} style={{ display: currentStep === 3 ? 'none' : 'block' }}>
-                            <LocalAtmIcon />
-                        </button>
-                        
-                        <div className={'d-flex justify-content-center flex-wrap ' + (currentStep === 3 ? 'active-column-checkout' : 'nonactive-column-checkout')}>
-                            {currentStep === 3 && (
-                                <PaymentForm 
-                                    formData={formData}
-                                    isSubmitting={isSubmitting}
-                                    maskedCard={maskedCard}
-                                    cardFlag={cardFlag}
-                                    errors={errors.card}
-                                    onUpdateField={updateField}
-                                    onCardNumberChange={handleChangeCardNumber}
-                                    onValidateCardNumber={validateCardNumberField}
-                                    onValidateExpiration={validateCardExpirationField}
-                                    onValidateCVV={validateCardCVVField}
-                                    onValidateHolderName={validateCardHolderNameField}
-                                    onValidateHolderDocument={validateCardHolderDocumentField}
-                                    onPaymentSubmit={handlePaymentSubmit}
-                                />
-                            )}
-                        </div>
-                    </div>
+                    <CheckoutStepSection
+                        title="Pagamento"
+                        stepNumber={3}
+                        currentStep={currentStep}
+                        icon={<PaymentIcon />}
+                        onStepClick={goToStep}
+                    >
+                        <PaymentForm 
+                            formData={formData}
+                            isSubmitting={isSubmitting}
+                            maskedCard={maskedCard}
+                            cardFlag={cardFlag}
+                            errors={errors.card}
+                            onUpdateField={updateField}
+                            onCardNumberChange={handleChangeCardNumber}
+                            onValidateCardNumber={validateCardNumberField}
+                            onValidateExpiration={validateCardExpirationField}
+                            onValidateCVV={validateCardCVVField}
+                            onValidateHolderName={validateCardHolderNameField}
+                            onValidateHolderDocument={validateCardHolderDocumentField}
+                            onPaymentSubmit={handlePaymentSubmit}
+                        />
+                    </CheckoutStepSection>
                 </div>
             </div>
             <Footer />
@@ -447,4 +445,3 @@ const CheckoutPage = () => {
 };
 
 export default CheckoutPage;
-

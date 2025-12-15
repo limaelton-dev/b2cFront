@@ -1,6 +1,9 @@
 "use client";
 import React, { useState } from 'react';
-import { Box, RadioGroup, FormControlLabel, Radio, TextField, InputAdornment, Button, CircularProgress, Chip } from '@mui/material';
+import { Box, TextField, InputAdornment, Button, CircularProgress, Chip, ToggleButtonGroup, ToggleButton, Paper, Typography } from '@mui/material';
+import CreditCardIcon from '@mui/icons-material/CreditCard';
+import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
+import PixIcon from '@mui/icons-material/Pix';
 import Checkbox from '@mui/joy/Checkbox';
 import StarIcon from '@mui/icons-material/Star';
 import Cards from 'react-credit-cards-2';
@@ -113,35 +116,52 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
     return (
         <div className="position-relative d-flex flex-wrap" style={{ width: '100%', height: '100%' }}>
             <div className="d-flex justify-content-center flex-wrap" style={{ width: '100%' }}>
-                <RadioGroup
-                    row
+                <ToggleButtonGroup
                     value={formData.paymentMethod}
-                    aria-labelledby="payment-method-radio-group"
-                    name="payment-method-radio-group"
-                    sx={{ justifyContent: 'space-between', width: '100%', mt: '15px', flexWrap: 'wrap', gap: 1 }}
+                    exclusive
+                    onChange={(_, value) => value && onUpdateField('paymentMethod', value)}
+                    aria-label="método de pagamento"
+                    sx={{ 
+                        width: '100%', 
+                        mt: 2,
+                        display: 'flex',
+                        gap: 1,
+                        '& .MuiToggleButton-root': {
+                            flex: 1,
+                            py: 1.5,
+                            border: '1px solid',
+                            borderColor: 'divider',
+                            borderRadius: '8px !important',
+                            textTransform: 'none',
+                            flexDirection: 'column',
+                            gap: 0.5,
+                            '&.Mui-selected': {
+                                bgcolor: 'primary.main',
+                                color: 'white',
+                                borderColor: 'primary.main',
+                                '&:hover': {
+                                    bgcolor: 'primary.dark',
+                                }
+                            },
+                            '&:hover': {
+                                bgcolor: 'action.hover',
+                            }
+                        }
+                    }}
                 >
-                    <FormControlLabel 
-                        value={PAYMENT_METHOD.CREDIT_CARD}
-                        sx={{ margin: 0 }} 
-                        control={<Radio />} 
-                        onClick={() => onUpdateField('paymentMethod', PAYMENT_METHOD.CREDIT_CARD)} 
-                        label="Cartão de Crédito" 
-                    />
-                    <FormControlLabel 
-                        value={PAYMENT_METHOD.DEBIT_CARD}
-                        sx={{ margin: 0 }} 
-                        control={<Radio />} 
-                        onClick={() => onUpdateField('paymentMethod', PAYMENT_METHOD.DEBIT_CARD)} 
-                        label="Cartão de Débito" 
-                    />
-                    <FormControlLabel 
-                        value={PAYMENT_METHOD.PIX}
-                        sx={{ margin: 0 }} 
-                        control={<Radio />} 
-                        onClick={() => onUpdateField('paymentMethod', PAYMENT_METHOD.PIX)} 
-                        label="Pix" 
-                    />
-                </RadioGroup>
+                    <ToggleButton value={PAYMENT_METHOD.CREDIT_CARD}>
+                        <CreditCardIcon fontSize="small" />
+                        <Typography variant="caption" fontWeight={500}>Crédito</Typography>
+                    </ToggleButton>
+                    <ToggleButton value={PAYMENT_METHOD.DEBIT_CARD}>
+                        <AccountBalanceIcon fontSize="small" />
+                        <Typography variant="caption" fontWeight={500}>Débito</Typography>
+                    </ToggleButton>
+                    <ToggleButton value={PAYMENT_METHOD.PIX}>
+                        <PixIcon fontSize="small" />
+                        <Typography variant="caption" fontWeight={500}>Pix</Typography>
+                    </ToggleButton>
+                </ToggleButtonGroup>
                 
                 {isCardPayment && (
                     <Box sx={{ width: '100%', mt: 2 }}>
@@ -191,7 +211,6 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
                                 onChange={(e) => onUpdateField('cardHolderName', e.target.value.toUpperCase())}
                                 onFocus={handleFocus('name')}
                                 onBlur={handleHolderNameBlur}
-                                disabled={maskedCard.isMasked}
                                 variant="standard"
                                 error={errors.holderName}
                                 helperText={errors.holderName ? errors.holderNameMessage : ''}
@@ -204,13 +223,12 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
                                 onChange={onCardNumberChange}
                                 onFocus={handleFocus('number')}
                                 onBlur={handleCardNumberBlur}
-                                disabled={maskedCard.isMasked}
-                                maskChar="X"
+                                maskChar=""
                                 label="Número do Cartão*"
                                 variant="standard"
                                 error={errors.number}
                                 helperText={errors.number ? errors.numberMessage : ''}
-                                placeholder='•••• •••• •••• ••••'
+                                placeholder="0000 0000 0000 0000"
                                 slotProps={{ input: { endAdornment: <InputAdornment position="end">{cardFlag}</InputAdornment> } }}
                                 sx={{ width: '100%', mb: 1 }}
                             />
@@ -225,9 +243,8 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
                                 }}
                                 onFocus={handleFocus('expiry')}
                                 onBlur={handleExpirationBlur}
-                                disabled={maskedCard.isMasked}
                                 label="Validade (MM/AA)*"
-                                placeholder='MM/AA'
+                                placeholder="MM/AA"
                                 variant="standard"
                                 error={errors.expiration}
                                 helperText={errors.expiration ? errors.expirationMessage : ''}
@@ -243,7 +260,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
                                 label="CVV*" 
                                 variant="standard"
                                 error={errors.cvv}
-                                helperText={errors.cvv ? errors.cvvMessage : (maskedCard.isMasked ? "Informe para confirmar" : "")}
+                                helperText={errors.cvv ? errors.cvvMessage : ''}
                                 inputProps={{ maxLength: errors.brand === 'amex' ? 4 : 3 }}
                             />
                             
@@ -252,7 +269,6 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
                                 value={formData.cardHolderDocument}
                                 onChange={(e) => onUpdateField('cardHolderDocument', e.target.value)}
                                 onBlur={handleHolderDocumentBlur}
-                                disabled={maskedCard.isMasked}
                                 label="CPF do Titular do Cartão*"
                                 variant="standard"
                                 error={errors.holderDocument}
@@ -262,7 +278,6 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
                             
                             <Box sx={{ width: '100%', mt: 2 }}>
                                 <Checkbox 
-                                    disabled={maskedCard.isMasked} 
                                     label="Guardar cartão para compras futuras"
                                     checked={formData.saveCard}
                                     onChange={(e) => onUpdateField('saveCard', e.target.checked)}
@@ -273,9 +288,27 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
                 )}
                 
                 {!isCardPayment && (
-                    <div className='d-flex justify-content-center align-items-center' style={{ height: '158px', width: '100%' }}>
-                        <span>A chave PIX será liberada após a confirmação</span>
-                    </div>
+                    <Paper 
+                        elevation={0}
+                        sx={{ 
+                            width: '100%', 
+                            mt: 3, 
+                            p: 3, 
+                            bgcolor: '#f0fdf4',
+                            borderRadius: 2,
+                            border: '1px dashed',
+                            borderColor: 'success.light',
+                            textAlign: 'center'
+                        }}
+                    >
+                        <PixIcon sx={{ fontSize: 48, color: 'success.main', mb: 1 }} />
+                        <Typography variant="body1" fontWeight={500} color="success.dark">
+                            Pagamento via PIX
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                            A chave PIX será gerada após a confirmação do pedido
+                        </Typography>
+                    </Paper>
                 )}
                 
                 {formData.profileType === PROFILE_TYPE.PJ && (
