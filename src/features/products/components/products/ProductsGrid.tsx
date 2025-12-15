@@ -26,13 +26,11 @@ export default function ProductsGrid({
         return (
             <Box
                 sx={{
-                    width: '80%',
                     display: 'flex',
                     flexWrap: 'wrap',
                     gap: 2,
                     justifyContent: 'flex-start',
                     alignContent: 'flex-start',
-                    px: 1,
                 }}
             >
                 {Array.from({ length: skeletonCount }).map((_, index) => (
@@ -51,7 +49,7 @@ export default function ProductsGrid({
 
     if (hasError) {
         return (
-            <Box sx={{ width: '80%', px: 1 }}>
+            <Box sx={{ width: '100%' }}>
                 <ProductsEmptyState 
                     type="error" 
                     onRetry={onRetry}
@@ -63,7 +61,7 @@ export default function ProductsGrid({
 
     if (!hasProducts) {
         return (
-            <Box sx={{ width: '80%', px: 1 }}>
+            <Box sx={{ width: '100%' }}>
                 <ProductsEmptyState 
                     type="no-results"
                     showRetryButton={false}
@@ -75,13 +73,11 @@ export default function ProductsGrid({
     return (
         <Box
             sx={{
-                width: '80%',
                 display: 'flex',
                 flexWrap: 'wrap',
                 gap: 2,
                 justifyContent: 'flex-start',
                 alignContent: 'flex-start',
-                px: 1,
             }}
         >
             {products.map((product) => (
