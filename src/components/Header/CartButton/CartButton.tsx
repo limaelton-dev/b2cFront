@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Box, Badge, Typography, Tooltip } from '@mui/material';
+import { Box, Badge, Tooltip } from '@mui/material';
 import { ShoppingBagOutlined } from '@mui/icons-material';
 
 const THEME_COLOR = '#252d5f';
@@ -19,7 +19,7 @@ export default function CartButton({ count, onClick }: CartButtonProps) {
                 sx={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 0.75,
+                    justifyContent: 'center',
                     cursor: 'pointer',
                     p: 1,
                     borderRadius: 2,
@@ -27,7 +27,6 @@ export default function CartButton({ count, onClick }: CartButtonProps) {
                     '&:hover': {
                         backgroundColor: 'rgba(37, 45, 95, 0.05)',
                         '& .cart-icon': { color: THEME_COLOR },
-                        '& .cart-text': { color: THEME_COLOR },
                     },
                 }}
             >
@@ -60,19 +59,6 @@ export default function CartButton({ count, onClick }: CartButtonProps) {
                         }}
                     />
                 </Badge>
-                <Typography
-                    className="cart-text"
-                    variant="body2"
-                    sx={{
-                        fontWeight: 600,
-                        color: '#666',
-                        fontSize: '0.85rem',
-                        display: { xs: 'none', sm: 'block' },
-                        transition: 'color 0.2s ease',
-                    }}
-                >
-                    Carrinho
-                </Typography>
             </Box>
         </Tooltip>
     );

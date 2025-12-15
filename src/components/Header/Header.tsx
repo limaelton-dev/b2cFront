@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter, usePathname } from 'next/navigation';
+import { Box } from '@mui/material';
 import TopBar from './TopBar';
 import Logo from './Logo';
 import SearchBox from './SearchBox/SearchBox';
@@ -38,13 +39,19 @@ export default function Header({ cartOpened, onCartToggle }: Props) {
         <div className="row">
           <Logo onClick={() => router.push('/')} />
           <SearchBox onSubmit={handleSubmitSearch} />
-          <div className="user-preference">
+          <Box
+            className="user-preference"
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+            }}
+          >
             <UserMenu user={user} />
             <CartButton
               count={cart?.items?.length || 0}
               onClick={() => onCartToggle(!cartOpened)}
             />
-          </div>
+          </Box>
         </div>
         <div className="row">
           <CategoriesNav />

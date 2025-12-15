@@ -10,20 +10,19 @@ import {
     ListItemIcon,
     ListItemText,
     Divider,
-    Button,
+    Tooltip,
 } from '@mui/material';
 import {
     AccountCircle,
     Logout,
-    Login,
-    PersonAdd,
+    PersonOutline,
 } from '@mui/icons-material';
 import { useAuth } from '../../../context/AuthProvider';
 import { UserAvatar } from '../../common';
 
 const THEME_COLOR = '#252d5f';
 
-type User = { name?: string; email?: string };
+type User = { name?: string; email?: string } | null | undefined;
 
 interface UserMenuProps {
     user: User;
@@ -35,12 +34,10 @@ export default function UserMenu({ user }: UserMenuProps) {
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const open = Boolean(anchorEl);
 
+    const isLoggedIn = Boolean(user?.name);
+
     const handleClick = (event: React.MouseEvent<HTMLElement>) => {
-        if (user?.name) {
-            setAnchorEl(event.currentTarget);
-        } else {
-            router.push('/login');
-        }
+        setAnchorEl(event.currentTarget);
     };
 
     const handleClose = () => {
@@ -72,101 +69,57 @@ export default function UserMenu({ user }: UserMenuProps) {
         }
     };
 
-    if (!user?.name) {
-        return (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                <UserAvatar onClick={goLogin} size={42} />
-                <Box sx={{ display: { xs: 'none', md: 'block' } }}>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.25 }}>
-                        <Button
-                            onClick={goLogin}
-                            variant="text"
-                            size="small"
-                            sx={{
-                                color: THEME_COLOR,
-                                fontWeight: 600,
-                                fontSize: '0.8rem',
-                                p: 0,
-                                minWidth: 'auto',
-                                textTransform: 'none',
-                                justifyContent: 'flex-start',
-                                '&:hover': { backgroundColor: 'transparent', textDecoration: 'underline' },
-                            }}
-                        >
-                            Entre
-                        </Button>
-                        <Typography variant="caption" sx={{ color: '#666', lineHeight: 1 }}>
-                            ou{' '}
-                            <Button
-                                onClick={goRegister}
-                                variant="text"
-                                size="small"
-                                sx={{
-                                    color: THEME_COLOR,
-                                    fontWeight: 600,
-                                    fontSize: '0.75rem',
-                                    p: 0,
-                                    minWidth: 'auto',
-                                    textTransform: 'none',
-                                    '&:hover': { backgroundColor: 'transparent', textDecoration: 'underline' },
-                                }}
-                            >
-                                Cadastre-se
-                            </Button>
-                        </Typography>
-                    </Box>
-                </Box>
-            </Box>
-        );
-    }
-
     return (
         <>
-            <Box
-                onClick={handleClick}
-                sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 1.5,
-                    cursor: 'pointer',
-                    p: 0.5,
-                    borderRadius: 2,
-                    transition: 'background-color 0.2s',
-                    '&:hover': { backgroundColor: 'rgba(37, 45, 95, 0.05)' },
-                }}
-            >
-                <UserAvatar name={user.name} size={42} />
-                <Box sx={{ display: { xs: 'none', md: 'block' } }}>
+            <Tooltip title={isLoggedIn ? 'Minha conta' : ''} arrow>
+                <Box
+                    onClick={handleClick}
+                    sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 0.75,
+                        cursor: 'pointer',
+                        p: 1,
+                        borderRadius: 2,
+                        transition: 'all 0.2s ease',
+                        '&:hover': {
+                            backgroundColor: 'rgba(37, 45, 95, 0.05)',
+                            '& .user-icon': { color: THEME_COLOR },
+                            '& .user-text': { color: THEME_COLOR },
+                        },
+                    }}
+                >
+                    {isLoggedIn ? (
+                        <UserAvatar name={user?.name} size={26} />
+                    ) : (
+                        <PersonOutline
+                            className="user-icon"
+                            sx={{
+                                fontSize: 26,
+                                color: '#666',
+                                transition: 'color 0.2s ease',
+                            }}
+                        />
+                    )}
                     <Typography
+                        className="user-text"
                         variant="body2"
                         sx={{
                             fontWeight: 600,
-                            color: '#333',
-                            maxWidth: 120,
+                            color: '#666',
+                            fontSize: '0.85rem',
+                            display: { xs: 'none', sm: 'block' },
+                            transition: 'color 0.2s ease',
+                            maxWidth: 80,
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
                             whiteSpace: 'nowrap',
                         }}
                     >
-                        {user.name}
+                        {isLoggedIn ? user?.name?.split(' ')[0] : ''}
                     </Typography>
-                    {user.email && (
-                        <Typography
-                            variant="caption"
-                            sx={{
-                                color: '#666',
-                                maxWidth: 120,
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                                display: 'block',
-                            }}
-                        >
-                            {user.email}
-                        </Typography>
-                    )}
                 </Box>
-            </Box>
+            </Tooltip>
 
             <Menu
                 anchorEl={anchorEl}
@@ -183,30 +136,50 @@ export default function UserMenu({ user }: UserMenuProps) {
                     },
                 }}
             >
-                <Box sx={{ px: 2, py: 1.5 }}>
-                    <Typography variant="body2" sx={{ fontWeight: 600, color: '#333' }}>
-                        {user.name}
-                    </Typography>
-                    {user.email && (
-                        <Typography variant="caption" sx={{ color: '#666' }}>
-                            {user.email}
-                        </Typography>
-                    )}
-                </Box>
-                <Divider />
-                <MenuItem onClick={goAccount} sx={{ py: 1.5 }}>
-                    <ListItemIcon>
-                        <AccountCircle fontSize="small" sx={{ color: THEME_COLOR }} />
-                    </ListItemIcon>
-                    <ListItemText primary="Minha Conta" />
-                </MenuItem>
-                <Divider />
-                <MenuItem onClick={onLogout} sx={{ py: 1.5, color: '#d32f2f' }}>
-                    <ListItemIcon>
-                        <Logout fontSize="small" sx={{ color: '#d32f2f' }} />
-                    </ListItemIcon>
-                    <ListItemText primary="Sair" />
-                </MenuItem>
+                {isLoggedIn ? (
+                    <>
+                        <Box sx={{ px: 2, py: 1.5 }}>
+                            <Typography variant="body2" sx={{ fontWeight: 600, color: '#333' }}>
+                                {user?.name}
+                            </Typography>
+                            {user?.email && (
+                                <Typography variant="caption" sx={{ color: '#666' }}>
+                                    {user.email}
+                                </Typography>
+                            )}
+                        </Box>
+                        <Divider />
+                        <MenuItem onClick={goAccount} sx={{ py: 1.5 }}>
+                            <ListItemIcon>
+                                <AccountCircle fontSize="small" sx={{ color: THEME_COLOR }} />
+                            </ListItemIcon>
+                            <ListItemText primary="Minha Conta" />
+                        </MenuItem>
+                        <Divider />
+                        <MenuItem onClick={onLogout} sx={{ py: 1.5, color: '#d32f2f' }}>
+                            <ListItemIcon>
+                                <Logout fontSize="small" sx={{ color: '#d32f2f' }} />
+                            </ListItemIcon>
+                            <ListItemText primary="Sair" />
+                        </MenuItem>
+                    </>
+                ) : (
+                    <>
+                        <MenuItem onClick={goLogin} sx={{ py: 1.5 }}>
+                            <ListItemIcon>
+                                <PersonOutline fontSize="small" sx={{ color: THEME_COLOR }} />
+                            </ListItemIcon>
+                            <ListItemText primary="Entrar" />
+                        </MenuItem>
+                        <Divider />
+                        <MenuItem onClick={goRegister} sx={{ py: 1.5 }}>
+                            <ListItemIcon>
+                                <AccountCircle fontSize="small" sx={{ color: THEME_COLOR }} />
+                            </ListItemIcon>
+                            <ListItemText primary="Criar conta" />
+                        </MenuItem>
+                    </>
+                )}
             </Menu>
         </>
     );
