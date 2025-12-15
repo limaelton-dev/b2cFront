@@ -17,7 +17,7 @@ import {
 } from '@mui/material';
 import { DadosPessoaisType } from '../../types';
 import { useToastSide } from '@/context/ToastSideProvider';
-import { formatCPF, formatDateForInput, formatDateForAPI } from '../../utils/formatters';
+import { formatCPF, formatDateForInput, formatDateForAPI, formatPhone } from '../../utils/formatters';
 
 interface EditProfileModalProps {
   open: boolean;
@@ -40,12 +40,14 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
 
   useEffect(() => {
     if (open) {
-      // Inicializar o formulário com os dados atuais do usuário
       setFormData({
+        firstName: userData.firstName || '',
+        lastName: userData.lastName || '',
         full_name: userData.full_name,
         cpf: userData.cpf,
         birth_date: formatDateForInput(userData.birth_date),
         gender: userData.gender,
+        phone: userData.phone,
         username: userData.username,
         email: userData.email
       });
@@ -55,9 +57,22 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
   const handleTextFieldChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
 
-    // Formatação especial para CPF
     if (name === 'cpf') {
       setFormData(prev => ({ ...prev, [name]: formatCPF(value) }));
+      return;
+    }
+
+    if (name === 'phone') {
+      setFormData(prev => ({ ...prev, [name]: formatPhone(value) }));
+      return;
+    }
+
+    if (name === 'firstName' || name === 'lastName') {
+      setFormData(prev => {
+        const updated = { ...prev, [name]: value };
+        updated.full_name = `${updated.firstName || ''} ${updated.lastName || ''}`.trim();
+        return updated;
+      });
       return;
     }
 
@@ -71,17 +86,24 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
 
   const handleSubmit = async () => {
     try {
-      // Validar campos obrigatórios
       if (activeTab === 'profile') {
-        if (!formData.full_name?.trim()) {
-          showToast('Nome completo é obrigatório', 'error');
+        if (!formData.firstName?.trim()) {
+          showToast('Primeiro nome é obrigatório', 'error');
           return;
         }
         
-        // Formatar data para o formato da API
+        if (!formData.lastName?.trim()) {
+          showToast('Sobrenome é obrigatório', 'error');
+          return;
+        }
+        
         const dataToSave = {
-          ...formData,
-          birth_date: formData.birth_date ? formatDateForAPI(formData.birth_date as string) : undefined
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          cpf: formData.cpf,
+          phone: formData.phone,
+          birth_date: formData.birth_date ? formatDateForAPI(formData.birth_date as string) : undefined,
+          gender: formData.gender || null,
         };
         
         await onSave(dataToSave, 'profile');
@@ -91,12 +113,7 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
           return;
         }
         
-        if (!formData.username?.trim()) {
-          showToast('Nome de usuário é obrigatório', 'error');
-          return;
-        }
-        
-        await onSave(formData, 'user');
+        await onSave({ email: formData.email }, 'user');
       }
       
       onClose();
@@ -151,15 +168,27 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
               Atualize seus dados pessoais
             </Typography>
             
-            <TextField
-              fullWidth
-              margin="normal"
-              label="Nome Completo"
-              name="full_name"
-              value={formData.full_name || ''}
-              onChange={handleTextFieldChange}
-              required
-            />
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <TextField
+                fullWidth
+                margin="normal"
+                label="Primeiro Nome"
+                name="firstName"
+                value={formData.firstName || ''}
+                onChange={handleTextFieldChange}
+                required
+              />
+              
+              <TextField
+                fullWidth
+                margin="normal"
+                label="Sobrenome"
+                name="lastName"
+                value={formData.lastName || ''}
+                onChange={handleTextFieldChange}
+                required
+              />
+            </Box>
             
             <TextField
               fullWidth
@@ -169,6 +198,17 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
               value={formData.cpf || ''}
               onChange={handleTextFieldChange}
               inputProps={{ maxLength: 14 }}
+            />
+            
+            <TextField
+              fullWidth
+              margin="normal"
+              label="Telefone"
+              name="phone"
+              value={formData.phone || ''}
+              onChange={handleTextFieldChange}
+              placeholder="(00) 00000-0000"
+              inputProps={{ maxLength: 15 }}
             />
             
             <TextField

@@ -1,4 +1,4 @@
-import { get, post, patch } from "../../http";
+import { get, post, put } from "../../http";
 import {
   ProfileDetails,
   ProfilePF,
@@ -40,12 +40,12 @@ export async function updateProfilePF(
   profileId: number,
   data: Partial<Omit<ProfilePF, "id">>
 ): Promise<ProfilePF> {
-  return patch<ProfilePF>(`${BASE_PATH}/${profileId}/pf`, data);
+  return put<ProfilePF>(`${BASE_PATH}/${profileId}/pf`, data);
 }
 
 export async function updateProfilePJ(
   profileId: number,
   data: Partial<Omit<ProfilePJ, "id">>
 ): Promise<ProfilePJ> {
-  return patch<ProfilePJ>(`${BASE_PATH}/${profileId}/pj`, data);
+  return put<ProfilePJ>(`${BASE_PATH}/${profileId}/pj`, data);
 }

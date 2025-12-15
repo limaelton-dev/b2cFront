@@ -83,19 +83,28 @@ export const updateProfile = async (data: any): Promise<void> => {
   }
   
   if (profileType === 'PF') {
+    const currentProfile = profileData.profile as ProfilePF;
     const pfData: Partial<Omit<ProfilePF, 'id'>> = {};
+    
     if (data.firstName !== undefined) pfData.firstName = data.firstName;
     if (data.lastName !== undefined) pfData.lastName = data.lastName;
     if (data.full_name !== undefined) {
-      const [firstName, ...lastParts] = data.full_name.trim().split(' ');
-      pfData.firstName = firstName;
-      pfData.lastName = lastParts.join(' ');
+      const nameParts = data.full_name.trim().split(' ');
+      pfData.firstName = nameParts[0] || '';
+      pfData.lastName = nameParts.slice(1).join(' ') || '';
     }
-    if (data.cpf !== undefined) pfData.cpf = data.cpf;
-    if (data.birth_date !== undefined) pfData.birthDate = data.birth_date;
-    if (data.gender !== undefined) pfData.gender = data.gender;
+    if (data.cpf !== undefined) {
+      pfData.cpf = data.cpf.replace(/\D/g, '');
+      pfData.cpf = pfData.cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+    }
+    if (data.birth_date !== undefined && data.birth_date) {
+      pfData.birthDate = data.birth_date;
+    }
+    if (data.gender !== undefined) pfData.gender = data.gender || null;
     
-    await updateProfilePF(profileId, pfData);
+    if (Object.keys(pfData).length > 0) {
+      await updateProfilePF(profileId, pfData);
+    }
   } else {
     const pjData: Partial<Omit<ProfilePJ, 'id'>> = {};
     if (data.companyName !== undefined) pjData.companyName = data.companyName;
@@ -104,7 +113,20 @@ export const updateProfile = async (data: any): Promise<void> => {
     if (data.stateRegistration !== undefined) pjData.stateRegistration = data.stateRegistration;
     if (data.municipalRegistration !== undefined) pjData.municipalRegistration = data.municipalRegistration;
     
-    await updateProfilePJ(profileId, pjData);
+    if (Object.keys(pjData).length > 0) {
+      await updateProfilePJ(profileId, pjData);
+    }
+  }
+  
+  if (data.phone !== undefined && data.phone) {
+    const phones = profileData.phone || profileData.phones || [];
+    const defaultPhone = phones.find(p => p.isDefault) || phones[0];
+    
+    if (defaultPhone) {
+      await updatePhone(defaultPhone.id, data.phone);
+    } else {
+      await addPhone(data.phone);
+    }
   }
 };
 

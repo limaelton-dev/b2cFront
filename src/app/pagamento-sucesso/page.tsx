@@ -1,12 +1,10 @@
 "use client"
 import React, { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import Image from 'next/image';
-import { Box, Button, Container, Typography, Paper, CircularProgress, Divider } from '@mui/material';
+import { Box, Button, Container, Typography, Paper, Divider } from '@mui/material';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import { useAuth } from '../../context/AuthProvider';
 import { useToastSide } from '../../context/ToastSideProvider';
-import '../assets/css/checkout.css';
 
 const PagamentoSucessoPage = () => {
     const router = useRouter();

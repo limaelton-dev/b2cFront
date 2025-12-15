@@ -2,10 +2,9 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
-import { Box, Button, Container, Typography, Paper, CircularProgress } from '@mui/material';
+import { Box, Button, Container, Typography, Paper } from '@mui/material';
 import { useAuth } from '../../context/AuthProvider';
 import { useToastSide } from '../../context/ToastSideProvider';
-import '../assets/css/checkout.css';
 
 const PixCheckoutPage = () => {
     const router = useRouter();
