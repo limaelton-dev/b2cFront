@@ -89,17 +89,17 @@ html {
 }
 .addToCartButton, .refreshFillters {
     width: 100%;
-    background-color: #209c20;
+    background-color: #252d5f;
     color: white;
     font-weight: bold;
-    border: 1px solid #209c20;
+    border: 1px solid #252d5f;
     transition: all ease 0.2s;
     border-radius: 3px;
     padding: 4px 0px;
 }
 .addToCartButton:hover, .refreshFillters:hover {
     background-color: white;
-    color: #209c20;
+    color: #252d5f;
 }
 .rewind {
     cursor: pointer;

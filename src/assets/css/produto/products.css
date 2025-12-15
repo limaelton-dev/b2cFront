@@ -59,9 +59,10 @@
 }
 .products .product .price .discount {
     margin-left: 5px;
-    color: #3DB86A;
+    color: #252d5f;
     font-size: 12px;
     margin-top: 2px;
+    font-weight: 600;
 }
 .products .product .colors {
     width: 100%;

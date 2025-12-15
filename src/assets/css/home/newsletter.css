@@ -19,8 +19,12 @@
     border-radius: 15px;
     padding: 7px 20px;
     font-size: 13px;
-    background-color: #12862f;
+    background-color: #252d5f;
     color: white;
     text-transform: uppercase;
     font-weight: bold;
+    transition: all ease 0.2s;
+}
+#newsletter .inputs-newsletter button:hover {
+    background-color: #1a2147;
 }

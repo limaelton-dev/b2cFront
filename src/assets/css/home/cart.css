@@ -97,7 +97,7 @@
     width: 100%;
     display: flex;
     justify-content: center;
-    background-color: #34af58;
+    background-color: #252d5f;
     color: white;
     border-radius: 4px;
     padding: 8px 0px;
@@ -106,6 +106,10 @@
     font-size: 15px;
     font-weight: bold;
     text-transform: uppercase;
+    transition: all ease 0.2s;
+}
+.cart-totals .link-to-buy:hover {
+    background-color: #1a2147;
 }
 .content-header .user-preference .cart .items-total, .content-header .user-preference .wishlist .items-total{
     background-color: #4C90F3;
@@ -136,7 +140,7 @@
 }
 .coupon-code .coupon-status {
     display: flex;
-    color: green;
+    color: #252d5f;
     align-items: center;
     margin-top: 6px;
 }

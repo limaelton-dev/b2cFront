@@ -17,37 +17,9 @@
         width: 41%;
         margin-bottom: 15px;
     }
-    #info-cards .card-info {
-        align-items: center;
-    }
-    #info-cards .card-info .content{
-        align-items: center;
-        margin-bottom: 20px;
-    }
-    #info-cards .card-info p{
-        font-size: 14px;
-    }
 }
 /* 📱 Pequeno (SM) - Até 767px */
 @media only screen and (max-width: 767px) {
-    #info-cards .card-info .content:last-of-type{
-        margin-right: 55px;
-    }
-    #info-cards .container {
-        flex-wrap: wrap;
-        justify-content: space-between;
-    }
-    #info-cards .card-info:nth-child(2) {
-        margin-right: 55px;
-    }
-    #colecao-categorias .content-collections {
-        justify-content: center;
-        flex-wrap: wrap;
-        gap: 10px;
-    }
-    #colecao-categorias .content-collections .collection {
-        width: 31%;
-    }
     header .user-preference {
         width: 100% !important;
     }
@@ -65,15 +37,6 @@
 @media only screen and (max-width: 575px) {
     #promo .cards .card {
         width: 225px;
-    }
-    #info-cards .card-info {
-        margin-bottom: 15px;
-    }
-    #info-cards .card-info p{
-        font-size: 17px;
-    }
-    #colecao-categorias .content-collections .collection {
-        width: 43%;
     }
     header .content-header .logo {
         width: 100%;

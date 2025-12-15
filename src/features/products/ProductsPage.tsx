@@ -16,7 +16,6 @@ import Cart from "../../components/Cart";
 import ClientOnly from "../../components/ClientOnly";
 import Header from "@/app/header";
 import Footer from "@/app/footer";
-import NoImage from "@/assets/img/noimage.png";
 
 import { useAddToCart } from "@/hooks/useAddToCart";
 
@@ -201,17 +200,9 @@ const ProductsPage = () => {
       [addToCart]
   );
 
-  // Função para controlar a abertura/fechamento do carrinho
   const handleCartToggle = useCallback((opened: boolean) => {
       setCartOpened(opened);
   }, []);
-
-  const handleImageError = useCallback(
-      (e: React.SyntheticEvent<HTMLImageElement>) => {
-          e.currentTarget.src = NoImage.src;
-      },
-      []
-  );
 
   return (
       <>
@@ -235,7 +226,6 @@ const ProductsPage = () => {
                   isLoading={isLoading || isPending}
                   loadingProducts={loadingProducts}
                   handleAddToCart={handleAddToCart}
-                  handleImageError={handleImageError}
               />
 
               {totalPages > 1 ? (

@@ -1,13 +1,18 @@
 "use client"
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import Image from 'next/image';
-import { Button, CircularProgress, Typography, TextField } from '@mui/material';
-import { Carousel } from 'primereact/carousel';
+import { Button, CircularProgress, Typography, TextField, Box, Container } from '@mui/material';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Navigation, Pagination } from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/navigation';
+import 'swiper/css/pagination';
 import ReactInputMask from 'react-input-mask';
 
 import '@/assets/css/produto.css';
 import HeadphoneImg from '@/assets/img/headphone.png';
+import { ProductCard, ProductCardSkeleton } from '@/components/ProductCard';
 import Cart from '@/components/Cart';
 import ClientOnly from '@/components/ClientOnly';
 import Header from '@/app/header';
@@ -20,7 +25,7 @@ import { useProductDetails } from './hooks/useProductDetails';
 
 import { Product } from '@/api/products/types/product';
 import { fetchAllProducts } from '@/api/products/services/product';
-import { formatPrice, getFirstSkuPrice, getSkuPrice } from '@/utils/product';
+import { formatPrice, getSkuPrice } from '@/utils/product';
 
 const ProductPage = () => {
     const { slug } = useParams();
@@ -49,7 +54,7 @@ const ProductPage = () => {
 
     const [openedCart, setOpenedCart] = useState(false);
     const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
-    const [loadingRelatedProduct, setLoadingRelatedProduct] = useState<number | null>(null);
+    const [loadingRelatedProducts, setLoadingRelatedProducts] = useState<{ [key: number]: boolean }>({});
 
     const getSelectedSkuPrice = () => {
         const selectedSku = getSelectedSku();
@@ -71,15 +76,7 @@ const ProductPage = () => {
         loadRelatedProducts();
     }, []);
 
-    const responsiveOptions = [
-        { breakpoint: "1400px", numVisible: 4, numScroll: 2 },
-        { breakpoint: "1199px", numVisible: 3, numScroll: 2 },
-        { breakpoint: "991px", numVisible: 2, numScroll: 2 },
-        { breakpoint: "767px", numVisible: 1, numScroll: 1 },
-        { breakpoint: "575px", numVisible: 1, numScroll: 1 }  
-    ];
-
-    const productDescription = (description) => {
+    const productDescription = (description: string) => {
         return (
           <div dangerouslySetInnerHTML={{ __html: description }} />
         );
@@ -88,7 +85,7 @@ const ProductPage = () => {
     const handleAddToCart = async () => {
         if (!product || !selectedSkuId) return;
 
-        const success = await addToCartWithSkuId(selectedSkuId, product.id, {
+        await addToCartWithSkuId(selectedSkuId, product.id, {
             onSuccess: () => {
                 setTimeout(() => {
                     setOpenedCart(true);
@@ -97,89 +94,24 @@ const ProductPage = () => {
         });
     };
 
-    const productTemplate = (relatedProduct: Product) => {
-        const handleRelatedAddToCart = async () => {
-            setLoadingRelatedProduct(relatedProduct.id);
+    const handleRelatedAddToCart = useCallback(async (relatedProduct: Product) => {
+        setLoadingRelatedProducts(prev => ({ ...prev, [relatedProduct.id]: true }));
 
-            try {
-                const activeSku = relatedProduct.skus?.find(sku => sku.active) || relatedProduct.skus?.[0];
-                if (!activeSku) return;
+        try {
+            const activeSku = relatedProduct.skus?.find(sku => sku.active) || relatedProduct.skus?.[0];
+            if (!activeSku) return;
 
-                await addToCartWithSkuId(activeSku.id, relatedProduct.id, {
-                    onSuccess: () => {
-                        setTimeout(() => {
-                            setOpenedCart(true);
-                        }, 500);
-                    }
-                });
-            } finally {
-                setLoadingRelatedProduct(null);
-            }
-        };
-
-        return (
-            <div className="product">
-                <div className="wishlist-button"></div>
-                <a href={`/produto/${relatedProduct.slug}`}>
-                    <Image
-                        src={relatedProduct?.images && relatedProduct.images.length > 0 ?
-                            (relatedProduct.images[0].url || relatedProduct.images[0].standardUrl || relatedProduct.images[0].originalImage) :
-                            HeadphoneImg.src}
-                        width={200}
-                        height={200}
-                        alt="Produto"
-                        layout="responsive"
-                        unoptimized={true}
-                    />
-                </a>
-                <div className="promo green">Até 20% OFF</div>
-                <div className="promo-rating">
-                    <div className="colors">
-                        <div className="color red"></div>
-                        <div className="color black"></div>
-                        <div className="color white"></div>
-                    </div>
-                    <div className="rating">
-                        4.7
-                        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#F6B608">
-                            <path d="m233-120 65-281L80-590l288-25 112-265 112 265 288 25-218 189 65 281-247-149-247 149Z"/>
-                        </svg>
-                    </div>
-                </div>
-                <a className='title-link-product' href={`/produto/${relatedProduct.slug}`}>
-                    <Typography
-                        variant="body1"
-                        className='title-product'
-                        sx={{
-                            display: "-webkit-box",
-                            WebkitBoxOrient: "vertical",
-                            WebkitLineClamp: 2,
-                            overflow: "hidden",
-                        }}
-                    >
-                        {relatedProduct.title}
-                    </Typography>
-                </a>
-                <div className="description">
-                    {productDescription(relatedProduct.model)}
-                </div>
-                <div className="price">
-                    {`R$ ${formatPrice(getFirstSkuPrice(relatedProduct) || 0)}`}
-                    <div className="discount">(5% OFF)</div>
-                </div>
-                <div className='addToCartBox d-flex justify-content-center'>
-                    <button
-                        type='button'
-                        className='addToCartButton'
-                        onClick={handleRelatedAddToCart}
-                        disabled={loadingRelatedProduct === relatedProduct.id}
-                    >
-                        {loadingRelatedProduct === relatedProduct.id ? 'Adicionando...' : 'Adicionar ao carrinho'}
-                    </button>
-                </div>
-            </div>
-        );
-    };
+            await addToCartWithSkuId(activeSku.id, relatedProduct.id, {
+                onSuccess: () => {
+                    setTimeout(() => {
+                        setOpenedCart(true);
+                    }, 500);
+                }
+            });
+        } finally {
+            setLoadingRelatedProducts(prev => ({ ...prev, [relatedProduct.id]: false }));
+        }
+    }, [addToCartWithSkuId]);
 
     const handleCalculateShipping = async () => {
         const selectedSku = getSelectedSku();
@@ -524,19 +456,67 @@ const ProductPage = () => {
                         </div>
                     </div>
                 </section>
-                <section id="recomend" style={{paddingBottom: '25px', marginTop: '25px'}}>
-                    <div className="container">
-                        <div className="title-section">
-                            <p>Recomendado para você</p>
-                        </div>
-                        <div className="products prod-listing" style={{
-                            display: 'flex',
-                            justifyContent: 'space-between'
-                        }}>
-                            <Carousel value={relatedProducts} numVisible={4} numScroll={2} itemTemplate={productTemplate} responsiveOptions={responsiveOptions} circular/>
-                        </div>
-                    </div>
-                </section>
+                <Box component="section" sx={{ py: 4 }}>
+                    <Container maxWidth="lg">
+                        <Typography
+                            variant="h5"
+                            sx={{
+                                fontWeight: 700,
+                                color: '#333',
+                                mb: 3,
+                                position: 'relative',
+                                '&::after': {
+                                    content: '""',
+                                    position: 'absolute',
+                                    bottom: -8,
+                                    left: 0,
+                                    width: 60,
+                                    height: 3,
+                                    backgroundColor: '#252d5f',
+                                    borderRadius: 1,
+                                },
+                            }}
+                        >
+                            Recomendado para você
+                        </Typography>
+                        
+                        <Swiper
+                            modules={[Navigation, Pagination]}
+                            spaceBetween={16}
+                            slidesPerView={1}
+                            navigation
+                            pagination={{ clickable: true }}
+                            breakpoints={{
+                                480: { slidesPerView: 2, spaceBetween: 16 },
+                                768: { slidesPerView: 3, spaceBetween: 20 },
+                                1024: { slidesPerView: 4, spaceBetween: 24 },
+                            }}
+                            style={{ paddingBottom: 40 }}
+                        >
+                            {relatedProducts.length === 0 ? (
+                                Array.from({ length: 4 }).map((_, index) => (
+                                    <SwiperSlide key={`skeleton-${index}`}>
+                                        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                                            <ProductCardSkeleton />
+                                        </Box>
+                                    </SwiperSlide>
+                                ))
+                            ) : (
+                                relatedProducts.map((relatedProduct) => (
+                                    <SwiperSlide key={relatedProduct.id}>
+                                        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                                            <ProductCard
+                                                product={relatedProduct}
+                                                isLoading={loadingRelatedProducts[relatedProduct.id]}
+                                                onAddToCart={handleRelatedAddToCart}
+                                            />
+                                        </Box>
+                                    </SwiperSlide>
+                                ))
+                            )}
+                        </Swiper>
+                    </Container>
+                </Box>
                 <section id='especificacoes' style={{margin: '25px 0px'}}>
                     <div className="container">
                         <div className="title-section">
